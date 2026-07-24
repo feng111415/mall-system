@@ -10,8 +10,8 @@ $projectRoot = Split-Path -Parent $PSScriptRoot
 $versionPath = Join-Path $projectRoot (Join-Path $ReleaseRoot $Version)
 
 if (-not (Test-Path $versionPath)) {
-    throw "未找到版本发布包：$versionPath"
+    throw "Release package not found: $versionPath"
 }
 
-Write-Host "回滚目标版本：$Version"
-Write-Host "当前脚本只完成本地发布目录校验，生产替换动作需要部署环境确认后执行。"
+Write-Host "Rollback target version: $Version"
+Write-Host "The script only validates local packages. Production replacement requires deployment approval."
