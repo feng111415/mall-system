@@ -1,0 +1,116 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.ticket.mapper.TicketNotifySubscribeMapper">
+
+    <resultMap type="TicketNotifySubscribe" id="TicketNotifySubscribeResult">
+        <id     property="subscribeId" column="subscribe_id" />
+        <result property="userId" column="user_id" />
+        <result property="openid" column="openid" />
+        <result property="activityId" column="activity_id" />
+        <result property="sessionId" column="session_id" />
+        <result property="templateId" column="template_id" />
+        <result property="notifyType" column="notify_type" />
+        <result property="status" column="status" />
+        <result property="subscribeTime" column="subscribe_time" />
+        <result property="sendTime" column="send_time" />
+        <result property="failReason" column="fail_reason" />
+        <result property="createTime" column="create_time" />
+        <result property="updateTime" column="update_time" />
+        <result property="remark" column="remark" />
+    </resultMap>
+
+    <sql id="selectTicketNotifySubscribeVo">
+        select subscribe_id, user_id, openid, activity_id, session_id, template_id, notify_type, status, subscribe_time, send_time, fail_reason, create_time, update_time, remark
+        from ticket_notify_subscribe
+    </sql>
+
+    <select id="selectTicketNotifySubscribeList" parameterType="TicketNotifySubscribe" resultMap="TicketNotifySubscribeResult">
+        <include refid="selectTicketNotifySubscribeVo"/>
+        <where>
+            <if test="userId != null">
+                and user_id = #{userId}
+            </if>
+            <if test="activityId != null">
+                and activity_id = #{activityId}
+            </if>
+            <if test="notifyType != null and notifyType != ''">
+                and notify_type like concat('%', #{notifyType}, '%')
+            </if>
+            <if test="status != null and status != ''">
+                and status like concat('%', #{status}, '%')
+            </if>
+        </where>
+        order by subscribe_id desc
+    </select>
+
+    <select id="selectTicketNotifySubscribeById" parameterType="Long" resultMap="TicketNotifySubscribeResult">
+        <include refid="selectTicketNotifySubscribeVo"/>
+        where subscribe_id = #{subscribeId}
+    </select>
+
+    <insert id="insertTicketNotifySubscribe" parameterType="TicketNotifySubscribe" useGeneratedKeys="true" keyProperty="subscribeId">
+        insert into ticket_notify_subscribe
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="userId != null">user_id,</if>
+            <if test="openid != null">openid,</if>
+            <if test="activityId != null">activity_id,</if>
+            <if test="sessionId != null">session_id,</if>
+            <if test="templateId != null">template_id,</if>
+            <if test="notifyType != null">notify_type,</if>
+            <if test="status != null">status,</if>
+            <if test="subscribeTime != null">subscribe_time,</if>
+            <if test="sendTime != null">send_time,</if>
+            <if test="failReason != null">fail_reason,</if>
+            create_time,
+            <if test="updateTime != null">update_time,</if>
+            <if test="remark != null">remark,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="userId != null">#{userId},</if>
+            <if test="openid != null">#{openid},</if>
+            <if test="activityId != null">#{activityId},</if>
+            <if test="sessionId != null">#{sessionId},</if>
+            <if test="templateId != null">#{templateId},</if>
+            <if test="notifyType != null">#{notifyType},</if>
+            <if test="status != null">#{status},</if>
+            <if test="subscribeTime != null">#{subscribeTime},</if>
+            <if test="sendTime != null">#{sendTime},</if>
+            <if test="failReason != null">#{failReason},</if>
+            sysdate(),
+            <if test="updateTime != null">#{updateTime},</if>
+            <if test="remark != null">#{remark},</if>
+        </trim>
+    </insert>
+
+    <update id="updateTicketNotifySubscribe" parameterType="TicketNotifySubscribe">
+        update ticket_notify_subscribe
+        <set>
+            <if test="userId != null">user_id = #{userId},</if>
+            <if test="openid != null">openid = #{openid},</if>
+            <if test="activityId != null">activity_id = #{activityId},</if>
+            <if test="sessionId != null">session_id = #{sessionId},</if>
+            <if test="templateId != null">template_id = #{templateId},</if>
+            <if test="notifyType != null">notify_type = #{notifyType},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="subscribeTime != null">subscribe_time = #{subscribeTime},</if>
+            <if test="sendTime != null">send_time = #{sendTime},</if>
+            <if test="failReason != null">fail_reason = #{failReason},</if>
+            update_time = sysdate(),
+            <if test="remark != null">remark = #{remark},</if>
+        </set>
+        where subscribe_id = #{subscribeId}
+    </update>
+
+    <delete id="deleteTicketNotifySubscribeById" parameterType="Long">
+        delete from ticket_notify_subscribe where subscribe_id = #{subscribeId}
+    </delete>
+
+    <delete id="deleteTicketNotifySubscribeByIds" parameterType="Long">
+        delete from ticket_notify_subscribe where subscribe_id in
+        <foreach collection="array" item="subscribeId" open="(" separator="," close=")">
+            #{subscribeId}
+        </foreach>
+    </delete>
+</mapper>

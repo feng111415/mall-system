@@ -1,0 +1,120 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.ticket.mapper.TicketRefundLogMapper">
+
+    <resultMap type="TicketRefundLog" id="TicketRefundLogResult">
+        <id     property="refundId" column="refund_id" />
+        <result property="orderId" column="order_id" />
+        <result property="orderNo" column="order_no" />
+        <result property="refundNo" column="refund_no" />
+        <result property="transactionId" column="transaction_id" />
+        <result property="refundIdWx" column="refund_id_wx" />
+        <result property="userId" column="user_id" />
+        <result property="refundAmount" column="refund_amount" />
+        <result property="refundReason" column="refund_reason" />
+        <result property="refundStatus" column="refund_status" />
+        <result property="notifyTime" column="notify_time" />
+        <result property="notifyBody" column="notify_body" />
+        <result property="createTime" column="create_time" />
+        <result property="updateTime" column="update_time" />
+        <result property="remark" column="remark" />
+    </resultMap>
+
+    <sql id="selectTicketRefundLogVo">
+        select refund_id, order_id, order_no, refund_no, transaction_id, refund_id_wx, user_id, refund_amount, refund_reason, refund_status, notify_time, notify_body, create_time, update_time, remark
+        from ticket_refund_log
+    </sql>
+
+    <select id="selectTicketRefundLogList" parameterType="TicketRefundLog" resultMap="TicketRefundLogResult">
+        <include refid="selectTicketRefundLogVo"/>
+        <where>
+            <if test="orderNo != null and orderNo != ''">
+                and order_no like concat('%', #{orderNo}, '%')
+            </if>
+            <if test="refundNo != null and refundNo != ''">
+                and refund_no like concat('%', #{refundNo}, '%')
+            </if>
+            <if test="refundStatus != null and refundStatus != ''">
+                and refund_status like concat('%', #{refundStatus}, '%')
+            </if>
+            <if test="transactionId != null and transactionId != ''">
+                and transaction_id like concat('%', #{transactionId}, '%')
+            </if>
+        </where>
+        order by refund_id desc
+    </select>
+
+    <select id="selectTicketRefundLogById" parameterType="Long" resultMap="TicketRefundLogResult">
+        <include refid="selectTicketRefundLogVo"/>
+        where refund_id = #{refundId}
+    </select>
+
+    <insert id="insertTicketRefundLog" parameterType="TicketRefundLog" useGeneratedKeys="true" keyProperty="refundId">
+        insert into ticket_refund_log
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="orderId != null">order_id,</if>
+            <if test="orderNo != null">order_no,</if>
+            <if test="refundNo != null">refund_no,</if>
+            <if test="transactionId != null">transaction_id,</if>
+            <if test="refundIdWx != null">refund_id_wx,</if>
+            <if test="userId != null">user_id,</if>
+            <if test="refundAmount != null">refund_amount,</if>
+            <if test="refundReason != null">refund_reason,</if>
+            <if test="refundStatus != null">refund_status,</if>
+            <if test="notifyTime != null">notify_time,</if>
+            <if test="notifyBody != null">notify_body,</if>
+            create_time,
+            <if test="updateTime != null">update_time,</if>
+            <if test="remark != null">remark,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="orderId != null">#{orderId},</if>
+            <if test="orderNo != null">#{orderNo},</if>
+            <if test="refundNo != null">#{refundNo},</if>
+            <if test="transactionId != null">#{transactionId},</if>
+            <if test="refundIdWx != null">#{refundIdWx},</if>
+            <if test="userId != null">#{userId},</if>
+            <if test="refundAmount != null">#{refundAmount},</if>
+            <if test="refundReason != null">#{refundReason},</if>
+            <if test="refundStatus != null">#{refundStatus},</if>
+            <if test="notifyTime != null">#{notifyTime},</if>
+            <if test="notifyBody != null">#{notifyBody},</if>
+            sysdate(),
+            <if test="updateTime != null">#{updateTime},</if>
+            <if test="remark != null">#{remark},</if>
+        </trim>
+    </insert>
+
+    <update id="updateTicketRefundLog" parameterType="TicketRefundLog">
+        update ticket_refund_log
+        <set>
+            <if test="orderId != null">order_id = #{orderId},</if>
+            <if test="orderNo != null">order_no = #{orderNo},</if>
+            <if test="refundNo != null">refund_no = #{refundNo},</if>
+            <if test="transactionId != null">transaction_id = #{transactionId},</if>
+            <if test="refundIdWx != null">refund_id_wx = #{refundIdWx},</if>
+            <if test="userId != null">user_id = #{userId},</if>
+            <if test="refundAmount != null">refund_amount = #{refundAmount},</if>
+            <if test="refundReason != null">refund_reason = #{refundReason},</if>
+            <if test="refundStatus != null">refund_status = #{refundStatus},</if>
+            <if test="notifyTime != null">notify_time = #{notifyTime},</if>
+            <if test="notifyBody != null">notify_body = #{notifyBody},</if>
+            update_time = sysdate(),
+            <if test="remark != null">remark = #{remark},</if>
+        </set>
+        where refund_id = #{refundId}
+    </update>
+
+    <delete id="deleteTicketRefundLogById" parameterType="Long">
+        delete from ticket_refund_log where refund_id = #{refundId}
+    </delete>
+
+    <delete id="deleteTicketRefundLogByIds" parameterType="Long">
+        delete from ticket_refund_log where refund_id in
+        <foreach collection="array" item="refundId" open="(" separator="," close=")">
+            #{refundId}
+        </foreach>
+    </delete>
+</mapper>

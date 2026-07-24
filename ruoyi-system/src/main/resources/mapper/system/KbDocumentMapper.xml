@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ruoyi.system.mapper.KbDocumentMapper">
+
+    <resultMap type="KbDocument" id="KbDocumentResult">
+        <result property="documentId" column="document_id"/>
+        <result property="categoryId" column="category_id"/>
+        <result property="categoryName" column="category_name"/>
+        <result property="documentName" column="document_name"/>
+        <result property="fileName" column="file_name"/>
+        <result property="filePath" column="file_path"/>
+        <result property="fileType" column="file_type"/>
+        <result property="status" column="status"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+
+    <sql id="selectKbDocumentVo">
+        SELECT d.document_id, d.category_id, c.category_name,
+               d.document_name, d.file_name, d.file_path,
+               d.file_type, d.status, d.create_time,
+               d.update_time, d.remark
+        FROM kb_document d
+        LEFT JOIN kb_category c ON d.category_id = c.category_id
+    </sql>
+
+    <select id="selectKbDocumentById"
+            parameterType="Long"
+            resultMap="KbDocumentResult">
+        <include refid="selectKbDocumentVo"/>
+        WHERE d.document_id = #{documentId}
+    </select>
+
+    <select id="selectKbDocumentList"
+            parameterType="KbDocument"
+            resultMap="KbDocumentResult">
+        <include refid="selectKbDocumentVo"/>
+        <where>
+            <if test="documentName != null and documentName != ''">
+                AND d.document_name LIKE concat('%', #{documentName}, '%')
+            </if>
+            <if test="categoryId != null">
+                AND d.category_id = #{categoryId}
+            </if>
+            <if test="status != null and status != ''">
+                AND d.status = #{status}
+            </if>
+        </where>
+        ORDER BY d.document_id DESC
+    </select>
+
+
+<insert id="insertKbDocument"
+        parameterType="KbDocument"
+        useGeneratedKeys="true"
+        keyProperty="documentId">
+    INSERT INTO kb_document (
+        category_id, document_name, file_name, file_path,
+        file_type, status, create_time, remark
+    )
+    VALUES (
+        #{categoryId}, #{documentName}, #{fileName}, #{filePath},
+        #{fileType}, #{status}, #{createTime}, #{remark}
+    )
+</insert>
+
+<update id="updateKbDocument" parameterType="KbDocument">
+    UPDATE kb_document
+    <set>
+        <if test="categoryId != null">
+            category_id = #{categoryId},
+        </if>
+        <if test="documentName != null and documentName != ''">
+            document_name = #{documentName},
+        </if>
+        <if test="fileName != null">
+            file_name = #{fileName},
+        </if>
+        <if test="filePath != null">
+            file_path = #{filePath},
+        </if>
+        <if test="fileType != null">
+            file_type = #{fileType},
+        </if>
+        <if test="status != null and status != ''">
+            status = #{status},
+        </if>
+        update_time = #{updateTime},
+        <if test="remark != null">
+            remark = #{remark},
+        </if>
+    </set>
+    WHERE document_id = #{documentId}
+</update>
+
+<delete id="deleteKbDocumentById" parameterType="Long">
+    DELETE FROM kb_document
+    WHERE document_id = #{documentId}
+</delete>
+
+<delete id="deleteKbDocumentByIds">
+    DELETE FROM kb_document
+    WHERE document_id IN
+    <foreach
+        item="documentId"
+        collection="array"
+        open="("
+        separator=","
+        close=")">
+        #{documentId}
+    </foreach>
+</delete>
+</mapper>

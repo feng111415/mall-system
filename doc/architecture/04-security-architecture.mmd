@@ -1,0 +1,22 @@
+flowchart TB
+    subgraph CLIENTS[调用方]
+        direction LR
+        USER[用户端]
+        ADMIN[后台端]
+        CALLBACK[支付/物流回调]
+    end
+
+    GATEWAY[HTTPS / WAF / 限流 / 入口路由]
+
+    subgraph ROUTES[接口类型与对应业务模块]
+        direction LR
+        PUB[公开只读接口] --> CATALOG[商品中心]
+        MEMBER_API[会员接口<br/>会员令牌 + 数据归属] --> MEMBER[会员 / 订单 / 售后]
+        ADMIN_API[后台接口<br/>后台令牌 + RBAC] --> MALL_ADMIN[运营模块]
+        CALLBACK_API[回调接口<br/>签名 + 时间戳 + 幂等] --> PAYMENT[支付 / 物流处理]
+    end
+
+    AUDIT[全链路审计日志<br/>所有接口统一记录]
+
+    CLIENTS --> GATEWAY --> ROUTES
+    ROUTES --> AUDIT

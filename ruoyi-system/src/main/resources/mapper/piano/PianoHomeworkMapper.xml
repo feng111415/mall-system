@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.piano.mapper.PianoHomeworkMapper">
+
+    <resultMap type="PianoHomework" id="PianoHomeworkResult">
+        <id     property="homeworkId"          column="homework_id"          />
+        <result property="submitCode"          column="submit_code"          />
+        <result property="studentId"           column="student_id"           />
+        <result property="studentName"         column="student_name"         />
+        <result property="homeworkTitle"       column="homework_title"       />
+        <result property="practiceContent"     column="practice_content"     />
+        <result property="practiceRequirement" column="practice_requirement" />
+        <result property="submitDeadline"      column="submit_deadline"      />
+        <result property="homeworkStatus"      column="homework_status"      />
+        <result property="teacherRemark"       column="teacher_remark"       />
+        <result property="delFlag"             column="del_flag"             />
+        <result property="createBy"            column="create_by"            />
+        <result property="createTime"          column="create_time"          />
+        <result property="updateBy"            column="update_by"            />
+        <result property="updateTime"          column="update_time"          />
+        <result property="remark"              column="remark"               />
+    </resultMap>
+
+    <sql id="selectPianoHomeworkVo">
+        select h.homework_id, h.submit_code, h.student_id, s.student_name, h.homework_title, h.practice_content,
+               h.practice_requirement, h.submit_deadline, h.homework_status, h.teacher_remark,
+               h.del_flag, h.create_by, h.create_time, h.update_by, h.update_time, h.remark
+        from piano_homework h
+        left join piano_student s on s.student_id = h.student_id and s.del_flag = '0'
+    </sql>
+
+    <select id="selectPianoHomeworkList" parameterType="PianoHomework" resultMap="PianoHomeworkResult">
+        <include refid="selectPianoHomeworkVo"/>
+        <where>
+            h.del_flag = '0'
+            <if test="studentId != null">
+                and h.student_id = #{studentId}
+            </if>
+            <if test="studentName != null and studentName != ''">
+                and s.student_name like concat('%', #{studentName}, '%')
+            </if>
+            <if test="homeworkTitle != null and homeworkTitle != ''">
+                and h.homework_title like concat('%', #{homeworkTitle}, '%')
+            </if>
+            <if test="homeworkStatus != null and homeworkStatus != ''">
+                and h.homework_status = #{homeworkStatus}
+            </if>
+            <if test="params.beginSubmitDeadline != null and params.beginSubmitDeadline != ''">
+                and h.submit_deadline &gt;= #{params.beginSubmitDeadline}
+            </if>
+            <if test="params.endSubmitDeadline != null and params.endSubmitDeadline != ''">
+                and h.submit_deadline &lt; date_add(#{params.endSubmitDeadline}, interval 1 day)
+            </if>
+        </where>
+        order by h.homework_id desc
+    </select>
+
+    <select id="selectPianoHomeworkById" parameterType="Long" resultMap="PianoHomeworkResult">
+        <include refid="selectPianoHomeworkVo"/>
+        where h.homework_id = #{homeworkId} and h.del_flag = '0'
+    </select>
+
+    <select id="selectPianoHomeworkBySubmitCode" parameterType="String" resultMap="PianoHomeworkResult">
+        <include refid="selectPianoHomeworkVo"/>
+        where h.submit_code = #{submitCode} and h.del_flag = '0'
+    </select>
+
+    <select id="selectWeekHomeworkCount" resultType="Long">
+        select count(1)
+        from piano_homework
+        where del_flag = '0'
+          and create_time &gt;= date_sub(curdate(), interval weekday(curdate()) day)
+          and create_time &lt; date_add(date_sub(curdate(), interval weekday(curdate()) day), interval 7 day)
+    </select>
+
+    <select id="selectOverdueUnfinishedHomeworkCount" resultType="Long">
+        select count(1)
+        from piano_homework
+        where del_flag = '0'
+          and submit_deadline is not null
+          and submit_deadline &lt; sysdate()
+          and homework_status in ('0', '1', '2', '4')
+    </select>
+
+    <select id="selectPianoHomeworkCountByStatus" parameterType="String" resultType="Long">
+        select count(1)
+        from piano_homework
+        where del_flag = '0' and homework_status = #{homeworkStatus}
+    </select>
+
+    <select id="selectPianoHomeworkCountBySubmitCode" parameterType="String" resultType="Long">
+        select count(1)
+        from piano_homework
+        where submit_code = #{submitCode}
+    </select>
+
+    <select id="selectDashboardTodoHomeworks" resultMap="PianoHomeworkResult">
+        <include refid="selectPianoHomeworkVo"/>
+        where h.del_flag = '0' and h.homework_status = '0'
+        order by h.submit_deadline is null, h.submit_deadline asc, h.homework_id desc
+        limit 6
+    </select>
+
+    <insert id="insertPianoHomework" parameterType="PianoHomework" useGeneratedKeys="true" keyProperty="homeworkId">
+        insert into piano_homework
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="studentId != null">student_id,</if>
+            <if test="submitCode != null and submitCode != ''">submit_code,</if>
+            <if test="homeworkTitle != null and homeworkTitle != ''">homework_title,</if>
+            <if test="practiceContent != null and practiceContent != ''">practice_content,</if>
+            <if test="practiceRequirement != null">practice_requirement,</if>
+            <if test="submitDeadline != null">submit_deadline,</if>
+            <if test="homeworkStatus != null and homeworkStatus != ''">homework_status,</if>
+            <if test="teacherRemark != null">teacher_remark,</if>
+            <if test="remark != null">remark,</if>
+            <if test="createBy != null and createBy != ''">create_by,</if>
+            create_time
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="studentId != null">#{studentId},</if>
+            <if test="submitCode != null and submitCode != ''">#{submitCode},</if>
+            <if test="homeworkTitle != null and homeworkTitle != ''">#{homeworkTitle},</if>
+            <if test="practiceContent != null and practiceContent != ''">#{practiceContent},</if>
+            <if test="practiceRequirement != null">#{practiceRequirement},</if>
+            <if test="submitDeadline != null">#{submitDeadline},</if>
+            <if test="homeworkStatus != null and homeworkStatus != ''">#{homeworkStatus},</if>
+            <if test="teacherRemark != null">#{teacherRemark},</if>
+            <if test="remark != null">#{remark},</if>
+            <if test="createBy != null and createBy != ''">#{createBy},</if>
+            sysdate()
+        </trim>
+    </insert>
+
+    <update id="updatePianoHomework" parameterType="PianoHomework">
+        update piano_homework
+        <set>
+            <if test="studentId != null">student_id = #{studentId},</if>
+            <if test="submitCode != null and submitCode != ''">submit_code = #{submitCode},</if>
+            <if test="homeworkTitle != null and homeworkTitle != ''">homework_title = #{homeworkTitle},</if>
+            <if test="practiceContent != null and practiceContent != ''">practice_content = #{practiceContent},</if>
+            <if test="practiceRequirement != null">practice_requirement = #{practiceRequirement},</if>
+            <if test="submitDeadline != null">submit_deadline = #{submitDeadline},</if>
+            <if test="homeworkStatus != null and homeworkStatus != ''">homework_status = #{homeworkStatus},</if>
+            <if test="teacherRemark != null">teacher_remark = #{teacherRemark},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+            update_time = sysdate()
+        </set>
+        where homework_id = #{homeworkId} and del_flag = '0'
+    </update>
+
+    <update id="deletePianoHomeworkById" parameterType="Long">
+        update piano_homework set del_flag = '2', update_time = sysdate()
+        where homework_id = #{homeworkId}
+    </update>
+
+    <update id="deletePianoHomeworkByIds" parameterType="Long">
+        update piano_homework set del_flag = '2', update_time = sysdate()
+        where homework_id in
+        <foreach collection="array" item="homeworkId" open="(" separator="," close=")">
+            #{homeworkId}
+        </foreach>
+    </update>
+
+    <update id="updatePianoHomeworkStatus">
+        update piano_homework
+        set homework_status = #{homeworkStatus}, update_time = sysdate()
+        where homework_id = #{homeworkId} and del_flag = '0'
+    </update>
+</mapper>

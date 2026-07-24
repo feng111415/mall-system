@@ -1,0 +1,49 @@
+flowchart TB
+    subgraph CLIENT[客户端]
+        direction LR
+        H5[商城用户端<br/>Vue 3 + Vant 4]
+        ADMIN[运营管理端<br/>Vue 3 + Element Plus]
+        OPS[运维人员]
+    end
+
+    EDGE[HTTPS 反向代理 / WAF / 限流]
+
+    subgraph APP[商城 API 单体进程]
+        direction TB
+        FILTER[认证过滤器<br/>用户令牌 / 后台令牌]
+        WEB[Web Adapter<br/>Controller / DTO / 参数校验]
+
+        subgraph MALL[商城业务模块]
+            direction LR
+            MEMBER[会员与身份]
+            CATALOG[商品中心<br/>分类 / 品牌 / SPU / SKU]
+            TRANSACTION[交易核心<br/>购物车 / 订单 / 库存 / 支付]
+            FULFILL[履约与售后<br/>物流 / 退款]
+            GOVERNANCE[治理能力<br/>风控 / 审计 / 补偿 / 对账]
+        end
+
+        RY[若依基础能力<br/>权限 / 日志 / 文件 / 字典 / Redis / Quartz]
+    end
+
+    subgraph DATA[数据与基础设施]
+        direction LR
+        DB[(MySQL 8<br/>sys_* + mall_*)]
+        CACHE[(Redis<br/>令牌 / 限流 / 验证码 / 短期锁)]
+        FILE[(文件或对象存储<br/>公开商品图 / 私有售后凭证)]
+    end
+
+    subgraph EXTERNAL[外部适配器]
+        direction LR
+        SMS[短信供应商]
+        PAYMENT[支付渠道<br/>首期 Mock，后续微信/支付宝]
+        LOGISTICS[物流渠道<br/>首期手工，后续第三方]
+    end
+
+    H5 --> EDGE
+    ADMIN --> EDGE
+    OPS --> EDGE
+    EDGE --> FILTER --> WEB
+    WEB --> MALL
+    MALL --> RY
+    APP --> DATA
+    APP --> EXTERNAL

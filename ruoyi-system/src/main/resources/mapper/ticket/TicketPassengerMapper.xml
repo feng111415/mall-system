@@ -1,0 +1,120 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.ticket.mapper.TicketPassengerMapper">
+
+    <resultMap type="TicketPassenger" id="TicketPassengerResult">
+        <id     property="passengerId" column="passenger_id" />
+        <result property="userId" column="user_id" />
+        <result property="realName" column="real_name" />
+        <result property="idType" column="id_type" />
+        <result property="idNo" column="id_no" />
+        <result property="mobile" column="mobile" />
+        <result property="passengerType" column="passenger_type" />
+        <result property="isDefault" column="is_default" />
+        <result property="status" column="status" />
+        <result property="delFlag" column="del_flag" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy" column="update_by" />
+        <result property="updateTime" column="update_time" />
+        <result property="remark" column="remark" />
+    </resultMap>
+
+    <sql id="selectTicketPassengerVo">
+        select passenger_id, user_id, real_name, id_type, id_no, mobile, passenger_type, is_default, status, del_flag, create_by, create_time, update_by, update_time, remark
+        from ticket_passenger
+    </sql>
+
+    <select id="selectTicketPassengerList" parameterType="TicketPassenger" resultMap="TicketPassengerResult">
+        <include refid="selectTicketPassengerVo"/>
+        <where>
+            <if test="userId != null">
+                and user_id = #{userId}
+            </if>
+            <if test="realName != null and realName != ''">
+                and real_name like concat('%', #{realName}, '%')
+            </if>
+            <if test="mobile != null and mobile != ''">
+                and mobile like concat('%', #{mobile}, '%')
+            </if>
+            <if test="status != null and status != ''">
+                and status like concat('%', #{status}, '%')
+            </if>
+        </where>
+        order by passenger_id desc
+    </select>
+
+    <select id="selectTicketPassengerById" parameterType="Long" resultMap="TicketPassengerResult">
+        <include refid="selectTicketPassengerVo"/>
+        where passenger_id = #{passengerId}
+    </select>
+
+    <insert id="insertTicketPassenger" parameterType="TicketPassenger" useGeneratedKeys="true" keyProperty="passengerId">
+        insert into ticket_passenger
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="userId != null">user_id,</if>
+            <if test="realName != null">real_name,</if>
+            <if test="idType != null">id_type,</if>
+            <if test="idNo != null">id_no,</if>
+            <if test="mobile != null">mobile,</if>
+            <if test="passengerType != null">passenger_type,</if>
+            <if test="isDefault != null">is_default,</if>
+            <if test="status != null">status,</if>
+            <if test="delFlag != null">del_flag,</if>
+            <if test="createBy != null">create_by,</if>
+            create_time,
+            <if test="updateBy != null">update_by,</if>
+            <if test="updateTime != null">update_time,</if>
+            <if test="remark != null">remark,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="userId != null">#{userId},</if>
+            <if test="realName != null">#{realName},</if>
+            <if test="idType != null">#{idType},</if>
+            <if test="idNo != null">#{idNo},</if>
+            <if test="mobile != null">#{mobile},</if>
+            <if test="passengerType != null">#{passengerType},</if>
+            <if test="isDefault != null">#{isDefault},</if>
+            <if test="status != null">#{status},</if>
+            <if test="delFlag != null">#{delFlag},</if>
+            <if test="createBy != null">#{createBy},</if>
+            sysdate(),
+            <if test="updateBy != null">#{updateBy},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+            <if test="remark != null">#{remark},</if>
+        </trim>
+    </insert>
+
+    <update id="updateTicketPassenger" parameterType="TicketPassenger">
+        update ticket_passenger
+        <set>
+            <if test="userId != null">user_id = #{userId},</if>
+            <if test="realName != null">real_name = #{realName},</if>
+            <if test="idType != null">id_type = #{idType},</if>
+            <if test="idNo != null">id_no = #{idNo},</if>
+            <if test="mobile != null">mobile = #{mobile},</if>
+            <if test="passengerType != null">passenger_type = #{passengerType},</if>
+            <if test="isDefault != null">is_default = #{isDefault},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="delFlag != null">del_flag = #{delFlag},</if>
+            <if test="createBy != null">create_by = #{createBy},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            update_time = sysdate(),
+            <if test="remark != null">remark = #{remark},</if>
+        </set>
+        where passenger_id = #{passengerId}
+    </update>
+
+    <delete id="deleteTicketPassengerById" parameterType="Long">
+        delete from ticket_passenger where passenger_id = #{passengerId}
+    </delete>
+
+    <delete id="deleteTicketPassengerByIds" parameterType="Long">
+        delete from ticket_passenger where passenger_id in
+        <foreach collection="array" item="passengerId" open="(" separator="," close=")">
+            #{passengerId}
+        </foreach>
+    </delete>
+</mapper>

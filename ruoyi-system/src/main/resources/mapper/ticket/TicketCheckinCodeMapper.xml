@@ -1,0 +1,116 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.ticket.mapper.TicketCheckinCodeMapper">
+
+    <resultMap type="TicketCheckinCode" id="TicketCheckinCodeResult">
+        <id     property="codeId" column="code_id" />
+        <result property="orderId" column="order_id" />
+        <result property="orderNo" column="order_no" />
+        <result property="itemId" column="item_id" />
+        <result property="ticketNo" column="ticket_no" />
+        <result property="checkinCode" column="checkin_code" />
+        <result property="qrcodeUrl" column="qrcode_url" />
+        <result property="status" column="status" />
+        <result property="checkinUserId" column="checkin_user_id" />
+        <result property="checkinUser" column="checkin_user" />
+        <result property="checkinTime" column="checkin_time" />
+        <result property="createTime" column="create_time" />
+        <result property="updateTime" column="update_time" />
+        <result property="remark" column="remark" />
+    </resultMap>
+
+    <sql id="selectTicketCheckinCodeVo">
+        select code_id, order_id, order_no, item_id, ticket_no, checkin_code, qrcode_url, status, checkin_user_id, checkin_user, checkin_time, create_time, update_time, remark
+        from ticket_checkin_code
+    </sql>
+
+    <select id="selectTicketCheckinCodeList" parameterType="TicketCheckinCode" resultMap="TicketCheckinCodeResult">
+        <include refid="selectTicketCheckinCodeVo"/>
+        <where>
+            <if test="orderNo != null and orderNo != ''">
+                and order_no like concat('%', #{orderNo}, '%')
+            </if>
+            <if test="ticketNo != null and ticketNo != ''">
+                and ticket_no like concat('%', #{ticketNo}, '%')
+            </if>
+            <if test="checkinCode != null and checkinCode != ''">
+                and checkin_code like concat('%', #{checkinCode}, '%')
+            </if>
+            <if test="status != null and status != ''">
+                and status like concat('%', #{status}, '%')
+            </if>
+        </where>
+        order by code_id desc
+    </select>
+
+    <select id="selectTicketCheckinCodeById" parameterType="Long" resultMap="TicketCheckinCodeResult">
+        <include refid="selectTicketCheckinCodeVo"/>
+        where code_id = #{codeId}
+    </select>
+
+    <insert id="insertTicketCheckinCode" parameterType="TicketCheckinCode" useGeneratedKeys="true" keyProperty="codeId">
+        insert into ticket_checkin_code
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="orderId != null">order_id,</if>
+            <if test="orderNo != null">order_no,</if>
+            <if test="itemId != null">item_id,</if>
+            <if test="ticketNo != null">ticket_no,</if>
+            <if test="checkinCode != null">checkin_code,</if>
+            <if test="qrcodeUrl != null">qrcode_url,</if>
+            <if test="status != null">status,</if>
+            <if test="checkinUserId != null">checkin_user_id,</if>
+            <if test="checkinUser != null">checkin_user,</if>
+            <if test="checkinTime != null">checkin_time,</if>
+            create_time,
+            <if test="updateTime != null">update_time,</if>
+            <if test="remark != null">remark,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="orderId != null">#{orderId},</if>
+            <if test="orderNo != null">#{orderNo},</if>
+            <if test="itemId != null">#{itemId},</if>
+            <if test="ticketNo != null">#{ticketNo},</if>
+            <if test="checkinCode != null">#{checkinCode},</if>
+            <if test="qrcodeUrl != null">#{qrcodeUrl},</if>
+            <if test="status != null">#{status},</if>
+            <if test="checkinUserId != null">#{checkinUserId},</if>
+            <if test="checkinUser != null">#{checkinUser},</if>
+            <if test="checkinTime != null">#{checkinTime},</if>
+            sysdate(),
+            <if test="updateTime != null">#{updateTime},</if>
+            <if test="remark != null">#{remark},</if>
+        </trim>
+    </insert>
+
+    <update id="updateTicketCheckinCode" parameterType="TicketCheckinCode">
+        update ticket_checkin_code
+        <set>
+            <if test="orderId != null">order_id = #{orderId},</if>
+            <if test="orderNo != null">order_no = #{orderNo},</if>
+            <if test="itemId != null">item_id = #{itemId},</if>
+            <if test="ticketNo != null">ticket_no = #{ticketNo},</if>
+            <if test="checkinCode != null">checkin_code = #{checkinCode},</if>
+            <if test="qrcodeUrl != null">qrcode_url = #{qrcodeUrl},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="checkinUserId != null">checkin_user_id = #{checkinUserId},</if>
+            <if test="checkinUser != null">checkin_user = #{checkinUser},</if>
+            <if test="checkinTime != null">checkin_time = #{checkinTime},</if>
+            update_time = sysdate(),
+            <if test="remark != null">remark = #{remark},</if>
+        </set>
+        where code_id = #{codeId}
+    </update>
+
+    <delete id="deleteTicketCheckinCodeById" parameterType="Long">
+        delete from ticket_checkin_code where code_id = #{codeId}
+    </delete>
+
+    <delete id="deleteTicketCheckinCodeByIds" parameterType="Long">
+        delete from ticket_checkin_code where code_id in
+        <foreach collection="array" item="codeId" open="(" separator="," close=")">
+            #{codeId}
+        </foreach>
+    </delete>
+</mapper>

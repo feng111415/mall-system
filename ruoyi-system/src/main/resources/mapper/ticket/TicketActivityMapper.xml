@@ -1,0 +1,164 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.ticket.mapper.TicketActivityMapper">
+
+    <resultMap type="TicketActivity" id="TicketActivityResult">
+        <id     property="activityId" column="activity_id" />
+        <result property="activityName" column="activity_name" />
+        <result property="activityCode" column="activity_code" />
+        <result property="activityType" column="activity_type" />
+        <result property="coverUrl" column="cover_url" />
+        <result property="bannerUrls" column="banner_urls" />
+        <result property="venueName" column="venue_name" />
+        <result property="venueAddress" column="venue_address" />
+        <result property="longitude" column="longitude" />
+        <result property="latitude" column="latitude" />
+        <result property="saleStartTime" column="sale_start_time" />
+        <result property="saleEndTime" column="sale_end_time" />
+        <result property="startTime" column="start_time" />
+        <result property="endTime" column="end_time" />
+        <result property="purchaseLimit" column="purchase_limit" />
+        <result property="needRealName" column="need_real_name" />
+        <result property="needSeat" column="need_seat" />
+        <result property="orderTimeout" column="order_timeout" />
+        <result property="status" column="status" />
+        <result property="delFlag" column="del_flag" />
+        <result property="description" column="description" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy" column="update_by" />
+        <result property="updateTime" column="update_time" />
+        <result property="remark" column="remark" />
+    </resultMap>
+
+    <sql id="selectTicketActivityVo">
+        select activity_id, activity_name, activity_code, activity_type, cover_url, banner_urls, venue_name, venue_address, longitude, latitude, sale_start_time, sale_end_time, start_time, end_time, purchase_limit, need_real_name, need_seat, order_timeout, status, del_flag, description, create_by, create_time, update_by, update_time, remark
+        from ticket_activity
+    </sql>
+
+    <select id="selectTicketActivityList" parameterType="TicketActivity" resultMap="TicketActivityResult">
+        <include refid="selectTicketActivityVo"/>
+        <where>
+            <if test="activityName != null and activityName != ''">
+                and activity_name like concat('%', #{activityName}, '%')
+            </if>
+            <if test="activityCode != null and activityCode != ''">
+                and activity_code like concat('%', #{activityCode}, '%')
+            </if>
+            <if test="activityType != null and activityType != ''">
+                and activity_type like concat('%', #{activityType}, '%')
+            </if>
+            <if test="status != null and status != ''">
+                and status like concat('%', #{status}, '%')
+            </if>
+        </where>
+        order by activity_id desc
+    </select>
+
+    <select id="selectTicketActivityById" parameterType="Long" resultMap="TicketActivityResult">
+        <include refid="selectTicketActivityVo"/>
+        where activity_id = #{activityId}
+    </select>
+
+    <insert id="insertTicketActivity" parameterType="TicketActivity" useGeneratedKeys="true" keyProperty="activityId">
+        insert into ticket_activity
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="activityName != null">activity_name,</if>
+            <if test="activityCode != null">activity_code,</if>
+            <if test="activityType != null">activity_type,</if>
+            <if test="coverUrl != null">cover_url,</if>
+            <if test="bannerUrls != null">banner_urls,</if>
+            <if test="venueName != null">venue_name,</if>
+            <if test="venueAddress != null">venue_address,</if>
+            <if test="longitude != null">longitude,</if>
+            <if test="latitude != null">latitude,</if>
+            <if test="saleStartTime != null">sale_start_time,</if>
+            <if test="saleEndTime != null">sale_end_time,</if>
+            <if test="startTime != null">start_time,</if>
+            <if test="endTime != null">end_time,</if>
+            <if test="purchaseLimit != null">purchase_limit,</if>
+            <if test="needRealName != null">need_real_name,</if>
+            <if test="needSeat != null">need_seat,</if>
+            <if test="orderTimeout != null">order_timeout,</if>
+            <if test="status != null">status,</if>
+            <if test="delFlag != null">del_flag,</if>
+            <if test="description != null">description,</if>
+            <if test="createBy != null">create_by,</if>
+            create_time,
+            <if test="updateBy != null">update_by,</if>
+            <if test="updateTime != null">update_time,</if>
+            <if test="remark != null">remark,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="activityName != null">#{activityName},</if>
+            <if test="activityCode != null">#{activityCode},</if>
+            <if test="activityType != null">#{activityType},</if>
+            <if test="coverUrl != null">#{coverUrl},</if>
+            <if test="bannerUrls != null">#{bannerUrls},</if>
+            <if test="venueName != null">#{venueName},</if>
+            <if test="venueAddress != null">#{venueAddress},</if>
+            <if test="longitude != null">#{longitude},</if>
+            <if test="latitude != null">#{latitude},</if>
+            <if test="saleStartTime != null">#{saleStartTime},</if>
+            <if test="saleEndTime != null">#{saleEndTime},</if>
+            <if test="startTime != null">#{startTime},</if>
+            <if test="endTime != null">#{endTime},</if>
+            <if test="purchaseLimit != null">#{purchaseLimit},</if>
+            <if test="needRealName != null">#{needRealName},</if>
+            <if test="needSeat != null">#{needSeat},</if>
+            <if test="orderTimeout != null">#{orderTimeout},</if>
+            <if test="status != null">#{status},</if>
+            <if test="delFlag != null">#{delFlag},</if>
+            <if test="description != null">#{description},</if>
+            <if test="createBy != null">#{createBy},</if>
+            sysdate(),
+            <if test="updateBy != null">#{updateBy},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+            <if test="remark != null">#{remark},</if>
+        </trim>
+    </insert>
+
+    <update id="updateTicketActivity" parameterType="TicketActivity">
+        update ticket_activity
+        <set>
+            <if test="activityName != null">activity_name = #{activityName},</if>
+            <if test="activityCode != null">activity_code = #{activityCode},</if>
+            <if test="activityType != null">activity_type = #{activityType},</if>
+            <if test="coverUrl != null">cover_url = #{coverUrl},</if>
+            <if test="bannerUrls != null">banner_urls = #{bannerUrls},</if>
+            <if test="venueName != null">venue_name = #{venueName},</if>
+            <if test="venueAddress != null">venue_address = #{venueAddress},</if>
+            <if test="longitude != null">longitude = #{longitude},</if>
+            <if test="latitude != null">latitude = #{latitude},</if>
+            <if test="saleStartTime != null">sale_start_time = #{saleStartTime},</if>
+            <if test="saleEndTime != null">sale_end_time = #{saleEndTime},</if>
+            <if test="startTime != null">start_time = #{startTime},</if>
+            <if test="endTime != null">end_time = #{endTime},</if>
+            <if test="purchaseLimit != null">purchase_limit = #{purchaseLimit},</if>
+            <if test="needRealName != null">need_real_name = #{needRealName},</if>
+            <if test="needSeat != null">need_seat = #{needSeat},</if>
+            <if test="orderTimeout != null">order_timeout = #{orderTimeout},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="delFlag != null">del_flag = #{delFlag},</if>
+            <if test="description != null">description = #{description},</if>
+            <if test="createBy != null">create_by = #{createBy},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            update_time = sysdate(),
+            <if test="remark != null">remark = #{remark},</if>
+        </set>
+        where activity_id = #{activityId}
+    </update>
+
+    <delete id="deleteTicketActivityById" parameterType="Long">
+        delete from ticket_activity where activity_id = #{activityId}
+    </delete>
+
+    <delete id="deleteTicketActivityByIds" parameterType="Long">
+        delete from ticket_activity where activity_id in
+        <foreach collection="array" item="activityId" open="(" separator="," close=")">
+            #{activityId}
+        </foreach>
+    </delete>
+</mapper>

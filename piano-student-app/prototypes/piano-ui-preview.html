@@ -1,0 +1,550 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>钢琴小程序 UI 视觉预览 - Prototype</title>
+  <style>
+    :root {
+      --bg: #fcf9f9;
+      --panel: #fffdfd;
+      --ink: #3a3a3a;
+      --muted: rgba(153, 153, 153, 0.88);
+      --rose: #d8b8c2;
+      --rose-2: #e0c6d0;
+      --line: #eae2e8;
+      --shadow: 0 18px 48px rgba(216, 184, 194, 0.14);
+      --soft: rgba(216, 184, 194, 0.1);
+      --font: "PingFang SC", "Source Han Sans SC", "Microsoft YaHei UI", "Microsoft YaHei", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      font-family: var(--font);
+      letter-spacing: 1px;
+      background:
+        radial-gradient(circle at 18% 12%, rgba(216,184,194,0.16), transparent 28%),
+        linear-gradient(135deg, #fcf9f9 0%, #f8f1f4 48%, #fbf8f1 100%);
+    }
+
+    .prototype-note {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 14px 28px;
+      border-bottom: 1px solid rgba(234,226,232,0.78);
+      background: rgba(252,249,249,0.88);
+      backdrop-filter: blur(18px);
+      font-size: 13px;
+      font-weight: 300;
+      color: var(--muted);
+    }
+
+    .layout {
+      max-width: 1380px;
+      margin: 0 auto;
+      padding: 34px 34px 110px;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(280px, 0.8fr) minmax(320px, 1.2fr);
+      gap: 30px;
+      align-items: end;
+      margin-bottom: 32px;
+    }
+
+    .title {
+      margin: 0 0 14px;
+      color: var(--rose);
+      font-size: 36px;
+      font-weight: 200;
+      line-height: 1.35;
+    }
+
+    .subtitle {
+      margin: 0;
+      max-width: 620px;
+      color: var(--muted);
+      font-size: 15px;
+      font-weight: 300;
+      line-height: 1.8;
+    }
+
+    .page-tabs {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .page-tab,
+    .variant-btn {
+      border: 1px solid rgba(216,184,194,0.34);
+      background: rgba(255,253,253,0.72);
+      color: #6e5f64;
+      border-radius: 999px;
+      padding: 10px 16px;
+      font-size: 13px;
+      font-weight: 300;
+      cursor: pointer;
+      box-shadow: 0 10px 24px rgba(216,184,194,0.08);
+    }
+
+    .page-tab.active,
+    .variant-btn.active {
+      border-color: transparent;
+      background: linear-gradient(135deg, var(--rose-2), var(--rose));
+      color: #fffafa;
+    }
+
+    .showcase {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(310px, 1fr));
+      gap: 26px;
+      align-items: start;
+    }
+
+    .phone {
+      min-height: 720px;
+      overflow: hidden;
+      border: 1px solid rgba(234,226,232,0.88);
+      border-radius: 34px;
+      background: var(--bg);
+      box-shadow: var(--shadow);
+    }
+
+    .screen {
+      position: relative;
+      min-height: 720px;
+      padding: 34px 30px 36px;
+      overflow: hidden;
+    }
+
+    .screen::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: var(--pattern-opacity, 0.07);
+      background:
+        repeating-linear-gradient(180deg, transparent 0 13px, #a98d96 14px 15px, transparent 16px 24px),
+        linear-gradient(90deg, transparent 0 72%, rgba(58,58,58,0.08) 72% 74%, transparent 74% 77%, rgba(58,58,58,0.08) 77% 79%, transparent 79%);
+      mask-image: linear-gradient(180deg, black, transparent 44%);
+    }
+
+    .screen > * { position: relative; z-index: 1; }
+
+    .nav-title {
+      margin: 0 0 28px;
+      color: var(--rose);
+      font-size: 34px;
+      font-weight: 200;
+      text-align: center;
+      letter-spacing: 2px;
+    }
+
+    .small-title {
+      margin: 0 0 18px;
+      font-size: 28px;
+      font-weight: 300;
+      color: var(--ink);
+    }
+
+    .hint {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 22px;
+      font-weight: 300;
+      line-height: 1.7;
+      transform: scale(0.92);
+      transform-origin: left top;
+    }
+
+    .card {
+      margin-bottom: 24px;
+      padding: 28px;
+      border-radius: 16px;
+      background: rgba(255,253,253,0.84);
+      box-shadow: 0 14px 38px rgba(216,184,194,0.12);
+      border: 1px solid rgba(234,226,232,0.46);
+    }
+
+    .field { margin-bottom: 24px; }
+    .label {
+      display: block;
+      margin-bottom: 10px;
+      color: rgba(58,58,58,0.68);
+      font-size: 24px;
+      font-weight: 300;
+    }
+
+    .input-line {
+      min-height: 58px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--line);
+      color: var(--ink);
+      font-size: 26px;
+      font-weight: 400;
+      line-height: 1.5;
+    }
+
+    .textarea {
+      min-height: 140px;
+      padding: 22px;
+      border-radius: 12px;
+      background: rgba(234,226,232,0.28);
+      color: var(--ink);
+      font-size: 24px;
+      font-weight: 400;
+      line-height: 1.7;
+    }
+
+    .primary {
+      width: 100%;
+      margin-top: 8px;
+      border: 0;
+      border-radius: 20px;
+      padding: 18px 22px;
+      background: linear-gradient(135deg, var(--rose-2), var(--rose));
+      color: #fffafa;
+      font-size: 26px;
+      font-weight: 300;
+      box-shadow: 0 16px 32px rgba(216,184,194,0.22);
+    }
+
+    .secondary {
+      border: 1px solid rgba(216,184,194,0.36);
+      border-radius: 12px;
+      padding: 11px 18px;
+      background: rgba(255,253,253,0.78);
+      color: #6c6064;
+      font-size: 23px;
+      font-weight: 300;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .stat {
+      padding: 22px 10px;
+      border-radius: 16px;
+      background: rgba(255,253,253,0.82);
+      text-align: center;
+      box-shadow: 0 12px 30px rgba(216,184,194,0.1);
+    }
+
+    .stat strong {
+      display: block;
+      color: var(--rose);
+      font-size: 38px;
+      font-weight: 200;
+      line-height: 1.2;
+    }
+
+    .stat span {
+      color: var(--muted);
+      font-size: 21px;
+      font-weight: 300;
+    }
+
+    .grid-actions {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 18px;
+    }
+
+    .action {
+      min-height: 128px;
+      padding: 24px;
+      border-radius: 16px;
+      background: rgba(255,253,253,0.84);
+      box-shadow: 0 14px 34px rgba(216,184,194,0.12);
+    }
+
+    .icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 42px;
+      height: 42px;
+      margin-bottom: 16px;
+      border-radius: 14px;
+      background: rgba(216,184,194,0.14);
+      color: var(--rose);
+      font-size: 22px;
+      font-weight: 300;
+    }
+
+    .action b,
+    .list-title {
+      display: block;
+      color: var(--ink);
+      font-size: 26px;
+      font-weight: 400;
+      line-height: 1.45;
+    }
+
+    .action span,
+    .meta {
+      display: block;
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 21px;
+      font-weight: 300;
+      line-height: 1.55;
+    }
+
+    .list-card {
+      margin-bottom: 18px;
+      padding: 24px;
+      border-radius: 16px;
+      background: rgba(255,253,253,0.86);
+      box-shadow: 0 12px 32px rgba(216,184,194,0.1);
+    }
+
+    .row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .tag {
+      border-radius: 999px;
+      padding: 7px 12px;
+      background: rgba(216,184,194,0.15);
+      color: #a57e8b;
+      font-size: 20px;
+      font-weight: 300;
+      white-space: nowrap;
+    }
+
+    .audio {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 18px;
+      padding: 18px;
+      border-radius: 16px;
+      background: rgba(234,226,232,0.3);
+    }
+
+    .bar {
+      flex: 1;
+      height: 5px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--rose) 62%, rgba(216,184,194,0.22) 62%);
+    }
+
+    .bottom-switch {
+      position: fixed;
+      left: 50%;
+      bottom: 22px;
+      z-index: 20;
+      display: flex;
+      gap: 10px;
+      padding: 10px;
+      border: 1px solid rgba(234,226,232,0.74);
+      border-radius: 999px;
+      background: rgba(252,249,249,0.86);
+      box-shadow: 0 18px 42px rgba(216,184,194,0.2);
+      transform: translateX(-50%);
+      backdrop-filter: blur(18px);
+    }
+
+    body.variant-b {
+      --bg: #fdf9f4;
+      --panel: #fffaf6;
+      --rose: #cfa9b0;
+      --rose-2: #ead0cb;
+      --line: #eaded8;
+      --soft: rgba(207, 169, 176, 0.12);
+      --shadow: 0 18px 52px rgba(207,169,176,0.16);
+    }
+
+    body.variant-b .screen {
+      background:
+        linear-gradient(180deg, rgba(255,250,246,0.96), rgba(252,249,249,0.98)),
+        radial-gradient(circle at 70% 20%, rgba(207,169,176,0.18), transparent 34%);
+    }
+
+    body.variant-b .card,
+    body.variant-b .list-card,
+    body.variant-b .action,
+    body.variant-b .stat {
+      border: 0;
+      background: rgba(255,250,246,0.9);
+    }
+
+    @media (max-width: 1100px) {
+      .hero,
+      .showcase { grid-template-columns: 1fr; }
+      .page-tabs { justify-content: flex-start; }
+      .phone { max-width: 430px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="prototype-note">
+    <span>PROTOTYPE - 临时视觉预览，只用于确认风格，不是生产代码</span>
+    <span id="stateText">当前：方案 A / 学生提交首页</span>
+  </div>
+
+  <main class="layout">
+    <section class="hero">
+      <div>
+        <h1 class="title">钢琴琴行微信小程序 UI 视觉预览</h1>
+        <p class="subtitle">保留现有业务逻辑的前提下，先确认整体气质：奶白背景、豆沙粉、细体文字、浅阴影、五线谱和琴键暗纹。下面可以切换页面和两套视觉方向。</p>
+      </div>
+      <div class="page-tabs" id="pageTabs"></div>
+    </section>
+
+    <section class="showcase" id="showcase"></section>
+  </main>
+
+  <nav class="bottom-switch">
+    <button class="variant-btn active" data-variant="a">方案 A：奶白留白</button>
+    <button class="variant-btn" data-variant="b">方案 B：暖粉文艺</button>
+  </nav>
+
+  <script>
+    const pages = [
+      { key: "student", name: "学生提交首页" },
+      { key: "login", name: "老师登录" },
+      { key: "home", name: "老师工作台" },
+      { key: "form", name: "布置作业" },
+      { key: "homeworks", name: "作业列表" },
+      { key: "submissions", name: "点评列表" },
+      { key: "review", name: "老师点评" }
+    ];
+
+    const pageHtml = {
+      student: `
+        <div class="phone"><div class="screen">
+          <h2 class="nav-title">钢琴作业</h2>
+          <div class="card">
+            <h3 class="small-title">找到你的练习任务</h3>
+            <div class="field"><span class="label">学生姓名</span><div class="input-line">林小夏</div></div>
+            <div class="field"><span class="label">提交码</span><div class="input-line">Piano-0720</div></div>
+            <button class="primary">查看今日作业</button>
+            <p class="hint">提交码由老师提供，支持多次提交和订正。</p>
+          </div>
+          <div class="list-card"><span class="list-title">本周练习提醒</span><span class="meta">慢练右手旋律，注意第 12 小节节奏。</span></div>
+        </div></div>
+        <div class="phone"><div class="screen">
+          <h2 class="nav-title">作业详情</h2>
+          <div class="list-card"><div class="row"><span class="list-title">拜厄 42 条</span><span class="tag">7月20日前</span></div><span class="meta">练习 3 遍，录制完整视频提交。</span></div>
+          <div class="card"><h3 class="small-title">老师要求</h3><p class="hint">手腕放松，左手伴奏保持均匀，不要抢拍。</p></div>
+          <button class="primary">提交作业</button>
+        </div></div>
+        <div class="phone"><div class="screen">
+          <h2 class="nav-title">提交作业</h2>
+          <div class="card">
+            <div class="field"><span class="label">练习说明</span><div class="textarea">今天练了 4 遍，第三遍以后节奏更稳定。</div></div>
+            <div class="audio"><span class="icon">♪</span><div class="bar"></div><span class="meta">00:42</span></div>
+            <button class="primary">提交给老师</button>
+            <p class="hint">老师点评后可继续订正提交。</p>
+          </div>
+        </div></div>`,
+      login: `
+        <div class="phone"><div class="screen">
+          <h2 class="nav-title">老师入口</h2>
+          <div class="card">
+            <h3 class="small-title">输入管理口令</h3>
+            <div class="field"><span class="label">老师口令</span><div class="input-line">••••••</div></div>
+            <button class="primary">进入工作台</button>
+            <p class="hint">默认口令可在后端配置，建议正式使用前修改。</p>
+          </div>
+        </div></div>
+        <div class="phone"><div class="screen">
+          <h2 class="nav-title">登录后提示</h2>
+          <div class="list-card"><span class="list-title">今日待处理</span><span class="meta">3 份新提交，1 份订正待复看。</span></div>
+          <button class="primary">开始处理</button>
+        </div></div>
+        <div class="phone"><div class="screen">
+          <h2 class="nav-title">安全提醒</h2>
+          <div class="card"><h3 class="small-title">手机端完成全部管理</h3><p class="hint">老师无需电脑，也可以布置作业、查看学生、点评订正。</p></div>
+        </div></div>`,
+      home: `
+        <div class="phone"><div class="screen">
+          <h2 class="nav-title">老师工作台</h2>
+          <div class="stats"><div class="stat"><strong>12</strong><span>学生</span></div><div class="stat"><strong>4</strong><span>待评</span></div><div class="stat"><strong>8</strong><span>作业</span></div></div>
+          <div class="grid-actions">
+            <div class="action"><span class="icon">♬</span><b>布置作业</b><span>设置内容与截止时间</span></div>
+            <div class="action"><span class="icon">✓</span><b>提交点评</b><span>审核、评价、要求订正</span></div>
+            <div class="action"><span class="icon">◎</span><b>学生档案</b><span>查看联系方式和进度</span></div>
+            <div class="action"><span class="icon">⌕</span><b>作业管理</b><span>编辑、关闭、查看统计</span></div>
+          </div>
+        </div></div>
+        <div class="phone"><div class="screen"><h2 class="nav-title">今日概览</h2><div class="list-card"><span class="list-title">李若安 已提交订正</span><span class="meta">7月7日 09:42，等待老师复评</span></div><div class="list-card"><span class="list-title">周末汇报课准备</span><span class="meta">3 名学生未提交视频</span></div></div></div>
+        <div class="phone"><div class="screen"><h2 class="nav-title">快捷处理</h2><div class="card"><h3 class="small-title">最近作业</h3><p class="hint">车尔尼 599 第 12 条，截止 7月12日 22:00。</p><button class="primary">查看提交</button></div></div></div>`,
+      form: `
+        <div class="phone"><div class="screen"><h2 class="nav-title">布置作业</h2><div class="card"><div class="field"><span class="label">作业标题</span><div class="input-line">车尔尼 599 第 12 条</div></div><div class="field"><span class="label">截止时间</span><div class="input-line">2026-07-12 22:00</div></div><div class="field"><span class="label">练习要求</span><div class="textarea">分手慢练，再合手录制一遍完整视频。</div></div><button class="primary">发布作业</button></div></div></div>
+        <div class="phone"><div class="screen"><h2 class="nav-title">选择学生</h2><div class="list-card"><div class="row"><span class="list-title">全部学生</span><span class="tag">12人</span></div></div><div class="list-card"><div class="row"><span class="list-title">初级班</span><span class="tag">6人</span></div></div><button class="secondary">单独选择</button></div></div>
+        <div class="phone"><div class="screen"><h2 class="nav-title">发布确认</h2><div class="card"><h3 class="small-title">无需开始时间</h3><p class="hint">发布后学生随时可提交，只限制截止时间。</p><button class="primary">确认发布</button></div></div></div>`,
+      homeworks: `
+        <div class="phone"><div class="screen"><h2 class="nav-title">作业管理</h2><div class="list-card"><div class="row"><span class="list-title">拜厄 42 条</span><span class="tag">进行中</span></div><span class="meta">截止 7月12日 22:00，已提交 8/12</span></div><div class="list-card"><div class="row"><span class="list-title">音阶 C 大调</span><span class="tag">已结束</span></div><span class="meta">可查看历史提交与点评</span></div></div></div>
+        <div class="phone"><div class="screen"><h2 class="nav-title">作业统计</h2><div class="stats"><div class="stat"><strong>8</strong><span>已交</span></div><div class="stat"><strong>3</strong><span>未交</span></div><div class="stat"><strong>1</strong><span>订正</span></div></div></div></div>
+        <div class="phone"><div class="screen"><h2 class="nav-title">操作</h2><div class="card"><button class="primary">查看提交</button><button class="secondary" style="width:100%;margin-top:14px;">编辑作业</button></div></div></div>`,
+      submissions: `
+        <div class="phone"><div class="screen"><h2 class="nav-title">提交点评</h2><div class="list-card"><div class="row"><span class="list-title">林小夏</span><span class="tag">新提交</span></div><span class="meta">7月7日 10:12，车尔尼 599 第 12 条</span></div><div class="list-card"><div class="row"><span class="list-title">李若安</span><span class="tag">订正</span></div><span class="meta">7月7日 09:42，等待复评</span></div></div></div>
+        <div class="phone"><div class="screen"><h2 class="nav-title">学生信息</h2><div class="card"><span class="list-title">家长联系方式</span><span class="meta">138****2468</span><span class="meta">最近三次均按时提交</span></div></div></div>
+        <div class="phone"><div class="screen"><h2 class="nav-title">筛选</h2><div class="grid-actions"><div class="action"><span class="icon">新</span><b>新提交</b><span>4份</span></div><div class="action"><span class="icon">改</span><b>订正</b><span>1份</span></div></div></div></div>`,
+      review: `
+        <div class="phone"><div class="screen"><h2 class="nav-title">作业点评</h2><div class="card"><span class="list-title">林小夏 - 拜厄 42 条</span><div class="audio"><span class="icon">▶</span><div class="bar"></div><span class="meta">01:18</span></div></div><div class="field"><span class="label">老师点评</span><div class="textarea">节奏比上次稳定，左手低音要再轻一点。请订正第 8-12 小节。</div></div><button class="primary">保存点评</button></div></div>
+        <div class="phone"><div class="screen"><h2 class="nav-title">点评结果</h2><div class="grid-actions"><div class="action"><span class="icon">✓</span><b>通过</b><span>本次完成较好</span></div><div class="action"><span class="icon">↺</span><b>要求订正</b><span>学生可再次提交</span></div></div></div></div>
+        <div class="phone"><div class="screen"><h2 class="nav-title">历史记录</h2><div class="list-card"><span class="list-title">第一次提交</span><span class="meta">老师要求订正：节奏偏快</span></div><div class="list-card"><span class="list-title">第二次提交</span><span class="meta">当前正在点评</span></div></div></div>`
+    };
+
+    let currentPage = new URLSearchParams(location.search).get("page") || "student";
+    let currentVariant = new URLSearchParams(location.search).get("v") || "a";
+
+    function renderTabs() {
+      document.getElementById("pageTabs").innerHTML = pages.map(page =>
+        `<button class="page-tab ${page.key === currentPage ? "active" : ""}" data-page="${page.key}">${page.name}</button>`
+      ).join("");
+    }
+
+    function updateUrl() {
+      const params = new URLSearchParams({ v: currentVariant, page: currentPage });
+      history.replaceState(null, "", `${location.pathname}?${params.toString()}`);
+    }
+
+    function render() {
+      document.body.classList.toggle("variant-b", currentVariant === "b");
+      document.getElementById("showcase").innerHTML = pageHtml[currentPage] || pageHtml.student;
+      document.querySelectorAll(".variant-btn").forEach(btn => btn.classList.toggle("active", btn.dataset.variant === currentVariant));
+      renderTabs();
+      const pageName = pages.find(page => page.key === currentPage)?.name || "";
+      document.getElementById("stateText").textContent = `当前：方案 ${currentVariant.toUpperCase()} / ${pageName}`;
+      updateUrl();
+    }
+
+    document.addEventListener("click", event => {
+      const pageBtn = event.target.closest("[data-page]");
+      if (pageBtn) {
+        currentPage = pageBtn.dataset.page;
+        render();
+      }
+      const variantBtn = event.target.closest("[data-variant]");
+      if (variantBtn) {
+        currentVariant = variantBtn.dataset.variant;
+        render();
+      }
+    });
+
+    render();
+  </script>
+</body>
+</html>

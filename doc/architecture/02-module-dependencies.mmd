@@ -1,0 +1,39 @@
+flowchart LR
+    WEB[Web Adapter<br/>Controller / Application Interface]
+
+    subgraph MAIN[交易主链]
+        direction LR
+        MEMBER[会员与身份] --> CATALOG[商品中心] --> CART[购物车] --> ORDER[订单与结算<br/>交易编排核心]
+        ORDER --> STOCK[库存]
+        ORDER --> PAY[支付]
+        ORDER --> FULFILL[履约物流]
+    end
+
+    subgraph GOVERNANCE[治理模块]
+        direction TB
+        RISK[交易风控]
+        AFTER[售后退款]
+        JOB[补偿与对账]
+        AUDIT[审计与版本]
+    end
+
+    subgraph ADAPTERS[外部 Adapter]
+        direction TB
+        SMS[短信 Adapter]
+        MPAY[支付 Adapter]
+        LOGI[物流 Adapter]
+    end
+
+    WEB --> MEMBER
+    WEB --> ORDER
+    ORDER --> RISK
+    AFTER --> ORDER
+    AFTER --> PAY
+    JOB --> ORDER
+    JOB --> STOCK
+    JOB --> PAY
+    JOB --> AUDIT
+
+    MEMBER -.-> SMS
+    PAY -.-> MPAY
+    FULFILL -.-> LOGI

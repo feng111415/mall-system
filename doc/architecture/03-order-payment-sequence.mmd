@@ -1,0 +1,46 @@
+sequenceDiagram
+    autonumber
+    participant U as 用户端
+    participant W as Web Adapter
+    participant O as 订单模块
+    participant R as 风控模块
+    participant C as 商品模块
+    participant S as 库存模块
+    participant DB as MySQL
+    participant P as 支付模块
+    participant G as 支付渠道
+
+    U->>W: 提交订单 + Idempotency-Key
+    W->>O: createOrder(command)
+    O->>R: evaluate(command, member, device)
+    R-->>O: PASS / REVIEW / REJECT
+    alt REJECT
+        O-->>W: 风控拒绝，不锁库存
+        W-->>U: 返回限制提示
+    else PASS 或 REVIEW
+        O->>C: snapshotSku(skuIds)
+        C-->>O: 商品/规格/价格快照
+        O->>S: reserve(orderId, sku, quantity)
+        S->>DB: 条件更新可用库存并写流水
+        DB-->>S: 成功或库存不足
+        alt 库存不足
+            S-->>O: ReserveFailed
+            O-->>W: 事务回滚，提示库存变化
+            W-->>U: 请刷新数量
+        else 库存成功
+            O->>DB: 写订单、订单项、幂等结果
+            O-->>W: 返回订单号
+            W-->>U: 进入支付页
+            U->>W: 发起支付
+            W->>O: createPayment(orderId)
+            O->>P: createPayment(order)
+            P->>G: 创建支付单
+            G-->>W: 支付结果回调
+            W->>O: handlePaymentCallback(payload)
+            O->>P: verifyAndRecord(payload)
+            P-->>O: PaymentSucceeded
+            O->>DB: 幂等更新订单和支付结果
+            O->>S: confirm(orderId)
+            O-->>W: 支付处理成功
+        end
+    end

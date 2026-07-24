@@ -1,0 +1,156 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.ticket.mapper.TicketOrderItemMapper">
+
+    <resultMap type="TicketOrderItem" id="TicketOrderItemResult">
+        <id     property="itemId" column="item_id" />
+        <result property="orderId" column="order_id" />
+        <result property="orderNo" column="order_no" />
+        <result property="userId" column="user_id" />
+        <result property="activityId" column="activity_id" />
+        <result property="sessionId" column="session_id" />
+        <result property="typeId" column="type_id" />
+        <result property="typeName" column="type_name" />
+        <result property="ticketNo" column="ticket_no" />
+        <result property="passengerId" column="passenger_id" />
+        <result property="passengerName" column="passenger_name" />
+        <result property="idType" column="id_type" />
+        <result property="idNo" column="id_no" />
+        <result property="seatArea" column="seat_area" />
+        <result property="seatRow" column="seat_row" />
+        <result property="seatNo" column="seat_no" />
+        <result property="price" column="price" />
+        <result property="quantity" column="quantity" />
+        <result property="itemAmount" column="item_amount" />
+        <result property="itemStatus" column="item_status" />
+        <result property="checkinTime" column="checkin_time" />
+        <result property="createTime" column="create_time" />
+        <result property="updateTime" column="update_time" />
+        <result property="remark" column="remark" />
+    </resultMap>
+
+    <sql id="selectTicketOrderItemVo">
+        select item_id, order_id, order_no, user_id, activity_id, session_id, type_id, type_name, ticket_no, passenger_id, passenger_name, id_type, id_no, seat_area, seat_row, seat_no, price, quantity, item_amount, item_status, checkin_time, create_time, update_time, remark
+        from ticket_order_item
+    </sql>
+
+    <select id="selectTicketOrderItemList" parameterType="TicketOrderItem" resultMap="TicketOrderItemResult">
+        <include refid="selectTicketOrderItemVo"/>
+        <where>
+            <if test="orderNo != null and orderNo != ''">
+                and order_no like concat('%', #{orderNo}, '%')
+            </if>
+            <if test="userId != null">
+                and user_id = #{userId}
+            </if>
+            <if test="typeId != null">
+                and type_id = #{typeId}
+            </if>
+            <if test="itemStatus != null and itemStatus != ''">
+                and item_status like concat('%', #{itemStatus}, '%')
+            </if>
+        </where>
+        order by item_id desc
+    </select>
+
+    <select id="selectTicketOrderItemById" parameterType="Long" resultMap="TicketOrderItemResult">
+        <include refid="selectTicketOrderItemVo"/>
+        where item_id = #{itemId}
+    </select>
+
+    <insert id="insertTicketOrderItem" parameterType="TicketOrderItem" useGeneratedKeys="true" keyProperty="itemId">
+        insert into ticket_order_item
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="orderId != null">order_id,</if>
+            <if test="orderNo != null">order_no,</if>
+            <if test="userId != null">user_id,</if>
+            <if test="activityId != null">activity_id,</if>
+            <if test="sessionId != null">session_id,</if>
+            <if test="typeId != null">type_id,</if>
+            <if test="typeName != null">type_name,</if>
+            <if test="ticketNo != null">ticket_no,</if>
+            <if test="passengerId != null">passenger_id,</if>
+            <if test="passengerName != null">passenger_name,</if>
+            <if test="idType != null">id_type,</if>
+            <if test="idNo != null">id_no,</if>
+            <if test="seatArea != null">seat_area,</if>
+            <if test="seatRow != null">seat_row,</if>
+            <if test="seatNo != null">seat_no,</if>
+            <if test="price != null">price,</if>
+            <if test="quantity != null">quantity,</if>
+            <if test="itemAmount != null">item_amount,</if>
+            <if test="itemStatus != null">item_status,</if>
+            <if test="checkinTime != null">checkin_time,</if>
+            create_time,
+            <if test="updateTime != null">update_time,</if>
+            <if test="remark != null">remark,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="orderId != null">#{orderId},</if>
+            <if test="orderNo != null">#{orderNo},</if>
+            <if test="userId != null">#{userId},</if>
+            <if test="activityId != null">#{activityId},</if>
+            <if test="sessionId != null">#{sessionId},</if>
+            <if test="typeId != null">#{typeId},</if>
+            <if test="typeName != null">#{typeName},</if>
+            <if test="ticketNo != null">#{ticketNo},</if>
+            <if test="passengerId != null">#{passengerId},</if>
+            <if test="passengerName != null">#{passengerName},</if>
+            <if test="idType != null">#{idType},</if>
+            <if test="idNo != null">#{idNo},</if>
+            <if test="seatArea != null">#{seatArea},</if>
+            <if test="seatRow != null">#{seatRow},</if>
+            <if test="seatNo != null">#{seatNo},</if>
+            <if test="price != null">#{price},</if>
+            <if test="quantity != null">#{quantity},</if>
+            <if test="itemAmount != null">#{itemAmount},</if>
+            <if test="itemStatus != null">#{itemStatus},</if>
+            <if test="checkinTime != null">#{checkinTime},</if>
+            sysdate(),
+            <if test="updateTime != null">#{updateTime},</if>
+            <if test="remark != null">#{remark},</if>
+        </trim>
+    </insert>
+
+    <update id="updateTicketOrderItem" parameterType="TicketOrderItem">
+        update ticket_order_item
+        <set>
+            <if test="orderId != null">order_id = #{orderId},</if>
+            <if test="orderNo != null">order_no = #{orderNo},</if>
+            <if test="userId != null">user_id = #{userId},</if>
+            <if test="activityId != null">activity_id = #{activityId},</if>
+            <if test="sessionId != null">session_id = #{sessionId},</if>
+            <if test="typeId != null">type_id = #{typeId},</if>
+            <if test="typeName != null">type_name = #{typeName},</if>
+            <if test="ticketNo != null">ticket_no = #{ticketNo},</if>
+            <if test="passengerId != null">passenger_id = #{passengerId},</if>
+            <if test="passengerName != null">passenger_name = #{passengerName},</if>
+            <if test="idType != null">id_type = #{idType},</if>
+            <if test="idNo != null">id_no = #{idNo},</if>
+            <if test="seatArea != null">seat_area = #{seatArea},</if>
+            <if test="seatRow != null">seat_row = #{seatRow},</if>
+            <if test="seatNo != null">seat_no = #{seatNo},</if>
+            <if test="price != null">price = #{price},</if>
+            <if test="quantity != null">quantity = #{quantity},</if>
+            <if test="itemAmount != null">item_amount = #{itemAmount},</if>
+            <if test="itemStatus != null">item_status = #{itemStatus},</if>
+            <if test="checkinTime != null">checkin_time = #{checkinTime},</if>
+            update_time = sysdate(),
+            <if test="remark != null">remark = #{remark},</if>
+        </set>
+        where item_id = #{itemId}
+    </update>
+
+    <delete id="deleteTicketOrderItemById" parameterType="Long">
+        delete from ticket_order_item where item_id = #{itemId}
+    </delete>
+
+    <delete id="deleteTicketOrderItemByIds" parameterType="Long">
+        delete from ticket_order_item where item_id in
+        <foreach collection="array" item="itemId" open="(" separator="," close=")">
+            #{itemId}
+        </foreach>
+    </delete>
+</mapper>

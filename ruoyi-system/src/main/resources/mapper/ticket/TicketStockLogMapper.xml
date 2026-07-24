@@ -1,0 +1,116 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.ticket.mapper.TicketStockLogMapper">
+
+    <resultMap type="TicketStockLog" id="TicketStockLogResult">
+        <id     property="logId" column="log_id" />
+        <result property="stockId" column="stock_id" />
+        <result property="activityId" column="activity_id" />
+        <result property="sessionId" column="session_id" />
+        <result property="typeId" column="type_id" />
+        <result property="orderNo" column="order_no" />
+        <result property="changeType" column="change_type" />
+        <result property="changeQty" column="change_qty" />
+        <result property="beforeQty" column="before_qty" />
+        <result property="afterQty" column="after_qty" />
+        <result property="operatorId" column="operator_id" />
+        <result property="operatorName" column="operator_name" />
+        <result property="createTime" column="create_time" />
+        <result property="remark" column="remark" />
+    </resultMap>
+
+    <sql id="selectTicketStockLogVo">
+        select log_id, stock_id, activity_id, session_id, type_id, order_no, change_type, change_qty, before_qty, after_qty, operator_id, operator_name, create_time, remark
+        from ticket_stock_log
+    </sql>
+
+    <select id="selectTicketStockLogList" parameterType="TicketStockLog" resultMap="TicketStockLogResult">
+        <include refid="selectTicketStockLogVo"/>
+        <where>
+            <if test="stockId != null">
+                and stock_id = #{stockId}
+            </if>
+            <if test="orderNo != null and orderNo != ''">
+                and order_no like concat('%', #{orderNo}, '%')
+            </if>
+            <if test="changeType != null and changeType != ''">
+                and change_type like concat('%', #{changeType}, '%')
+            </if>
+            <if test="typeId != null">
+                and type_id = #{typeId}
+            </if>
+        </where>
+        order by log_id desc
+    </select>
+
+    <select id="selectTicketStockLogById" parameterType="Long" resultMap="TicketStockLogResult">
+        <include refid="selectTicketStockLogVo"/>
+        where log_id = #{logId}
+    </select>
+
+    <insert id="insertTicketStockLog" parameterType="TicketStockLog" useGeneratedKeys="true" keyProperty="logId">
+        insert into ticket_stock_log
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="stockId != null">stock_id,</if>
+            <if test="activityId != null">activity_id,</if>
+            <if test="sessionId != null">session_id,</if>
+            <if test="typeId != null">type_id,</if>
+            <if test="orderNo != null">order_no,</if>
+            <if test="changeType != null">change_type,</if>
+            <if test="changeQty != null">change_qty,</if>
+            <if test="beforeQty != null">before_qty,</if>
+            <if test="afterQty != null">after_qty,</if>
+            <if test="operatorId != null">operator_id,</if>
+            <if test="operatorName != null">operator_name,</if>
+            create_time,
+            <if test="remark != null">remark,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="stockId != null">#{stockId},</if>
+            <if test="activityId != null">#{activityId},</if>
+            <if test="sessionId != null">#{sessionId},</if>
+            <if test="typeId != null">#{typeId},</if>
+            <if test="orderNo != null">#{orderNo},</if>
+            <if test="changeType != null">#{changeType},</if>
+            <if test="changeQty != null">#{changeQty},</if>
+            <if test="beforeQty != null">#{beforeQty},</if>
+            <if test="afterQty != null">#{afterQty},</if>
+            <if test="operatorId != null">#{operatorId},</if>
+            <if test="operatorName != null">#{operatorName},</if>
+            sysdate(),
+            <if test="remark != null">#{remark},</if>
+        </trim>
+    </insert>
+
+    <update id="updateTicketStockLog" parameterType="TicketStockLog">
+        update ticket_stock_log
+        <set>
+            <if test="stockId != null">stock_id = #{stockId},</if>
+            <if test="activityId != null">activity_id = #{activityId},</if>
+            <if test="sessionId != null">session_id = #{sessionId},</if>
+            <if test="typeId != null">type_id = #{typeId},</if>
+            <if test="orderNo != null">order_no = #{orderNo},</if>
+            <if test="changeType != null">change_type = #{changeType},</if>
+            <if test="changeQty != null">change_qty = #{changeQty},</if>
+            <if test="beforeQty != null">before_qty = #{beforeQty},</if>
+            <if test="afterQty != null">after_qty = #{afterQty},</if>
+            <if test="operatorId != null">operator_id = #{operatorId},</if>
+            <if test="operatorName != null">operator_name = #{operatorName},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </set>
+        where log_id = #{logId}
+    </update>
+
+    <delete id="deleteTicketStockLogById" parameterType="Long">
+        delete from ticket_stock_log where log_id = #{logId}
+    </delete>
+
+    <delete id="deleteTicketStockLogByIds" parameterType="Long">
+        delete from ticket_stock_log where log_id in
+        <foreach collection="array" item="logId" open="(" separator="," close=")">
+            #{logId}
+        </foreach>
+    </delete>
+</mapper>

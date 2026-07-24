@@ -1,0 +1,18 @@
+import { createRouter, createWebHistory } from 'vue-router'
+import HomeView from '../views/HomeView.vue'
+import CatalogView from '../views/CatalogView.vue'
+import CartView from '../views/CartView.vue'
+import AccountView from '../views/AccountView.vue'
+
+const router = createRouter({
+  history: createWebHistory(),
+  routes: [
+    { path: '/', name: 'home', component: HomeView },
+    { path: '/catalog', name: 'catalog', component: CatalogView },
+    { path: '/cart', name: 'cart', component: CartView },
+    { path: '/account', name: 'account', component: AccountView }
+  ],
+  scrollBehavior: () => ({ top: 0 })
+})
+
+export default router

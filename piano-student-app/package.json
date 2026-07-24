@@ -1,0 +1,38 @@
+{
+  "name": "piano-student-app",
+  "version": "1.0.0",
+  "description": "钢琴课后作业学生提交端",
+  "scripts": {
+    "postinstall": "node scripts/patch-dcloud-template-loader.js",
+    "generate:image": "node scripts/generate-openai-image.js",
+    "dev:mp-weixin": "cross-env NODE_ENV=development UNI_CLI_CONTEXT=. UNI_PLATFORM=mp-weixin VUE_APP_API_BASE_URL=http://localhost:8080 vue-cli-service uni-serve",
+    "build:mp-weixin": "cross-env NODE_ENV=production UNI_CLI_CONTEXT=. UNI_PLATFORM=mp-weixin VUE_APP_API_BASE_URL=http://localhost:8080 vue-cli-service uni-build && node scripts/patch-mp-weixin-vendor.js"
+  },
+  "dependencies": {
+    "@dcloudio/uni-app": "2.0.2-4020920240930001",
+    "@dcloudio/uni-h5": "2.0.2-4020920240930001",
+    "@dcloudio/uni-mp-weixin": "2.0.2-4020920240930001",
+    "@dcloudio/uni-ui": "1.5.7",
+    "regenerator-runtime": "0.14.1",
+    "vue": "2.6.14"
+  },
+  "devDependencies": {
+    "@dcloudio/uni-cli-i18n": "2.0.2-4020920240930001",
+    "@dcloudio/uni-cli-shared": "2.0.2-4020920240930001",
+    "@dcloudio/uni-i18n": "2.0.2-4020920240930001",
+    "@dcloudio/uni-template-compiler": "2.0.2-4020920240930001",
+    "@dcloudio/vue-cli-plugin-uni": "2.0.2-4020920240930001",
+    "@dcloudio/vue-cli-plugin-uni-optimize": "2.0.2-4020920240930001",
+    "@dcloudio/webpack-uni-mp-loader": "2.0.2-4020920240930001",
+    "@dcloudio/webpack-uni-pages-loader": "2.0.2-4020920240930001",
+    "@vue/cli-plugin-babel": "5.0.8",
+    "@vue/cli-service": "5.0.8",
+    "cross-env": "7.0.3",
+    "openai": "6.45.0",
+    "vue-template-compiler": "2.6.14",
+    "webpack": "5.88.2"
+  },
+  "overrides": {
+    "postcss-urlrewrite": "0.3.0"
+  }
+}

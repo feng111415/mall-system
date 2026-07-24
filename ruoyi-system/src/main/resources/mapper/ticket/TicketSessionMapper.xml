@@ -1,0 +1,136 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.ticket.mapper.TicketSessionMapper">
+
+    <resultMap type="TicketSession" id="TicketSessionResult">
+        <id     property="sessionId" column="session_id" />
+        <result property="activityId" column="activity_id" />
+        <result property="sessionName" column="session_name" />
+        <result property="sessionCode" column="session_code" />
+        <result property="sessionStart" column="session_start" />
+        <result property="sessionEnd" column="session_end" />
+        <result property="saleStartTime" column="sale_start_time" />
+        <result property="saleEndTime" column="sale_end_time" />
+        <result property="venueName" column="venue_name" />
+        <result property="totalStock" column="total_stock" />
+        <result property="soldStock" column="sold_stock" />
+        <result property="lockedStock" column="locked_stock" />
+        <result property="status" column="status" />
+        <result property="sort" column="sort" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy" column="update_by" />
+        <result property="updateTime" column="update_time" />
+        <result property="remark" column="remark" />
+    </resultMap>
+
+    <sql id="selectTicketSessionVo">
+        select session_id, activity_id, session_name, session_code, session_start, session_end, sale_start_time, sale_end_time, venue_name, total_stock, sold_stock, locked_stock, status, sort, create_by, create_time, update_by, update_time, remark
+        from ticket_session
+    </sql>
+
+    <select id="selectTicketSessionList" parameterType="TicketSession" resultMap="TicketSessionResult">
+        <include refid="selectTicketSessionVo"/>
+        <where>
+            <if test="activityId != null">
+                and activity_id = #{activityId}
+            </if>
+            <if test="sessionName != null and sessionName != ''">
+                and session_name like concat('%', #{sessionName}, '%')
+            </if>
+            <if test="sessionCode != null and sessionCode != ''">
+                and session_code like concat('%', #{sessionCode}, '%')
+            </if>
+            <if test="status != null and status != ''">
+                and status like concat('%', #{status}, '%')
+            </if>
+        </where>
+        order by session_id desc
+    </select>
+
+    <select id="selectTicketSessionById" parameterType="Long" resultMap="TicketSessionResult">
+        <include refid="selectTicketSessionVo"/>
+        where session_id = #{sessionId}
+    </select>
+
+    <insert id="insertTicketSession" parameterType="TicketSession" useGeneratedKeys="true" keyProperty="sessionId">
+        insert into ticket_session
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="activityId != null">activity_id,</if>
+            <if test="sessionName != null">session_name,</if>
+            <if test="sessionCode != null">session_code,</if>
+            <if test="sessionStart != null">session_start,</if>
+            <if test="sessionEnd != null">session_end,</if>
+            <if test="saleStartTime != null">sale_start_time,</if>
+            <if test="saleEndTime != null">sale_end_time,</if>
+            <if test="venueName != null">venue_name,</if>
+            <if test="totalStock != null">total_stock,</if>
+            <if test="soldStock != null">sold_stock,</if>
+            <if test="lockedStock != null">locked_stock,</if>
+            <if test="status != null">status,</if>
+            <if test="sort != null">sort,</if>
+            <if test="createBy != null">create_by,</if>
+            create_time,
+            <if test="updateBy != null">update_by,</if>
+            <if test="updateTime != null">update_time,</if>
+            <if test="remark != null">remark,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="activityId != null">#{activityId},</if>
+            <if test="sessionName != null">#{sessionName},</if>
+            <if test="sessionCode != null">#{sessionCode},</if>
+            <if test="sessionStart != null">#{sessionStart},</if>
+            <if test="sessionEnd != null">#{sessionEnd},</if>
+            <if test="saleStartTime != null">#{saleStartTime},</if>
+            <if test="saleEndTime != null">#{saleEndTime},</if>
+            <if test="venueName != null">#{venueName},</if>
+            <if test="totalStock != null">#{totalStock},</if>
+            <if test="soldStock != null">#{soldStock},</if>
+            <if test="lockedStock != null">#{lockedStock},</if>
+            <if test="status != null">#{status},</if>
+            <if test="sort != null">#{sort},</if>
+            <if test="createBy != null">#{createBy},</if>
+            sysdate(),
+            <if test="updateBy != null">#{updateBy},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+            <if test="remark != null">#{remark},</if>
+        </trim>
+    </insert>
+
+    <update id="updateTicketSession" parameterType="TicketSession">
+        update ticket_session
+        <set>
+            <if test="activityId != null">activity_id = #{activityId},</if>
+            <if test="sessionName != null">session_name = #{sessionName},</if>
+            <if test="sessionCode != null">session_code = #{sessionCode},</if>
+            <if test="sessionStart != null">session_start = #{sessionStart},</if>
+            <if test="sessionEnd != null">session_end = #{sessionEnd},</if>
+            <if test="saleStartTime != null">sale_start_time = #{saleStartTime},</if>
+            <if test="saleEndTime != null">sale_end_time = #{saleEndTime},</if>
+            <if test="venueName != null">venue_name = #{venueName},</if>
+            <if test="totalStock != null">total_stock = #{totalStock},</if>
+            <if test="soldStock != null">sold_stock = #{soldStock},</if>
+            <if test="lockedStock != null">locked_stock = #{lockedStock},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="sort != null">sort = #{sort},</if>
+            <if test="createBy != null">create_by = #{createBy},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            update_time = sysdate(),
+            <if test="remark != null">remark = #{remark},</if>
+        </set>
+        where session_id = #{sessionId}
+    </update>
+
+    <delete id="deleteTicketSessionById" parameterType="Long">
+        delete from ticket_session where session_id = #{sessionId}
+    </delete>
+
+    <delete id="deleteTicketSessionByIds" parameterType="Long">
+        delete from ticket_session where session_id in
+        <foreach collection="array" item="sessionId" open="(" separator="," close=")">
+            #{sessionId}
+        </foreach>
+    </delete>
+</mapper>

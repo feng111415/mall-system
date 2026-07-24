@@ -1,0 +1,35 @@
+flowchart TB
+    DNS[域名 DNS]
+    NGINX[Nginx / WAF<br/>TLS、路由、限流、静态资源]
+    subgraph FRONT[前端静态资源]
+        direction LR
+        WEB[mall-storefront<br/>Vue 3 + Vant 4]
+        ADMIN[mall-admin<br/>Vue 3 + Element Plus]
+    end
+
+    subgraph APP[应用私网]
+        direction LR
+        API[ruoyi-admin<br/>商城 API 单体]
+        JOB[Quartz 调度线程]
+        MON[日志 / 指标 / 告警]
+    end
+
+    subgraph DATA[数据与文件私网]
+        direction LR
+        MYSQL[(MySQL)]
+        REDIS[(Redis)]
+        STORAGE[(对象或文件存储)]
+    end
+
+    subgraph EXTERNAL[外部供应商]
+        direction LR
+        SMS[短信供应商]
+        PAY[支付渠道]
+        LOGI[物流渠道]
+    end
+
+    DNS --> NGINX
+    NGINX --> FRONT
+    NGINX --> APP
+    APP --> DATA
+    APP --> EXTERNAL

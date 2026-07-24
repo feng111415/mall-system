@@ -1,0 +1,124 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.ticket.mapper.TicketPayLogMapper">
+
+    <resultMap type="TicketPayLog" id="TicketPayLogResult">
+        <id     property="payId" column="pay_id" />
+        <result property="orderId" column="order_id" />
+        <result property="orderNo" column="order_no" />
+        <result property="payNo" column="pay_no" />
+        <result property="userId" column="user_id" />
+        <result property="openid" column="openid" />
+        <result property="payChannel" column="pay_channel" />
+        <result property="payAmount" column="pay_amount" />
+        <result property="payStatus" column="pay_status" />
+        <result property="transactionId" column="transaction_id" />
+        <result property="prepayId" column="prepay_id" />
+        <result property="notifyTime" column="notify_time" />
+        <result property="notifyBody" column="notify_body" />
+        <result property="createTime" column="create_time" />
+        <result property="updateTime" column="update_time" />
+        <result property="remark" column="remark" />
+    </resultMap>
+
+    <sql id="selectTicketPayLogVo">
+        select pay_id, order_id, order_no, pay_no, user_id, openid, pay_channel, pay_amount, pay_status, transaction_id, prepay_id, notify_time, notify_body, create_time, update_time, remark
+        from ticket_pay_log
+    </sql>
+
+    <select id="selectTicketPayLogList" parameterType="TicketPayLog" resultMap="TicketPayLogResult">
+        <include refid="selectTicketPayLogVo"/>
+        <where>
+            <if test="orderNo != null and orderNo != ''">
+                and order_no like concat('%', #{orderNo}, '%')
+            </if>
+            <if test="payNo != null and payNo != ''">
+                and pay_no like concat('%', #{payNo}, '%')
+            </if>
+            <if test="payStatus != null and payStatus != ''">
+                and pay_status like concat('%', #{payStatus}, '%')
+            </if>
+            <if test="transactionId != null and transactionId != ''">
+                and transaction_id like concat('%', #{transactionId}, '%')
+            </if>
+        </where>
+        order by pay_id desc
+    </select>
+
+    <select id="selectTicketPayLogById" parameterType="Long" resultMap="TicketPayLogResult">
+        <include refid="selectTicketPayLogVo"/>
+        where pay_id = #{payId}
+    </select>
+
+    <insert id="insertTicketPayLog" parameterType="TicketPayLog" useGeneratedKeys="true" keyProperty="payId">
+        insert into ticket_pay_log
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="orderId != null">order_id,</if>
+            <if test="orderNo != null">order_no,</if>
+            <if test="payNo != null">pay_no,</if>
+            <if test="userId != null">user_id,</if>
+            <if test="openid != null">openid,</if>
+            <if test="payChannel != null">pay_channel,</if>
+            <if test="payAmount != null">pay_amount,</if>
+            <if test="payStatus != null">pay_status,</if>
+            <if test="transactionId != null">transaction_id,</if>
+            <if test="prepayId != null">prepay_id,</if>
+            <if test="notifyTime != null">notify_time,</if>
+            <if test="notifyBody != null">notify_body,</if>
+            create_time,
+            <if test="updateTime != null">update_time,</if>
+            <if test="remark != null">remark,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="orderId != null">#{orderId},</if>
+            <if test="orderNo != null">#{orderNo},</if>
+            <if test="payNo != null">#{payNo},</if>
+            <if test="userId != null">#{userId},</if>
+            <if test="openid != null">#{openid},</if>
+            <if test="payChannel != null">#{payChannel},</if>
+            <if test="payAmount != null">#{payAmount},</if>
+            <if test="payStatus != null">#{payStatus},</if>
+            <if test="transactionId != null">#{transactionId},</if>
+            <if test="prepayId != null">#{prepayId},</if>
+            <if test="notifyTime != null">#{notifyTime},</if>
+            <if test="notifyBody != null">#{notifyBody},</if>
+            sysdate(),
+            <if test="updateTime != null">#{updateTime},</if>
+            <if test="remark != null">#{remark},</if>
+        </trim>
+    </insert>
+
+    <update id="updateTicketPayLog" parameterType="TicketPayLog">
+        update ticket_pay_log
+        <set>
+            <if test="orderId != null">order_id = #{orderId},</if>
+            <if test="orderNo != null">order_no = #{orderNo},</if>
+            <if test="payNo != null">pay_no = #{payNo},</if>
+            <if test="userId != null">user_id = #{userId},</if>
+            <if test="openid != null">openid = #{openid},</if>
+            <if test="payChannel != null">pay_channel = #{payChannel},</if>
+            <if test="payAmount != null">pay_amount = #{payAmount},</if>
+            <if test="payStatus != null">pay_status = #{payStatus},</if>
+            <if test="transactionId != null">transaction_id = #{transactionId},</if>
+            <if test="prepayId != null">prepay_id = #{prepayId},</if>
+            <if test="notifyTime != null">notify_time = #{notifyTime},</if>
+            <if test="notifyBody != null">notify_body = #{notifyBody},</if>
+            update_time = sysdate(),
+            <if test="remark != null">remark = #{remark},</if>
+        </set>
+        where pay_id = #{payId}
+    </update>
+
+    <delete id="deleteTicketPayLogById" parameterType="Long">
+        delete from ticket_pay_log where pay_id = #{payId}
+    </delete>
+
+    <delete id="deleteTicketPayLogByIds" parameterType="Long">
+        delete from ticket_pay_log where pay_id in
+        <foreach collection="array" item="payId" open="(" separator="," close=")">
+            #{payId}
+        </foreach>
+    </delete>
+</mapper>

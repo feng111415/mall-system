@@ -1,0 +1,70 @@
+{
+  "pages": [
+    {
+      "path": "pages/index/index",
+      "style": {
+        "navigationBarTitleText": "钢琴作业"
+      }
+    },
+    {
+      "path": "pages/homework/detail",
+      "style": {
+        "navigationBarTitleText": "作业详情"
+      }
+    },
+    {
+      "path": "pages/submission/form",
+      "style": {
+        "navigationBarTitleText": "提交作业"
+      }
+    },
+    {
+      "path": "pages/teacher/login",
+      "style": {
+        "navigationBarTitleText": "老师入口"
+      }
+    },
+    {
+      "path": "pages/teacher/home",
+      "style": {
+        "navigationBarTitleText": "老师工作台"
+      }
+    },
+    {
+      "path": "pages/teacher/students",
+      "style": {
+        "navigationBarTitleText": "学生档案"
+      }
+    },
+    {
+      "path": "pages/teacher/homeworks",
+      "style": {
+        "navigationBarTitleText": "作业管理"
+      }
+    },
+    {
+      "path": "pages/teacher/homework-form",
+      "style": {
+        "navigationBarTitleText": "布置作业"
+      }
+    },
+    {
+      "path": "pages/teacher/submissions",
+      "style": {
+        "navigationBarTitleText": "提交点评"
+      }
+    },
+    {
+      "path": "pages/teacher/review",
+      "style": {
+        "navigationBarTitleText": "作业点评"
+      }
+    }
+  ],
+  "globalStyle": {
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "钢琴作业",
+    "navigationBarBackgroundColor": "#FCF9F9",
+    "backgroundColor": "#FCF9F9"
+  }
+}

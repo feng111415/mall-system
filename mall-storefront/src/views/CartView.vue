@@ -1,0 +1,7 @@
+<script setup>
+import { computed } from 'vue'
+import { useCartStore } from '../stores/cart'
+const cart = useCartStore(); const canCheckout = computed(() => cart.availableItems.length > 0)
+</script>
+
+<template><section class="cart-wrap"><div class="page-intro"><span class="section-kicker">购物袋</span><h1>准备好带回家</h1><p>{{ cart.totalCount }} 件商品</p></div><div v-if="cart.items.length" class="cart-list"><div v-for="item in cart.items" :key="item.id" class="cart-item" :class="{ soldout: !item.stock }"><img :src="item.image" :alt="item.name" /><div class="cart-item-main"><span class="product-category">{{ item.stock ? '现货' : '暂时售罄' }}</span><h3>{{ item.name }}</h3><div class="quantity"><button :disabled="!item.stock" @click="cart.setQuantity(item, item.quantity - 1)">−</button><span>{{ item.quantity }}</span><button :disabled="!item.stock" @click="cart.setQuantity(item, item.quantity + 1)">＋</button></div></div><strong class="cart-price">¥{{ (item.price * item.quantity).toLocaleString() }}</strong><button class="remove-button" aria-label="移除商品" @click="cart.remove(item.id)">×</button></div><div class="cart-summary"><span>合计 <strong>¥{{ cart.totalPrice.toLocaleString() }}</strong></span><button class="primary-button" :disabled="!canCheckout">去结算 <span>→</span></button></div></div><div v-else class="empty-state"><h2>购物袋还是空的</h2><p>去挑几件会让生活更顺手的东西吧。</p><router-link class="primary-button" to="/catalog">去逛逛</router-link></div></section></template>

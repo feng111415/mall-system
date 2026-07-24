@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.piano.mapper.PianoHomeworkSubmissionMapper">
+
+    <resultMap type="PianoHomeworkSubmission" id="PianoHomeworkSubmissionResult">
+        <id     property="submissionId"       column="submission_id"       />
+        <result property="homeworkId"         column="homework_id"         />
+        <result property="studentId"          column="student_id"          />
+        <result property="studentName"        column="student_name"        />
+        <result property="homeworkTitle"      column="homework_title"      />
+        <result property="submitDeadline"     column="submit_deadline"     />
+        <result property="attemptNo"          column="attempt_no"          />
+        <result property="submitType"         column="submit_type"         />
+        <result property="submitContent"      column="submit_content"      />
+        <result property="attachmentUrl"      column="attachment_url"      />
+        <result property="submitTime"         column="submit_time"         />
+        <result property="overdueFlag"        column="overdue_flag"        />
+        <result property="reviewStatus"       column="review_status"       />
+        <result property="score"              column="score"               />
+        <result property="reviewContent"      column="review_content"      />
+        <result property="correctionRequired" column="correction_required" />
+        <result property="reviewTime"         column="review_time"         />
+        <result property="latestFlag"         column="latest_flag"         />
+        <result property="createBy"           column="create_by"           />
+        <result property="createTime"         column="create_time"         />
+        <result property="updateBy"           column="update_by"           />
+        <result property="updateTime"         column="update_time"         />
+        <result property="remark"             column="remark"              />
+    </resultMap>
+
+    <sql id="selectPianoHomeworkSubmissionVo">
+        select sub.submission_id, sub.homework_id, sub.student_id, stu.student_name,
+               h.homework_title, h.submit_deadline, sub.attempt_no, sub.submit_type,
+               sub.submit_content, sub.attachment_url, sub.submit_time, sub.overdue_flag,
+               sub.review_status, sub.score, sub.review_content, sub.correction_required,
+               sub.review_time, sub.latest_flag, sub.create_by, sub.create_time,
+               sub.update_by, sub.update_time, sub.remark
+        from piano_homework_submission sub
+        left join piano_homework h on h.homework_id = sub.homework_id and h.del_flag = '0'
+        left join piano_student stu on stu.student_id = sub.student_id and stu.del_flag = '0'
+    </sql>
+
+    <select id="selectPianoHomeworkSubmissionList" parameterType="PianoHomeworkSubmission" resultMap="PianoHomeworkSubmissionResult">
+        <include refid="selectPianoHomeworkSubmissionVo"/>
+        <where>
+            <if test="homeworkId != null">
+                and sub.homework_id = #{homeworkId}
+            </if>
+            <if test="studentId != null">
+                and sub.student_id = #{studentId}
+            </if>
+            <if test="studentName != null and studentName != ''">
+                and stu.student_name like concat('%', #{studentName}, '%')
+            </if>
+            <if test="homeworkTitle != null and homeworkTitle != ''">
+                and h.homework_title like concat('%', #{homeworkTitle}, '%')
+            </if>
+            <if test="reviewStatus != null and reviewStatus != ''">
+                and sub.review_status = #{reviewStatus}
+            </if>
+            <if test="overdueFlag != null and overdueFlag != ''">
+                and sub.overdue_flag = #{overdueFlag}
+            </if>
+            <if test="latestFlag != null and latestFlag != ''">
+                and sub.latest_flag = #{latestFlag}
+            </if>
+        </where>
+        order by sub.submission_id desc
+    </select>
+
+    <select id="selectPianoHomeworkSubmissionHistory" parameterType="Long" resultMap="PianoHomeworkSubmissionResult">
+        <include refid="selectPianoHomeworkSubmissionVo"/>
+        where sub.homework_id = #{homeworkId}
+        order by sub.attempt_no desc
+    </select>
+
+    <select id="selectDashboardRecentSubmissions" resultMap="PianoHomeworkSubmissionResult">
+        select sub.submission_id, sub.homework_id, sub.student_id, stu.student_name,
+               h.homework_title, h.submit_deadline, sub.attempt_no, sub.submit_type,
+               sub.submit_content, sub.attachment_url, sub.submit_time, sub.overdue_flag,
+               sub.review_status, sub.score, sub.review_content, sub.correction_required,
+               sub.review_time, sub.latest_flag, sub.create_by, sub.create_time,
+               sub.update_by, sub.update_time, sub.remark
+        from piano_homework_submission sub
+        inner join piano_homework h on h.homework_id = sub.homework_id and h.del_flag = '0'
+        inner join piano_student stu on stu.student_id = sub.student_id and stu.del_flag = '0'
+        where sub.latest_flag = '1'
+        order by sub.submit_time desc, sub.submission_id desc
+        limit 6
+    </select>
+
+    <select id="selectPianoHomeworkSubmissionById" parameterType="Long" resultMap="PianoHomeworkSubmissionResult">
+        <include refid="selectPianoHomeworkSubmissionVo"/>
+        where sub.submission_id = #{submissionId}
+    </select>
+
+    <select id="selectMaxAttemptNoByHomeworkId" parameterType="Long" resultType="Integer">
+        select max(attempt_no) from piano_homework_submission where homework_id = #{homeworkId}
+    </select>
+
+    <update id="clearLatestFlagByHomeworkId" parameterType="Long">
+        update piano_homework_submission
+        set latest_flag = '0', update_time = sysdate()
+        where homework_id = #{homeworkId}
+    </update>
+
+    <insert id="insertPianoHomeworkSubmission" parameterType="PianoHomeworkSubmission" useGeneratedKeys="true" keyProperty="submissionId">
+        insert into piano_homework_submission
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="homeworkId != null">homework_id,</if>
+            <if test="studentId != null">student_id,</if>
+            <if test="attemptNo != null">attempt_no,</if>
+            <if test="submitType != null and submitType != ''">submit_type,</if>
+            <if test="submitContent != null">submit_content,</if>
+            <if test="attachmentUrl != null">attachment_url,</if>
+            <if test="submitTime != null">submit_time,</if>
+            <if test="overdueFlag != null and overdueFlag != ''">overdue_flag,</if>
+            <if test="reviewStatus != null and reviewStatus != ''">review_status,</if>
+            <if test="correctionRequired != null and correctionRequired != ''">correction_required,</if>
+            <if test="latestFlag != null and latestFlag != ''">latest_flag,</if>
+            <if test="remark != null">remark,</if>
+            <if test="createBy != null and createBy != ''">create_by,</if>
+            create_time
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="homeworkId != null">#{homeworkId},</if>
+            <if test="studentId != null">#{studentId},</if>
+            <if test="attemptNo != null">#{attemptNo},</if>
+            <if test="submitType != null and submitType != ''">#{submitType},</if>
+            <if test="submitContent != null">#{submitContent},</if>
+            <if test="attachmentUrl != null">#{attachmentUrl},</if>
+            <if test="submitTime != null">#{submitTime},</if>
+            <if test="overdueFlag != null and overdueFlag != ''">#{overdueFlag},</if>
+            <if test="reviewStatus != null and reviewStatus != ''">#{reviewStatus},</if>
+            <if test="correctionRequired != null and correctionRequired != ''">#{correctionRequired},</if>
+            <if test="latestFlag != null and latestFlag != ''">#{latestFlag},</if>
+            <if test="remark != null">#{remark},</if>
+            <if test="createBy != null and createBy != ''">#{createBy},</if>
+            sysdate()
+        </trim>
+    </insert>
+
+    <update id="updatePianoHomeworkSubmission" parameterType="PianoHomeworkSubmission">
+        update piano_homework_submission
+        <set>
+            <if test="submitContent != null">submit_content = #{submitContent},</if>
+            <if test="attachmentUrl != null">attachment_url = #{attachmentUrl},</if>
+            <if test="submitTime != null">submit_time = #{submitTime},</if>
+            <if test="score != null">score = #{score},</if>
+            <if test="reviewContent != null">review_content = #{reviewContent},</if>
+            <if test="correctionRequired != null and correctionRequired != ''">correction_required = #{correctionRequired},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+            update_time = sysdate()
+        </set>
+        where submission_id = #{submissionId}
+    </update>
+
+    <update id="updatePianoHomeworkSubmissionReview" parameterType="PianoHomeworkSubmission">
+        update piano_homework_submission
+        set score = #{score},
+            review_content = #{reviewContent},
+            correction_required = #{correctionRequired},
+            review_status = #{reviewStatus},
+            review_time = #{reviewTime},
+            update_time = sysdate()
+        where submission_id = #{submissionId}
+    </update>
+
+    <delete id="deletePianoHomeworkSubmissionById" parameterType="Long">
+        delete from piano_homework_submission where submission_id = #{submissionId}
+    </delete>
+
+    <delete id="deletePianoHomeworkSubmissionByIds" parameterType="Long">
+        delete from piano_homework_submission where submission_id in
+        <foreach collection="array" item="submissionId" open="(" separator="," close=")">
+            #{submissionId}
+        </foreach>
+    </delete>
+</mapper>
