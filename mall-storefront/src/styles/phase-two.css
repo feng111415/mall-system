@@ -47,5 +47,6 @@
 .checkout-total { border-top: 1px solid var(--line); margin-top: 12px; padding-top: 18px !important; color: var(--ink) !important; align-items: center; }
 .checkout-total strong { color: var(--red); font-size: 24px; font-weight: 500; }
 .checkout-summary .primary-button { width: 100%; justify-content: center; margin-top: 18px; }
+.order-created { color: #287a4d; font-size: 12px; line-height: 1.6; }
 .checkout-empty { color: var(--muted); font-size: 12px; padding: 18px 0; }
 @media (max-width: 800px) { .checkout-layout { grid-template-columns: 1fr; gap: 0; } .checkout-summary { position: static; } }

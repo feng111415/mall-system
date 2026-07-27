@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.mall.order.mapper.MallOrderMapper">
+    <resultMap id="Order" type="com.ruoyi.mall.order.domain.MallOrder">
+        <id property="orderId" column="order_id"/>
+        <result property="orderNo" column="order_no"/>
+        <result property="memberId" column="member_id"/>
+        <result property="status" column="status"/>
+        <result property="paymentStatus" column="payment_status"/>
+        <result property="idempotencyKey" column="idempotency_key"/>
+        <result property="productAmount" column="product_amount"/>
+        <result property="shippingFee" column="shipping_fee"/>
+        <result property="discountAmount" column="discount_amount"/>
+        <result property="payableAmount" column="payable_amount"/>
+        <result property="receiverName" column="receiver_name"/>
+        <result property="receiverPhone" column="receiver_phone"/>
+        <result property="receiverProvince" column="receiver_province"/>
+        <result property="receiverCity" column="receiver_city"/>
+        <result property="receiverDistrict" column="receiver_district"/>
+        <result property="receiverDetailAddress" column="receiver_detail_address"/>
+        <result property="remark" column="remark"/>
+        <result property="version" column="version"/>
+        <result property="createTime" column="create_time"/>
+    </resultMap>
+
+    <select id="selectByIdempotencyKey" resultMap="Order">
+        select order_id,order_no,member_id,status,payment_status,idempotency_key,
+            product_amount,shipping_fee,discount_amount,payable_amount,
+            receiver_name,receiver_phone,receiver_province,receiver_city,
+            receiver_district,receiver_detail_address,remark,version,create_time
+        from mall_order
+        where member_id=#{memberId} and idempotency_key=#{idempotencyKey}
+    </select>
+
+    <insert id="insertOrderIgnore" useGeneratedKeys="true" keyProperty="orderId">
+        insert ignore into mall_order(
+            order_no,member_id,status,payment_status,idempotency_key,
+            product_amount,shipping_fee,discount_amount,payable_amount,
+            receiver_name,receiver_phone,receiver_province,receiver_city,
+            receiver_district,receiver_detail_address,remark,version,create_time,update_time
+        ) values (
+            #{orderNo},#{memberId},#{status},#{paymentStatus},#{idempotencyKey},
+            #{productAmount},#{shippingFee},#{discountAmount},#{payableAmount},
+            #{receiverName},#{receiverPhone},#{receiverProvince},#{receiverCity},
+            #{receiverDistrict},#{receiverDetailAddress},#{remark},#{version},now(),now()
+        )
+    </insert>
+
+    <insert id="insertItem" useGeneratedKeys="true" keyProperty="orderItemId">
+        insert into mall_order_item(
+            order_id,sku_id,sku_code,product_name,sku_name,product_image,
+            unit_price,quantity,line_amount,create_time
+        ) values (
+            #{orderId},#{skuId},#{skuCode},#{productName},#{skuName},#{productImage},
+            #{unitPrice},#{quantity},#{lineAmount},now()
+        )
+    </insert>
+
+    <insert id="insertOperationLog" useGeneratedKeys="true" keyProperty="operationId">
+        insert into mall_order_operation_log(
+            order_id,order_no,from_status,to_status,operator_type,operator_id,
+            remark,request_id,create_time
+        ) values (
+            #{orderId},#{orderNo},#{fromStatus},#{toStatus},#{operatorType},#{operatorId},
+            #{remark},#{requestId},now()
+        )
+    </insert>
+</mapper>
