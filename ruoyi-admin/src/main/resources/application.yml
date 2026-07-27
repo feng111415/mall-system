@@ -150,3 +150,8 @@ xss:
   excludes: /system/notice
   # 匹配链接
   urlPatterns: /system/*,/monitor/*,/tool/*
+
+# 商城开发环境可通过 MALL_SMS_MOCK_CODE 注入固定验证码；未配置时随机生成且不返回前端。
+mall:
+  sms:
+    mock-code: ${MALL_SMS_MOCK_CODE:}

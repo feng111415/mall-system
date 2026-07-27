@@ -5,5 +5,6 @@ import router from './router'
 import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
 import './styles/variables.css'
+import './styles/phase-two.css'
 
 createApp(App).use(createPinia()).use(router).use(ElementPlus).mount('#app')
