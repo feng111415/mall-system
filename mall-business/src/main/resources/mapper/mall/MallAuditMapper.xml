@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.mall.audit.mapper.MallAuditMapper">
+    <resultMap id="Operation" type="com.ruoyi.mall.order.domain.MallOrderOperationLog">
+        <id property="operationId" column="operation_id"/><result property="orderId" column="order_id"/>
+        <result property="orderNo" column="order_no"/><result property="fromStatus" column="from_status"/>
+        <result property="toStatus" column="to_status"/><result property="operatorType" column="operator_type"/>
+        <result property="operatorId" column="operator_id"/><result property="remark" column="remark"/>
+        <result property="requestId" column="request_id"/><result property="createTime" column="create_time"/>
+    </resultMap>
+    <select id="selectOrderOperationLogs" resultMap="Operation">
+        select operation_id,order_id,order_no,from_status,to_status,operator_type,operator_id,remark,request_id,create_time
+        from mall_order_operation_log
+        <where>
+            <if test="orderNo != null and orderNo != ''">and order_no like concat('%',#{orderNo},'%')</if>
+            <if test="operatorType != null and operatorType != ''">and operator_type=#{operatorType}</if>
+            <if test="operatorId != null and operatorId != ''">and operator_id=#{operatorId}</if>
+        </where>
+        order by operation_id desc
+    </select>
+</mapper>
