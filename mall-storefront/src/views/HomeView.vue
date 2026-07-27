@@ -10,9 +10,10 @@ const products = [
   { id: 5, name: '静音头戴耳机', category: '数码音频', price: 699, oldPrice: 799, image: '/assets/headphones.jpg', stock: 0, tag: '暂时售罄' },
   { id: 6, name: '手冲咖啡套装', category: '居家生活', price: 188, oldPrice: 239, image: '/assets/coffee.jpg', stock: 20, tag: '新上架' }
 ]
-function addProduct(product) {
-  if (cart.add(product)) notice.value = `${product.name} 已加入购物袋`
-  else notice.value = '该商品暂时售罄'
+async function addProduct(product) {
+  if (!product.skuId) { notice.value = '请进入商品详情选择规格后加购'; window.setTimeout(() => { notice.value = '' }, 2200); return }
+  try { await cart.add(product); notice.value = `${product.name} 已加入购物车` }
+  catch (error) { notice.value = error.response?.data?.msg || '加入购物车失败，请先登录' }
   window.setTimeout(() => { notice.value = '' }, 2200)
 }
 </script>

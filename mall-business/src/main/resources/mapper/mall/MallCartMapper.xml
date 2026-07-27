@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.mall.cart.mapper.MallCartMapper">
+    <resultMap id="CartItem" type="com.ruoyi.mall.cart.domain.MallCartItem">
+        <id property="cartItemId" column="cart_item_id"/><result property="memberId" column="member_id"/>
+        <result property="skuId" column="sku_id"/><result property="quantity" column="quantity"/>
+        <result property="selectedFlag" column="selected_flag"/><result property="skuCode" column="sku_code"/>
+        <result property="skuName" column="sku_name"/><result property="productName" column="product_name"/>
+        <result property="productImage" column="product_image"/><result property="price" column="price"/>
+        <result property="availableStock" column="available_stock"/><result property="skuStatus" column="sku_status"/>
+        <result property="skuDelFlag" column="sku_del_flag"/><result property="spuPublishStatus" column="spu_publish_status"/>
+        <result property="spuDelFlag" column="spu_del_flag"/>
+    </resultMap>
+    <sql id="itemColumns">c.cart_item_id,c.member_id,c.sku_id,c.quantity,c.selected_flag,
+        s.sku_code,s.sku_name,p.product_name,coalesce(s.image_url,p.main_image) product_image,s.price,
+        coalesce(st.available_quantity,s.available_stock) available_stock,s.status sku_status,s.del_flag sku_del_flag,
+        p.publish_status spu_publish_status,p.del_flag spu_del_flag</sql>
+    <select id="selectItems" resultMap="CartItem">select <include refid="itemColumns"/> from mall_cart_item c
+        left join mall_sku s on s.sku_id=c.sku_id left join mall_spu p on p.spu_id=s.spu_id
+        left join mall_stock st on st.sku_id=s.sku_id where c.member_id=#{memberId} order by c.cart_item_id desc</select>
+    <select id="selectItemForUpdate" resultMap="CartItem">select <include refid="itemColumns"/> from mall_cart_item c
+        left join mall_sku s on s.sku_id=c.sku_id left join mall_spu p on p.spu_id=s.spu_id
+        left join mall_stock st on st.sku_id=s.sku_id where c.member_id=#{memberId} and c.sku_id=#{skuId} for update</select>
+    <select id="selectSkuSnapshot" resultMap="CartItem">select null cart_item_id,null member_id, s.sku_id,1 quantity,'0' selected_flag,
+        s.sku_code,s.sku_name,p.product_name,coalesce(s.image_url,p.main_image) product_image,s.price,
+        coalesce(st.available_quantity,s.available_stock) available_stock,s.status sku_status,s.del_flag sku_del_flag,
+        p.publish_status spu_publish_status,p.del_flag spu_del_flag from mall_sku s
+        left join mall_spu p on p.spu_id=s.spu_id left join mall_stock st on st.sku_id=s.sku_id where s.sku_id=#{skuId}</select>
+    <insert id="insertItemIgnore" useGeneratedKeys="true" keyProperty="cartItemId">insert ignore into mall_cart_item(member_id,sku_id,quantity,selected_flag,create_time,update_time)
+        values(#{memberId},#{skuId},#{quantity},#{selectedFlag},now(),now())</insert>
+    <update id="updateQuantity">update mall_cart_item set quantity=#{quantity},update_time=now() where member_id=#{memberId} and sku_id=#{skuId}</update>
+    <update id="updateSelected">update mall_cart_item set selected_flag=#{selectedFlag},update_time=now() where member_id=#{memberId} and sku_id=#{skuId}</update>
+    <delete id="deleteItem">delete from mall_cart_item where member_id=#{memberId} and sku_id=#{skuId}</delete>
+</mapper>

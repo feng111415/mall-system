@@ -1,22 +1,34 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
+import { addCartItem, getCart, removeCartItem, updateCartQuantity, updateCartSelected } from '../api/cart'
 
 export const useCartStore = defineStore('storefront-cart', () => {
-  const items = ref([
-    { id: 1, name: '北欧原木餐椅', price: 399, quantity: 1, image: '/assets/chair.jpg', stock: 8 },
-    { id: 2, name: '轻量城市跑鞋', price: 299, quantity: 1, image: '/assets/sneaker.jpg', stock: 0 }
-  ])
-  const availableItems = computed(() => items.value.filter(item => item.stock > 0))
-  const totalCount = computed(() => items.value.reduce((sum, item) => sum + item.quantity, 0))
-  const totalPrice = computed(() => availableItems.value.reduce((sum, item) => sum + item.price * item.quantity, 0))
-  function add(item) {
-    if (item.stock < 1) return false
-    const found = items.value.find(existing => existing.id === item.id)
-    if (found) found.quantity = Math.min(found.quantity + 1, found.stock)
-    else items.value.push({ ...item, quantity: 1 })
+  const items = ref([])
+  const loading = ref(false)
+  const totalCount = ref(0)
+  const totalPrice = ref(0)
+  const canCheckout = ref(false)
+  const availableItems = computed(() => items.value.filter(item => item.valid && !item.stockShortage))
+
+  function apply(data) {
+    items.value = data?.items || []
+    totalCount.value = data?.totalCount || 0
+    totalPrice.value = Number(data?.totalPrice || 0)
+    canCheckout.value = Boolean(data?.canCheckout)
+  }
+  async function load() {
+    if (!sessionStorage.getItem('mall-user-token')) { apply(null); return }
+    loading.value = true
+    try { apply((await getCart()).data.data) } finally { loading.value = false }
+  }
+  async function add(item, quantity = 1) {
+    if (!item?.skuId) return false
+    await addCartItem(item.skuId, quantity)
+    await load()
     return true
   }
-  function remove(id) { items.value = items.value.filter(item => item.id !== id) }
-  function setQuantity(item, quantity) { item.quantity = Math.max(1, Math.min(Number(quantity) || 1, item.stock || 1)) }
-  return { items, availableItems, totalCount, totalPrice, add, remove, setQuantity }
+  async function remove(item) { await removeCartItem(item.skuId); await load() }
+  async function setQuantity(item, quantity) { await updateCartQuantity(item.skuId, Number(quantity)); await load() }
+  async function setSelected(item, selected) { await updateCartSelected(item.skuId, selected); await load() }
+  return { items, loading, totalCount, totalPrice, canCheckout, availableItems, load, add, remove, setQuantity, setSelected }
 })

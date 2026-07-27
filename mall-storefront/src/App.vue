@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useCartStore } from './stores/cart'
 
@@ -16,6 +16,7 @@ const isActive = computed(() => path => route.path === path)
 function submitSearch() {
   router.push({ path: '/catalog', query: search.value ? { q: search.value } : {} })
 }
+onMounted(() => cart.load().catch(() => {}))
 </script>
 
 <template>
