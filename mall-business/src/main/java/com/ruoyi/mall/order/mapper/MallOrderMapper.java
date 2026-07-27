@@ -37,4 +37,6 @@ public interface MallOrderMapper
     int markPaymentPaying(@Param("orderId") Long orderId);
 
     int markPaymentSuccess(@Param("orderId") Long orderId);
+
+    int markShipped(@Param("orderId") Long orderId);
 }

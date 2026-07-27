@@ -68,5 +68,20 @@
 .order-detail-total { padding: 18px 0; border-bottom: 1px solid var(--line); }
 .order-detail-total strong { color: var(--red); font-size: 22px; }
 .order-detail-panel .primary-button { margin-top: 14px; }
+.order-logistics { border-top: 1px solid var(--line); margin-top: 28px; padding-top: 22px; }
+.order-logistics-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; }
+.order-logistics-head h3 { font-size: 18px; font-weight: 500; margin: 8px 0 0; }
+.logistics-status { color: #287a4d; font-size: 12px; }
+.logistics-summary { display: flex; justify-content: space-between; gap: 16px; padding: 18px 0 12px; font-size: 13px; }
+.logistics-summary span { color: var(--muted); }
+.logistics-summary strong { font-weight: 500; word-break: break-all; }
+.logistics-timeline { list-style: none; margin: 0; padding: 8px 0 0 14px; border-left: 1px solid var(--line); }
+.logistics-timeline li { position: relative; padding: 0 0 20px 18px; color: var(--muted); font-size: 12px; }
+.logistics-timeline li:last-child { padding-bottom: 2px; }
+.logistics-timeline li strong { color: var(--ink); font-size: 13px; font-weight: 500; }
+.logistics-timeline li p { margin: 6px 0; line-height: 1.6; }
+.logistics-timeline li small { color: #999; }
+.logistics-dot { position: absolute; width: 8px; height: 8px; border-radius: 50%; background: #bdb9b1; left: -19px; top: 4px; box-shadow: 0 0 0 3px var(--paper); }
+.logistics-timeline li.current .logistics-dot { background: var(--red); }
 .checkout-empty { color: var(--muted); font-size: 12px; padding: 18px 0; }
 @media (max-width: 800px) { .checkout-layout { grid-template-columns: 1fr; gap: 0; } .checkout-summary { position: static; } }

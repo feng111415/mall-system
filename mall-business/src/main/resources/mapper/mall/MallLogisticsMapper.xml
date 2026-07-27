@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.mall.logistics.mapper.MallLogisticsMapper">
+    <resultMap id="Shipment" type="com.ruoyi.mall.logistics.domain.MallLogisticsShipment">
+        <id property="shipmentId" column="shipment_id"/>
+        <result property="orderId" column="order_id"/><result property="orderNo" column="order_no"/>
+        <result property="memberId" column="member_id"/><result property="companyCode" column="company_code"/>
+        <result property="companyName" column="company_name"/><result property="trackingNo" column="tracking_no"/>
+        <result property="status" column="status"/><result property="shippedTime" column="shipped_time"/>
+        <result property="deliveredTime" column="delivered_time"/><result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+    <resultMap id="Node" type="com.ruoyi.mall.logistics.domain.MallLogisticsNode">
+        <id property="nodeId" column="node_id"/><result property="shipmentId" column="shipment_id"/>
+        <result property="trackingNo" column="tracking_no"/><result property="nodeStatus" column="node_status"/>
+        <result property="title" column="title"/><result property="description" column="description"/>
+        <result property="location" column="location"/><result property="eventTime" column="event_time"/>
+        <result property="createTime" column="create_time"/>
+    </resultMap>
+    <sql id="shipmentColumns">shipment_id,order_id,order_no,member_id,company_code,company_name,tracking_no,status,shipped_time,delivered_time,create_time,update_time</sql>
+    <select id="selectByOrderIdForUpdate" resultMap="Shipment">
+        select <include refid="shipmentColumns"/> from mall_logistics_shipment where order_id=#{orderId} for update
+    </select>
+    <select id="selectMemberShipment" resultMap="Shipment">
+        select <include refid="shipmentColumns"/> from mall_logistics_shipment
+        where order_id=#{orderId} and member_id=#{memberId}
+    </select>
+    <select id="selectById" resultMap="Shipment">
+        select <include refid="shipmentColumns"/> from mall_logistics_shipment where shipment_id=#{shipmentId}
+    </select>
+    <select id="selectNodes" resultMap="Node">
+        select node_id,shipment_id,tracking_no,node_status,title,description,location,event_time,create_time
+        from mall_logistics_node where shipment_id=#{shipmentId} order by event_time desc,node_id desc
+    </select>
+    <insert id="insertShipment" useGeneratedKeys="true" keyProperty="shipmentId">
+        insert into mall_logistics_shipment(order_id,order_no,member_id,company_code,company_name,tracking_no,status,shipped_time,create_time,update_time)
+        values(#{orderId},#{orderNo},#{memberId},#{companyCode},#{companyName},#{trackingNo},#{status},#{shippedTime},now(),now())
+    </insert>
+    <insert id="insertNode" useGeneratedKeys="true" keyProperty="nodeId">
+        insert into mall_logistics_node(shipment_id,tracking_no,node_status,title,description,location,event_time,create_time)
+        values(#{shipmentId},#{trackingNo},#{nodeStatus},#{title},#{description},#{location},#{eventTime},now())
+    </insert>
+</mapper>

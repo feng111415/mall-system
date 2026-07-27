@@ -16,6 +16,7 @@ import com.ruoyi.mall.order.domain.dto.MallCancelOrderRequest;
 import com.ruoyi.mall.order.service.MallOrderLifecycleService;
 import com.ruoyi.mall.order.service.MallOrderQueryService;
 import com.ruoyi.mall.order.service.MallOrderCreateService;
+import com.ruoyi.mall.logistics.service.MallLogisticsService;
 
 @Anonymous
 @RestController
@@ -26,15 +27,17 @@ public class MallOrderPortalController
     private final MallOrderLifecycleService lifecycleService;
     private final MallOrderQueryService queryService;
     private final MallMemberTokenService tokenService;
+    private final MallLogisticsService logisticsService;
 
     public MallOrderPortalController(MallOrderCreateService orderService,
             MallOrderLifecycleService lifecycleService, MallOrderQueryService queryService,
-            MallMemberTokenService tokenService)
+            MallMemberTokenService tokenService, MallLogisticsService logisticsService)
     {
         this.orderService = orderService;
         this.lifecycleService = lifecycleService;
         this.queryService = queryService;
         this.tokenService = tokenService;
+        this.logisticsService = logisticsService;
     }
 
     @GetMapping
@@ -68,5 +71,13 @@ public class MallOrderPortalController
         String reason = request == null ? null : request.getReason();
         return AjaxResult.success("订单已取消",
                 lifecycleService.cancelByMember(tokenService.requireMemberId(authorization), orderId, reason));
+    }
+
+    @GetMapping("/{orderId}/logistics")
+    public AjaxResult logistics(@RequestHeader(value = "Authorization", required = false) String authorization,
+            @PathVariable Long orderId)
+    {
+        return AjaxResult.success(logisticsService.detailForMember(
+                tokenService.requireMemberId(authorization), orderId));
     }
 }
