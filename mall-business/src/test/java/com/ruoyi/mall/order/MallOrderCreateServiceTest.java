@@ -3,6 +3,7 @@ package com.ruoyi.mall.order;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import com.ruoyi.common.exception.ServiceException;
+import com.ruoyi.mall.application.port.InventoryPort;
 import com.ruoyi.mall.cart.domain.MallCartItem;
 import com.ruoyi.mall.cart.domain.MallCartResult;
 import com.ruoyi.mall.cart.service.IMallCartService;
@@ -28,13 +30,14 @@ class MallOrderCreateServiceTest
     @Mock private MallOrderMapper mapper;
     @Mock private IMallCartService cartService;
     @Mock private MallMemberAuthService memberService;
+    @Mock private InventoryPort inventoryPort;
     private MallOrderCreateService service;
 
     @BeforeEach
     void setUp()
     {
         MockitoAnnotations.openMocks(this);
-        service = new MallOrderCreateService(mapper, cartService, memberService);
+        service = new MallOrderCreateService(mapper, cartService, memberService, inventoryPort);
     }
 
     @Test
@@ -54,6 +57,7 @@ class MallOrderCreateServiceTest
         assertEquals("PENDING_PAYMENT", order.getStatus());
         verify(mapper).insertItem(any());
         verify(mapper).insertOperationLog(any());
+        verify(inventoryPort).reserve(order.getOrderNo(), 10L, 2);
     }
 
     @Test
@@ -68,6 +72,7 @@ class MallOrderCreateServiceTest
         assertEquals("M-EXISTING", order.getOrderNo());
         verify(mapper, never()).insertOrderIgnore(any());
         verify(cartService, never()).selectCart(1L);
+        verify(inventoryPort, never()).reserve(any(), any(), any(Integer.class));
     }
 
     @Test
@@ -80,6 +85,21 @@ class MallOrderCreateServiceTest
 
         assertThrows(ServiceException.class, () -> service.create(1L, request));
         verify(mapper, never()).insertOrderIgnore(any());
+    }
+
+    @Test
+    void reservationFailureAbortsOrderCreation()
+    {
+        when(mapper.selectByIdempotencyKey(1L, "idem-001")).thenReturn(null);
+        when(cartService.selectCart(1L)).thenReturn(cart());
+        when(memberService.addresses(1L)).thenReturn(List.of(address(7L)));
+        when(mapper.insertOrderIgnore(any())).thenAnswer(invocation -> { ((MallOrder) invocation.getArgument(0)).setOrderId(100L); return 1; });
+        when(mapper.insertItem(any())).thenReturn(1);
+        doThrow(new ServiceException("库存不足")).when(inventoryPort).reserve(any(), any(), any(Integer.class));
+        MallCreateOrderRequest request = new MallCreateOrderRequest(); request.setIdempotencyKey("idem-001"); request.setAddressId(7L);
+
+        assertThrows(ServiceException.class, () -> service.create(1L, request));
+        verify(mapper, never()).insertOperationLog(any());
     }
 
     private MallCartResult cart()

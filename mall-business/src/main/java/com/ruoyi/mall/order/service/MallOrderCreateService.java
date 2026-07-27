@@ -3,11 +3,14 @@ package com.ruoyi.mall.order.service;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.ruoyi.common.exception.ServiceException;
+import com.ruoyi.mall.application.port.InventoryPort;
 import com.ruoyi.mall.cart.domain.MallCartItem;
 import com.ruoyi.mall.cart.domain.MallCartResult;
 import com.ruoyi.mall.cart.service.IMallCartService;
@@ -29,13 +32,23 @@ public class MallOrderCreateService
     private final MallOrderMapper mapper;
     private final IMallCartService cartService;
     private final MallMemberAuthService memberService;
+    private final InventoryPort inventoryPort;
 
+    /** Constructor kept for isolated unit tests that do not exercise stock reservation. */
     public MallOrderCreateService(MallOrderMapper mapper, IMallCartService cartService,
             MallMemberAuthService memberService)
+    {
+        this(mapper, cartService, memberService, null);
+    }
+
+    @Autowired
+    public MallOrderCreateService(MallOrderMapper mapper, IMallCartService cartService,
+            MallMemberAuthService memberService, InventoryPort inventoryPort)
     {
         this.mapper = mapper;
         this.cartService = cartService;
         this.memberService = memberService;
+        this.inventoryPort = inventoryPort;
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -75,6 +88,7 @@ public class MallOrderCreateService
             item.setProductName(cartItem.getProductName()); item.setSkuName(cartItem.getSkuName());
             item.setProductImage(cartItem.getProductImage()); item.setUnitPrice(cartItem.getPrice());
             item.setQuantity(cartItem.getQuantity()); item.setLineAmount(cartItem.getLineAmount());
+            if (inventoryPort != null) inventoryPort.reserve(order.getOrderNo(), cartItem.getSkuId(), cartItem.getQuantity());
             if (mapper.insertItem(item) != 1) throw new ServiceException("订单商品保存失败，请重试");
         }
         MallOrderOperationLog log = new MallOrderOperationLog();
@@ -107,10 +121,13 @@ public class MallOrderCreateService
         if (cart == null || !Boolean.TRUE.equals(cart.getCanCheckout()) || cart.getItems() == null)
             throw new ServiceException("购物车商品已变化，请返回购物车重新确认");
         List<MallCartItem> selected = cart.getItems().stream()
-                .filter(item -> "1".equals(item.getSelectedFlag())).toList();
+                .filter(item -> "1".equals(item.getSelectedFlag()))
+                .sorted(Comparator.comparing(MallCartItem::getSkuId, Comparator.nullsLast(Long::compareTo)))
+                .toList();
         if (selected.isEmpty()) throw new ServiceException("请至少选择一件商品");
         if (selected.stream().anyMatch(item -> !Boolean.TRUE.equals(item.getValid())
-                || Boolean.TRUE.equals(item.getStockShortage()) || item.getQuantity() == null || item.getQuantity() <= 0))
+                || Boolean.TRUE.equals(item.getStockShortage()) || item.getSkuId() == null || item.getSkuId() <= 0
+                || item.getQuantity() == null || item.getQuantity() <= 0))
             throw new ServiceException("商品状态或库存已变化，请返回购物车重新确认");
         return selected;
     }
