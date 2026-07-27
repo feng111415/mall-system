@@ -45,4 +45,6 @@ public interface MallOrderMapper
     int markRefundSuccess(@Param("orderId") Long orderId);
 
     int restoreAfterRefundReject(@Param("orderId") Long orderId, @Param("originalStatus") String originalStatus);
+
+    int markRiskPassed(@Param("orderId") Long orderId);
 }

@@ -23,6 +23,7 @@ import com.ruoyi.mall.order.domain.MallOrderStatus;
 import com.ruoyi.mall.order.domain.MallPaymentStatus;
 import com.ruoyi.mall.order.domain.dto.MallCreateOrderRequest;
 import com.ruoyi.mall.order.mapper.MallOrderMapper;
+import com.ruoyi.mall.risk.service.MallRiskService;
 
 @Service
 public class MallOrderCreateService
@@ -33,22 +34,31 @@ public class MallOrderCreateService
     private final IMallCartService cartService;
     private final MallMemberAuthService memberService;
     private final InventoryPort inventoryPort;
+    private final MallRiskService riskService;
 
     /** Constructor kept for isolated unit tests that do not exercise stock reservation. */
     public MallOrderCreateService(MallOrderMapper mapper, IMallCartService cartService,
             MallMemberAuthService memberService)
     {
-        this(mapper, cartService, memberService, null);
+        this(mapper, cartService, memberService, null, null);
     }
 
     @Autowired
     public MallOrderCreateService(MallOrderMapper mapper, IMallCartService cartService,
             MallMemberAuthService memberService, InventoryPort inventoryPort)
     {
+        this(mapper, cartService, memberService, inventoryPort, null);
+    }
+
+    @Autowired
+    public MallOrderCreateService(MallOrderMapper mapper, IMallCartService cartService,
+            MallMemberAuthService memberService, InventoryPort inventoryPort, MallRiskService riskService)
+    {
         this.mapper = mapper;
         this.cartService = cartService;
         this.memberService = memberService;
         this.inventoryPort = inventoryPort;
+        this.riskService = riskService;
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -62,6 +72,7 @@ public class MallOrderCreateService
         List<MallCartItem> selectedItems = validateCart(cart);
         MallMemberAddress address = findAddress(memberId, request.getAddressId());
         MallOrder order = buildOrder(memberId, request, address, selectedItems);
+        if (riskService != null) riskService.checkOrder(memberId, order.getPayableAmount());
 
         for (int attempt = 0; attempt < MAX_ORDER_NO_ATTEMPTS; attempt++)
         {
@@ -69,6 +80,7 @@ public class MallOrderCreateService
             if (mapper.insertOrderIgnore(order) == 1)
             {
                 saveItemsAndLog(order, selectedItems, request);
+                if (riskService != null) riskService.recordPassed(order);
                 return order;
             }
             existing = mapper.selectByIdempotencyKey(memberId, request.getIdempotencyKey());
@@ -107,6 +119,7 @@ public class MallOrderCreateService
         MallOrder order = new MallOrder();
         order.setMemberId(memberId); order.setStatus(MallOrderStatus.PENDING_PAYMENT.name());
         order.setPaymentStatus(MallPaymentStatus.UNPAID.name()); order.setIdempotencyKey(request.getIdempotencyKey());
+        order.setRiskStatus("PENDING_CHECK");
         order.setProductAmount(productAmount); order.setShippingFee(BigDecimal.ZERO);
         order.setDiscountAmount(BigDecimal.ZERO); order.setPayableAmount(productAmount);
         order.setReceiverName(address.getReceiverName()); order.setReceiverPhone(address.getReceiverPhone());

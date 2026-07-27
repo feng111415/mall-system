@@ -13,6 +13,7 @@ public class MallOrder implements Serializable
     private Long memberId;
     private String status;
     private String paymentStatus;
+    private String riskStatus;
     private String idempotencyKey;
     private BigDecimal productAmount;
     private BigDecimal shippingFee;
@@ -42,6 +43,8 @@ public class MallOrder implements Serializable
     public void setStatus(String status) { this.status = status; }
     public String getPaymentStatus() { return paymentStatus; }
     public void setPaymentStatus(String paymentStatus) { this.paymentStatus = paymentStatus; }
+    public String getRiskStatus() { return riskStatus; }
+    public void setRiskStatus(String riskStatus) { this.riskStatus = riskStatus; }
     public String getIdempotencyKey() { return idempotencyKey; }
     public void setIdempotencyKey(String idempotencyKey) { this.idempotencyKey = idempotencyKey; }
     public BigDecimal getProductAmount() { return productAmount; }
