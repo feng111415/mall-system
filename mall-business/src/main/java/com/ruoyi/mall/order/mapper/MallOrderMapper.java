@@ -25,4 +25,8 @@ public interface MallOrderMapper
 
     int updateStatus(@Param("orderId") Long orderId, @Param("fromStatus") String fromStatus,
             @Param("toStatus") String toStatus, @Param("cancelReason") String cancelReason);
+
+    int markPaymentPaying(@Param("orderId") Long orderId);
+
+    int markPaymentSuccess(@Param("orderId") Long orderId);
 }

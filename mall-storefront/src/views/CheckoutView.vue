@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { createOrder, getCheckoutPreview } from '../api/checkout'
+import { createPayment, mockPaymentSuccess } from '../api/payment'
 
 const router = useRouter()
 const preview = ref(null)
@@ -9,10 +10,13 @@ const loading = ref(true)
 const message = ref('')
 const selectedAddressId = ref(null)
 const busy = ref(false)
+const paymentBusy = ref(false)
 const order = ref(null)
+const payment = ref(null)
 const hasToken = computed(() => Boolean(sessionStorage.getItem('mall-user-token')))
 const randomUuid = globalThis.crypto?.randomUUID?.bind(globalThis.crypto)
 const idempotencyKey = randomUuid ? randomUuid() : `checkout-${Date.now()}-${Math.random().toString(16).slice(2)}`
+const paymentIdempotencyKey = randomUuid ? randomUuid() : `payment-${Date.now()}-${Math.random().toString(16).slice(2)}`
 
 onMounted(async () => {
   if (!hasToken.value) return router.replace('/account')
@@ -40,6 +44,32 @@ async function submitOrder() {
     busy.value = false
   }
 }
+
+async function startPayment() {
+  if (!order.value || paymentBusy.value || payment.value) return
+  paymentBusy.value = true
+  message.value = ''
+  try {
+    payment.value = (await createPayment(order.value.orderId, paymentIdempotencyKey)).data.data
+  } catch (error) {
+    message.value = error.response?.data?.msg || '支付单创建失败，请稍后重试'
+  } finally {
+    paymentBusy.value = false
+  }
+}
+
+async function confirmMockPayment() {
+  if (!payment.value || payment.value.status !== 'PAYING' || paymentBusy.value) return
+  paymentBusy.value = true
+  message.value = ''
+  try {
+    payment.value = (await mockPaymentSuccess(payment.value.paymentNo)).data.data
+  } catch (error) {
+    message.value = error.response?.data?.msg || '支付确认失败，请稍后重试'
+  } finally {
+    paymentBusy.value = false
+  }
+}
 </script>
 
 <template>
@@ -62,8 +92,13 @@ async function submitOrder() {
       <aside class="checkout-summary">
         <h2>费用明细</h2><div><span>商品金额</span><b>¥{{ formatPrice(preview.productAmount) }}</b></div><div><span>运费</span><b>¥{{ formatPrice(preview.shippingFee) }}</b></div><div><span>优惠</span><b>-¥{{ formatPrice(preview.discountAmount) }}</b></div><div class="checkout-total"><span>应付金额</span><strong>¥{{ formatPrice(preview.payableAmount) }}</strong></div>
         <p v-if="preview.validationMessages.length" class="form-message"><span v-for="item in preview.validationMessages" :key="item">{{ item }}<br /></span></p>
-        <p v-if="message" class="form-message">{{ message }}</p><p v-if="order" class="order-created">订单已创建：{{ order.orderNo }}，当前待支付</p>
-        <button class="primary-button" :disabled="!preview.canSubmit || !selectedAddressId || busy || order" @click="submitOrder">{{ order ? '订单已创建' : busy ? '正在创建订单...' : preview.canSubmit ? '提交订单（下一步）' : '暂不能提交订单' }} <span>→</span></button>
+        <p v-if="message" class="form-message">{{ message }}</p>
+        <p v-if="order" class="order-created">订单已创建：{{ order.orderNo }}，当前待支付</p>
+        <p v-if="payment" class="payment-created">支付单：{{ payment.paymentNo }}，状态：{{ payment.status }}</p>
+        <button v-if="!order" class="primary-button" :disabled="!preview.canSubmit || !selectedAddressId || busy" @click="submitOrder">{{ busy ? '正在创建订单...' : preview.canSubmit ? '提交订单（下一步）' : '暂不能提交订单' }} <span>→</span></button>
+        <button v-else-if="!payment" class="primary-button" :disabled="paymentBusy" @click="startPayment">{{ paymentBusy ? '正在创建支付单...' : '创建模拟支付' }} <span>→</span></button>
+        <button v-else-if="payment.status === 'PAYING'" class="primary-button" :disabled="paymentBusy" @click="confirmMockPayment">{{ paymentBusy ? '正在确认支付...' : '模拟支付成功' }} <span>→</span></button>
+        <p v-else-if="payment.status === 'SUCCESS'" class="order-created">支付成功，订单已进入待发货。</p>
       </aside>
     </div>
     <div v-else class="empty-state"><h2>暂时无法进入结算</h2><p>{{ message }}</p><router-link class="primary-button" to="/cart">返回购物车</router-link></div>
