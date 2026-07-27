@@ -154,4 +154,16 @@
         update mall_order set status='SHIPPED',version=version+1,update_time=now()
         where order_id=#{orderId} and status='PENDING_SHIPMENT' and payment_status='PAID'
     </update>
+    <update id="markRefunding">
+        update mall_order set status='AFTER_SALE',payment_status='REFUNDING',version=version+1,update_time=now()
+        where order_id=#{orderId} and status=#{fromStatus} and payment_status='PAID'
+    </update>
+    <update id="markRefundSuccess">
+        update mall_order set payment_status='REFUNDED',version=version+1,update_time=now()
+        where order_id=#{orderId} and status='AFTER_SALE' and payment_status='REFUNDING'
+    </update>
+    <update id="restoreAfterRefundReject">
+        update mall_order set status=#{originalStatus},payment_status='PAID',version=version+1,update_time=now()
+        where order_id=#{orderId} and status='AFTER_SALE' and payment_status='REFUNDING'
+    </update>
 </mapper>

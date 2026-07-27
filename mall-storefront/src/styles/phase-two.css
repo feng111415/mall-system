@@ -83,5 +83,9 @@
 .logistics-timeline li small { color: #999; }
 .logistics-dot { position: absolute; width: 8px; height: 8px; border-radius: 50%; background: #bdb9b1; left: -19px; top: 4px; box-shadow: 0 0 0 3px var(--paper); }
 .logistics-timeline li.current .logistics-dot { background: var(--red); }
+.refund-panel { border-top: 1px solid var(--line); margin-top: 26px; padding-top: 22px; }
+.refund-panel h3 { font-size: 18px; font-weight: 500; margin: 0 0 12px; }
+.refund-panel textarea { display: block; width: 100%; max-width: 520px; border: 1px solid var(--line); background: var(--paper); padding: 10px; resize: vertical; font: inherit; font-size: 13px; line-height: 1.6; box-sizing: border-box; }
+.refund-panel .primary-button { margin-top: 12px; }
 .checkout-empty { color: var(--muted); font-size: 12px; padding: 18px 0; }
 @media (max-width: 800px) { .checkout-layout { grid-template-columns: 1fr; gap: 0; } .checkout-summary { position: static; } }
