@@ -49,5 +49,24 @@
 .checkout-summary .primary-button { width: 100%; justify-content: center; margin-top: 18px; }
 .order-created { color: #287a4d; font-size: 12px; line-height: 1.6; }
 .payment-created { color: #5e6470; font-size: 12px; line-height: 1.6; word-break: break-all; }
+.orders-wrap { max-width: 1240px; margin: auto; padding: 32px 28px 72px; }
+.order-tabs { display: flex; gap: 22px; padding: 20px 0; border-bottom: 1px solid var(--line); overflow-x: auto; }
+.order-tabs button { border: 0; border-bottom: 1px solid transparent; background: transparent; padding: 6px 0; color: var(--muted); white-space: nowrap; }
+.order-tabs button.active { color: var(--ink); border-color: var(--red); }
+.order-list { display: grid; gap: 12px; padding-top: 22px; }
+.order-card { border: 1px solid var(--line); background: var(--paper); padding: 18px; cursor: pointer; transition: border-color .2s; }
+.order-card:hover { border-color: var(--ink); }
+.order-card-head,.order-card-body,.order-detail-head,.order-detail-total { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.order-card-head { font-size: 12px; color: var(--muted); }
+.order-card-head strong { color: var(--red); font-weight: 500; }
+.order-card-body { margin-top: 16px; font-size: 12px; color: var(--muted); }
+.order-card-body b { color: var(--ink); font-size: 18px; }
+.order-detail-panel { margin-top: 26px; border-top: 2px solid var(--ink); padding: 24px 0; max-width: 720px; }
+.order-detail-head h2 { margin: 8px 0 0; font-size: 22px; }
+.order-detail-status,.order-address { color: var(--muted); font-size: 12px; line-height: 1.8; }
+.order-detail-item { display: flex; justify-content: space-between; gap: 16px; border-bottom: 1px solid var(--line); padding: 13px 0; font-size: 13px; }
+.order-detail-total { padding: 18px 0; border-bottom: 1px solid var(--line); }
+.order-detail-total strong { color: var(--red); font-size: 22px; }
+.order-detail-panel .primary-button { margin-top: 14px; }
 .checkout-empty { color: var(--muted); font-size: 12px; padding: 18px 0; }
 @media (max-width: 800px) { .checkout-layout { grid-template-columns: 1fr; gap: 0; } .checkout-summary { position: static; } }

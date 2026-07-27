@@ -3,6 +3,7 @@ package com.ruoyi.mall.order.domain;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class MallOrder implements Serializable
 {
@@ -29,6 +30,7 @@ public class MallOrder implements Serializable
     private LocalDateTime createTime;
     private LocalDateTime closeTime;
     private LocalDateTime updateTime;
+    private List<MallOrderItem> items;
 
     public Long getOrderId() { return orderId; }
     public void setOrderId(Long orderId) { this.orderId = orderId; }
@@ -74,4 +76,6 @@ public class MallOrder implements Serializable
     public void setCloseTime(LocalDateTime closeTime) { this.closeTime = closeTime; }
     public LocalDateTime getUpdateTime() { return updateTime; }
     public void setUpdateTime(LocalDateTime updateTime) { this.updateTime = updateTime; }
+    public List<MallOrderItem> getItems() { return items; }
+    public void setItems(List<MallOrderItem> items) { this.items = items; }
 }

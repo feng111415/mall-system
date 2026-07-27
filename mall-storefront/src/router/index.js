@@ -5,6 +5,7 @@ import CartView from '../views/CartView.vue'
 import AccountView from '../views/AccountView.vue'
 import ProductDetailView from '../views/ProductDetailView.vue'
 import CheckoutView from '../views/CheckoutView.vue'
+import OrderListView from '../views/OrderListView.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -14,6 +15,7 @@ const router = createRouter({
     { path: '/product/:id', name: 'product-detail', component: ProductDetailView },
     { path: '/cart', name: 'cart', component: CartView },
     { path: '/checkout', name: 'checkout', component: CheckoutView },
+    { path: '/orders', name: 'orders', component: OrderListView },
     { path: '/account', name: 'account', component: AccountView }
   ],
   scrollBehavior: () => ({ top: 0 })

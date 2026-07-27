@@ -25,6 +25,43 @@
         <result property="closeTime" column="close_time"/>
         <result property="updateTime" column="update_time"/>
     </resultMap>
+    <resultMap id="OrderItem" type="com.ruoyi.mall.order.domain.MallOrderItem">
+        <id property="orderItemId" column="order_item_id"/><result property="orderId" column="order_id"/>
+        <result property="skuId" column="sku_id"/><result property="skuCode" column="sku_code"/>
+        <result property="productName" column="product_name"/><result property="skuName" column="sku_name"/>
+        <result property="productImage" column="product_image"/><result property="unitPrice" column="unit_price"/>
+        <result property="quantity" column="quantity"/><result property="lineAmount" column="line_amount"/>
+        <result property="createTime" column="create_time"/>
+    </resultMap>
+
+    <sql id="orderColumns">
+        order_id,order_no,member_id,status,payment_status,idempotency_key,
+        product_amount,shipping_fee,discount_amount,payable_amount,
+        receiver_name,receiver_phone,receiver_province,receiver_city,
+        receiver_district,receiver_detail_address,remark,cancel_reason,version,
+        create_time,close_time,update_time
+    </sql>
+
+    <select id="selectMemberOrders" resultMap="Order">
+        select <include refid="orderColumns"/> from mall_order
+        where member_id=#{memberId}
+        <if test="status != null and status != ''">and status=#{status}</if>
+        order by create_time desc,order_id desc
+        limit #{limit} offset #{offset}
+    </select>
+
+    <select id="selectMemberOrder" resultMap="Order">
+        select <include refid="orderColumns"/> from mall_order
+        where order_id=#{orderId} and member_id=#{memberId}
+    </select>
+
+    <select id="selectMemberOrderItems" resultMap="OrderItem">
+        select i.order_item_id,i.order_id,i.sku_id,i.sku_code,i.product_name,i.sku_name,
+            i.product_image,i.unit_price,i.quantity,i.line_amount,i.create_time
+        from mall_order_item i join mall_order o on o.order_id=i.order_id
+        where i.order_id=#{orderId} and o.member_id=#{memberId}
+        order by i.order_item_id
+    </select>
 
     <select id="selectByIdForUpdate" resultMap="Order">
         select order_id,order_no,member_id,status,payment_status,idempotency_key,

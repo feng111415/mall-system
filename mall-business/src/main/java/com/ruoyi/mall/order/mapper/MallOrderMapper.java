@@ -9,6 +9,14 @@ import com.ruoyi.mall.order.domain.MallOrderOperationLog;
 
 public interface MallOrderMapper
 {
+    List<MallOrder> selectMemberOrders(@Param("memberId") Long memberId,
+            @Param("status") String status, @Param("limit") int limit, @Param("offset") int offset);
+
+    MallOrder selectMemberOrder(@Param("orderId") Long orderId, @Param("memberId") Long memberId);
+
+    List<MallOrderItem> selectMemberOrderItems(@Param("orderId") Long orderId,
+            @Param("memberId") Long memberId);
+
     MallOrder selectByIdForUpdate(@Param("orderId") Long orderId, @Param("memberId") Long memberId);
 
     List<MallOrder> selectTimeoutCandidates(@Param("cutoffTime") LocalDateTime cutoffTime,
