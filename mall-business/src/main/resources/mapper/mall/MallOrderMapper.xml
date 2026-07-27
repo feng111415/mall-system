@@ -19,15 +19,43 @@
         <result property="receiverDistrict" column="receiver_district"/>
         <result property="receiverDetailAddress" column="receiver_detail_address"/>
         <result property="remark" column="remark"/>
+        <result property="cancelReason" column="cancel_reason"/>
         <result property="version" column="version"/>
         <result property="createTime" column="create_time"/>
+        <result property="closeTime" column="close_time"/>
+        <result property="updateTime" column="update_time"/>
     </resultMap>
+
+    <select id="selectByIdForUpdate" resultMap="Order">
+        select order_id,order_no,member_id,status,payment_status,idempotency_key,
+            product_amount,shipping_fee,discount_amount,payable_amount,
+            receiver_name,receiver_phone,receiver_province,receiver_city,
+            receiver_district,receiver_detail_address,remark,cancel_reason,version,
+            create_time,close_time,update_time
+        from mall_order
+        where order_id=#{orderId}
+        <if test="memberId != null">and member_id=#{memberId}</if>
+        for update
+    </select>
+
+    <select id="selectTimeoutCandidates" resultMap="Order">
+        select order_id,order_no,member_id,status,payment_status,idempotency_key,
+            product_amount,shipping_fee,discount_amount,payable_amount,
+            receiver_name,receiver_phone,receiver_province,receiver_city,
+            receiver_district,receiver_detail_address,remark,cancel_reason,version,
+            create_time,close_time,update_time
+        from mall_order
+        where status='PENDING_PAYMENT' and payment_status='UNPAID'
+            and create_time &lt;= #{cutoffTime}
+        order by create_time,order_id
+        limit #{limit}
+    </select>
 
     <select id="selectByIdempotencyKey" resultMap="Order">
         select order_id,order_no,member_id,status,payment_status,idempotency_key,
             product_amount,shipping_fee,discount_amount,payable_amount,
             receiver_name,receiver_phone,receiver_province,receiver_city,
-            receiver_district,receiver_detail_address,remark,version,create_time
+            receiver_district,receiver_detail_address,remark,cancel_reason,version,create_time,close_time,update_time
         from mall_order
         where member_id=#{memberId} and idempotency_key=#{idempotencyKey}
     </select>
@@ -65,4 +93,12 @@
             #{remark},#{requestId},now()
         )
     </insert>
+
+    <update id="updateStatus">
+        update mall_order
+        set status=#{toStatus},cancel_reason=#{cancelReason},
+            close_time=case when #{toStatus} in ('CANCELLED','CLOSED') then now() else close_time end,
+            version=version+1,update_time=now()
+        where order_id=#{orderId} and status=#{fromStatus} and payment_status='UNPAID'
+    </update>
 </mapper>

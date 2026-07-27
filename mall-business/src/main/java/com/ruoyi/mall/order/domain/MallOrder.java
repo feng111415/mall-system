@@ -24,8 +24,11 @@ public class MallOrder implements Serializable
     private String receiverDistrict;
     private String receiverDetailAddress;
     private String remark;
+    private String cancelReason;
     private Integer version;
     private LocalDateTime createTime;
+    private LocalDateTime closeTime;
+    private LocalDateTime updateTime;
 
     public Long getOrderId() { return orderId; }
     public void setOrderId(Long orderId) { this.orderId = orderId; }
@@ -61,8 +64,14 @@ public class MallOrder implements Serializable
     public void setReceiverDetailAddress(String receiverDetailAddress) { this.receiverDetailAddress = receiverDetailAddress; }
     public String getRemark() { return remark; }
     public void setRemark(String remark) { this.remark = remark; }
+    public String getCancelReason() { return cancelReason; }
+    public void setCancelReason(String cancelReason) { this.cancelReason = cancelReason; }
     public Integer getVersion() { return version; }
     public void setVersion(Integer version) { this.version = version; }
     public LocalDateTime getCreateTime() { return createTime; }
     public void setCreateTime(LocalDateTime createTime) { this.createTime = createTime; }
+    public LocalDateTime getCloseTime() { return closeTime; }
+    public void setCloseTime(LocalDateTime closeTime) { this.closeTime = closeTime; }
+    public LocalDateTime getUpdateTime() { return updateTime; }
+    public void setUpdateTime(LocalDateTime updateTime) { this.updateTime = updateTime; }
 }
