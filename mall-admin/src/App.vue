@@ -11,11 +11,11 @@ const nav = [
   { label: '分类与品牌', path: '/catalog-settings', icon: '目' },
   { label: '会员管理', path: '/members', icon: '人' },
   { label: '订单管理', path: '/orders', icon: '≡' },
-  { label: '库存管理', path: '/products?tab=stock', icon: '◈' },
+  { label: '库存管理', path: '/inventory', icon: '◈' },
   { label: '售后退款', path: '/orders?tab=after-sale', icon: '↩' },
   { label: '风控与审计', path: '/orders?tab=risk', icon: '◇' }
 ]
-const title = computed(() => ({ '/dashboard':'工作台','/products':'商品中心','/catalog-settings':'分类与品牌','/members':'会员管理','/orders':'订单管理' }[route.path] || '商城运营'))
+const title = computed(() => ({ '/dashboard':'工作台','/products':'商品中心','/catalog-settings':'分类与品牌','/members':'会员管理','/orders':'订单管理','/inventory':'库存管理' }[route.path] || '商城运营'))
 async function logout() { session.logout(); await router.replace('/login') }
 onMounted(async () => {
   if (!session.token) return

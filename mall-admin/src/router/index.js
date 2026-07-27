@@ -5,6 +5,7 @@ import OrdersView from '../views/OrdersView.vue'
 import MembersView from '../views/MembersView.vue'
 import CatalogSettingsView from '../views/CatalogSettingsView.vue'
 import LoginView from '../views/LoginView.vue'
+import InventoryView from '../views/InventoryView.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -15,7 +16,8 @@ const router = createRouter({
     { path: '/products', component: ProductsView },
     { path: '/catalog-settings', component: CatalogSettingsView },
     { path: '/members', component: MembersView },
-    { path: '/orders', component: OrdersView }
+    { path: '/orders', component: OrdersView },
+    { path: '/inventory', component: InventoryView }
   ]
 })
 

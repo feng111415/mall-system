@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.mall.inventory.mapper.MallInventoryMapper">
+    <resultMap id="Stock" type="com.ruoyi.mall.inventory.domain.MallStock">
+        <id property="stockId" column="stock_id"/>
+        <result property="skuId" column="sku_id"/><result property="skuCode" column="sku_code"/>
+        <result property="skuName" column="sku_name"/><result property="availableQuantity" column="available_quantity"/>
+        <result property="lockedQuantity" column="locked_quantity"/><result property="soldQuantity" column="sold_quantity"/>
+        <result property="warningThreshold" column="warning_threshold"/><result property="updateTime" column="update_time"/>
+    </resultMap>
+    <resultMap id="Log" type="com.ruoyi.mall.inventory.domain.MallStockLog">
+        <id property="logId" column="log_id"/><result property="skuId" column="sku_id"/>
+        <result property="skuCode" column="sku_code"/><result property="operationType" column="operation_type"/>
+        <result property="sourceType" column="source_type"/><result property="sourceNo" column="source_no"/>
+        <result property="availableChange" column="available_change"/><result property="lockedChange" column="locked_change"/>
+        <result property="soldChange" column="sold_change"/><result property="availableAfter" column="available_after"/>
+        <result property="lockedAfter" column="locked_after"/><result property="soldAfter" column="sold_after"/>
+        <result property="reason" column="reason"/><result property="operator" column="operator"/>
+        <result property="createTime" column="create_time"/>
+    </resultMap>
+    <resultMap id="Reservation" type="com.ruoyi.mall.inventory.domain.MallStockReservation">
+        <id property="reservationId" column="reservation_id"/><result property="orderNo" column="order_no"/>
+        <result property="skuId" column="sku_id"/><result property="quantity" column="quantity"/>
+        <result property="status" column="status"/>
+    </resultMap>
+
+    <insert id="insertAllStocksIfAbsent">insert ignore into mall_stock(sku_id,available_quantity,locked_quantity,sold_quantity,warning_threshold,create_time,update_time)
+        select sku_id,available_stock,0,0,0,now(),now() from mall_sku where del_flag='0'</insert>
+    <insert id="insertStockIfAbsent">insert ignore into mall_stock(sku_id,available_quantity,locked_quantity,sold_quantity,warning_threshold,create_time,update_time)
+        select sku_id,available_stock,0,0,0,now(),now() from mall_sku where sku_id=#{skuId} and del_flag='0'</insert>
+    <select id="selectBySkuId" resultMap="Stock">select st.*,s.sku_code,s.sku_name from mall_stock st join mall_sku s on s.sku_id=st.sku_id where st.sku_id=#{skuId} and s.del_flag='0'</select>
+    <select id="selectBySkuIdForUpdate" resultMap="Stock">select st.*,s.sku_code,s.sku_name from mall_stock st join mall_sku s on s.sku_id=st.sku_id where st.sku_id=#{skuId} and s.del_flag='0' for update</select>
+    <select id="selectStockList" resultMap="Stock">select st.*,s.sku_code,s.sku_name from mall_stock st join mall_sku s on s.sku_id=st.sku_id where s.del_flag='0'
+        <if test="skuCode!=null and skuCode!=''">and s.sku_code like concat('%',#{skuCode},'%')</if>
+        <if test="skuId!=null">and st.sku_id=#{skuId}</if> order by st.update_time desc,st.sku_id</select>
+    <select id="selectLogList" resultMap="Log">select l.*,s.sku_code from mall_stock_log l join mall_sku s on s.sku_id=l.sku_id where l.sku_id=#{skuId}
+        <if test="operationType!=null and operationType!=''">and l.operation_type=#{operationType}</if> order by l.log_id desc</select>
+
+    <select id="selectReservationForUpdate" resultMap="Reservation">select * from mall_stock_reservation where order_no=#{orderNo} and sku_id=#{skuId} for update</select>
+    <!-- The collection query intentionally does not lock rows. Each reservation is re-read after its SKU row is locked,
+         keeping reserve/release/confirm lock ordering consistent and avoiding cross-SKU deadlocks. -->
+    <select id="selectReservationsForUpdate" resultMap="Reservation">select * from mall_stock_reservation where order_no=#{orderNo} order by reservation_id</select>
+    <insert id="insertReservationIgnore">insert ignore into mall_stock_reservation(order_no,sku_id,quantity,status,create_time,update_time)
+        values(#{orderNo},#{skuId},#{quantity},#{status},now(),now())</insert>
+    <update id="updateReservationStatus">update mall_stock_reservation set status=#{status},update_time=now() where reservation_id=#{reservationId} and status='LOCKED'</update>
+
+    <update id="reserveStock">update mall_stock set available_quantity=available_quantity-#{quantity},locked_quantity=locked_quantity+#{quantity},update_time=now()
+        where sku_id=#{skuId} and available_quantity>=#{quantity}</update>
+    <update id="releaseStock">update mall_stock set available_quantity=available_quantity+#{quantity},locked_quantity=locked_quantity-#{quantity},update_time=now()
+        where sku_id=#{skuId} and locked_quantity>=#{quantity}</update>
+    <update id="confirmStock">update mall_stock set locked_quantity=locked_quantity-#{quantity},sold_quantity=sold_quantity+#{quantity},update_time=now()
+        where sku_id=#{skuId} and locked_quantity>=#{quantity}</update>
+    <update id="adjustStock">update mall_stock set available_quantity=available_quantity+#{delta},
+        warning_threshold=coalesce(#{warningThreshold},warning_threshold),update_time=now() where sku_id=#{skuId}
+        and available_quantity+#{delta}>=0</update>
+    <update id="syncLegacySkuStock">update mall_sku s join mall_stock st on st.sku_id=s.sku_id set s.available_stock=st.available_quantity,s.update_time=now() where s.sku_id=#{skuId}</update>
+    <insert id="insertLog">insert into mall_stock_log(sku_id,operation_type,source_type,source_no,available_change,locked_change,sold_change,available_after,locked_after,sold_after,reason,operator,create_time)
+        values(#{skuId},#{operationType},#{sourceType},#{sourceNo},#{availableChange},#{lockedChange},#{soldChange},#{availableAfter},#{lockedAfter},#{soldAfter},#{reason},#{operator},now())</insert>
+</mapper>
