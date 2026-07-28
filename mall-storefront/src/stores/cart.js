@@ -16,10 +16,13 @@ export const useCartStore = defineStore('storefront-cart', () => {
     totalPrice.value = Number(data?.totalPrice || 0)
     canCheckout.value = Boolean(data?.canCheckout)
   }
+  function reset() { apply(null) }
   async function load() {
-    if (!sessionStorage.getItem('mall-user-token')) { apply(null); return }
+    if (!sessionStorage.getItem('mall-user-token')) { reset(); return }
     loading.value = true
-    try { apply((await getCart()).data.data) } finally { loading.value = false }
+    try { apply((await getCart()).data.data) }
+    catch (error) { if (!sessionStorage.getItem('mall-user-token')) reset(); throw error }
+    finally { loading.value = false }
   }
   async function add(item, quantity = 1) {
     if (!item?.skuId) return false
@@ -30,5 +33,15 @@ export const useCartStore = defineStore('storefront-cart', () => {
   async function remove(item) { await removeCartItem(item.skuId); await load() }
   async function setQuantity(item, quantity) { await updateCartQuantity(item.skuId, Number(quantity)); await load() }
   async function setSelected(item, selected) { await updateCartSelected(item.skuId, selected); await load() }
-  return { items, loading, totalCount, totalPrice, canCheckout, availableItems, load, add, remove, setQuantity, setSelected }
+  async function setSelection(nextItems, selected) {
+    if (!nextItems?.length) return
+    await Promise.all(nextItems.map(item => updateCartSelected(item.skuId, selected)))
+    await load()
+  }
+  async function removeMany(nextItems) {
+    if (!nextItems?.length) return
+    await Promise.all(nextItems.map(item => removeCartItem(item.skuId)))
+    await load()
+  }
+  return { items, loading, totalCount, totalPrice, canCheckout, availableItems, load, reset, add, remove, setQuantity, setSelected, setSelection, removeMany }
 })

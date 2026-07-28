@@ -1,32 +1,53 @@
 <script setup>
-import { ref } from 'vue'
-import { useCartStore } from '../stores/cart'
+import { computed, onMounted, ref } from 'vue'
+import { getCategories, getProducts } from '../api/catalog'
+import StoreProductCard from '../components/StoreProductCard.vue'
 
-const cart = useCartStore()
-const notice = ref('')
-const products = [
-  { id: 3, name: '极简复古腕表', category: '腕表配饰', price: 528, oldPrice: 699, image: '/assets/watch.jpg', stock: 12, tag: '今日精选' },
-  { id: 4, name: '便携无反相机', category: '影像器材', price: 3499, oldPrice: 3799, image: '/assets/camera.jpg', stock: 4, tag: '编辑推荐' },
-  { id: 5, name: '静音头戴耳机', category: '数码音频', price: 699, oldPrice: 799, image: '/assets/headphones.jpg', stock: 0, tag: '暂时售罄' },
-  { id: 6, name: '手冲咖啡套装', category: '居家生活', price: 188, oldPrice: 239, image: '/assets/coffee.jpg', stock: 20, tag: '新上架' }
-]
-async function addProduct(product) {
-  if (!product.skuId) { notice.value = '请进入商品详情选择规格后加购'; window.setTimeout(() => { notice.value = '' }, 2200); return }
-  try { await cart.add(product); notice.value = `${product.name} 已加入购物车` }
-  catch (error) { notice.value = error.response?.data?.msg || '加入购物车失败，请先登录' }
-  window.setTimeout(() => { notice.value = '' }, 2200)
+const categories = ref([])
+const products = ref([])
+const loading = ref(true)
+const message = ref('')
+const categoryVisuals = {
+  家居: { image: '/assets/lamp.jpg', note: '把空间收拾得更顺手' },
+  数码: { image: '/assets/camera.jpg', note: '记录，也沉浸其中' },
+  穿搭: { image: '/assets/sneaker.jpg', note: '走得更远一点' },
+  咖啡: { image: '/assets/coffee.jpg', note: '慢慢开始一天' },
+  出行: { image: '/assets/backpack.jpg', note: '轻装，也装得下' }
 }
+const featured = computed(() => products.value.slice(0, 8))
+const featuredCategories = computed(() => categories.value
+  .filter(item => categoryVisuals[item.categoryName])
+  .slice(0, 5)
+  .map(item => ({ ...item, ...categoryVisuals[item.categoryName] })))
+
+async function loadHome() {
+  loading.value = true
+  message.value = ''
+  try {
+    const [categoryResponse, productResponse] = await Promise.all([
+      getCategories(), getProducts({ sort: 'sales' })
+    ])
+    categories.value = categoryResponse.data.data || []
+    products.value = productResponse.data.data || []
+  } catch (error) {
+    message.value = error.response?.data?.msg || '精选商品读取失败，请稍后刷新重试'
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(loadHome)
 </script>
 
 <template>
   <section class="home-wrap">
-    <div v-if="notice" class="toast">{{ notice }}</div>
     <section class="hero-strip">
-      <div class="hero-copy"><p class="eyebrow">本周陈列 · 07.24—07.30</p><h1>挑一些，<br /><em>让日子更顺手的东西。</em></h1><p class="hero-note">从家居、穿搭到日常器物，精选耐用、好看且愿意反复使用的商品。</p><router-link class="primary-button" to="/catalog">逛逛本周精选 <span>→</span></router-link></div>
-      <div class="hero-visual"><img src="/assets/lamp.jpg" alt="暖光台灯" /><span>01 / 04</span></div>
+      <div class="hero-copy"><p class="eyebrow">本周陈列 · 日常精选</p><h1>挑一些，<br /><em>让日子更顺手的东西。</em></h1><p class="hero-note">从家居、穿搭到随身器物，精选耐用、好看且愿意反复使用的商品。</p><router-link class="primary-button" :to="{ path: '/catalog', query: { sort: 'sales' } }">查看热销好物 <span>→</span></router-link></div>
+      <router-link class="hero-visual" to="/product/2"><img src="/assets/lamp.jpg" alt="暖光阅读台灯" /><span>暖光阅读台灯 · 查看详情</span></router-link>
     </section>
-    <section class="category-row"><div><span class="section-kicker">分类浏览</span><h2>从生活的不同角落开始</h2></div><div class="category-links"><router-link to="/catalog?q=家居">家居</router-link><router-link to="/catalog?q=穿搭">穿搭</router-link><router-link to="/catalog?q=数码">数码</router-link><router-link to="/catalog?q=咖啡">咖啡</router-link></div></section>
-    <section class="product-section"><div class="section-heading"><div><span class="section-kicker">精选商品</span><h2>今天也值得好好挑选</h2></div><router-link to="/catalog" class="text-link">查看全部 →</router-link></div><div class="product-grid"><article v-for="product in products" :key="product.id" class="product-card"><div class="product-image"><img :src="product.image" :alt="product.name" /><span :class="['product-tag', { muted: product.stock === 0 }]">{{ product.tag }}</span></div><div class="product-info"><p class="product-category">{{ product.category }}</p><h3>{{ product.name }}</h3><div class="product-bottom"><span class="price">¥{{ product.price.toLocaleString() }} <del>¥{{ product.oldPrice.toLocaleString() }}</del></span><button class="add-button" :disabled="product.stock === 0" @click="addProduct(product)">{{ product.stock === 0 ? '售罄' : '加入袋中' }}</button></div></div></article></div></section>
+    <section class="category-row"><div><span class="section-kicker">分类浏览</span><h2>从生活的不同角落开始</h2></div><router-link to="/catalog" class="text-link">查看全部分类 →</router-link></section>
+    <div v-if="featuredCategories.length" class="category-showcase"><router-link v-for="category in featuredCategories" :key="category.categoryId" class="category-tile" :to="{ path: '/catalog', query: { categoryId: category.categoryId } }"><img :src="category.image" :alt="category.categoryName" /><span><strong>{{ category.categoryName }}</strong><small>{{ category.note }}</small></span></router-link></div>
+    <section class="product-section"><div class="section-heading"><div><span class="section-kicker">热销商品</span><h2>最近大家都在认真挑的</h2></div><router-link :to="{ path: '/catalog', query: { sort: 'sales' } }" class="text-link">按销量查看 →</router-link></div><div v-if="loading" class="product-grid"><div v-for="item in 4" :key="item" class="product-skeleton"><span></span><i></i><b></b></div></div><div v-else-if="featured.length" class="product-grid"><StoreProductCard v-for="(product, index) in featured" :key="product.spuId" :product="product" :badge="index === 0 ? '本周热销' : ''" /></div><div v-else class="empty-state compact"><h2>精选商品正在整理</h2><p>{{ message || '请稍后刷新，或先浏览全部商品。' }}</p><router-link class="primary-button" to="/catalog">查看全部商品</router-link></div></section>
     <section class="service-row"><div><strong>安心选购</strong><span>7天无理由退换</span></div><div><strong>快速发货</strong><span>现货 48 小时内发出</span></div><div><strong>人工客服</strong><span>工作日 9:00—18:00</span></div></section>
   </section>
 </template>

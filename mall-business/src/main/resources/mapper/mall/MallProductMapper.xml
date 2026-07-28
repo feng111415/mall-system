@@ -17,6 +17,25 @@
  <update id="updateBrand">update mall_brand set brand_name=#{brandName},logo_url=#{logoUrl},description=#{description},sort_no=#{sortNo},status=#{status},update_by=#{updateBy},update_time=now() where brand_id=#{brandId}</update>
  <update id="deleteBrand">update mall_brand set del_flag='2',update_time=now() where brand_id=#{brandId}</update>
  <select id="selectSpuList" resultMap="Spu">select s.*,c.category_name,b.brand_name from mall_spu s join mall_category c on c.category_id=s.category_id left join mall_brand b on b.brand_id=s.brand_id where s.del_flag='0'<if test="productName!=null and productName!=''"> and s.product_name like concat('%',#{productName},'%')</if><if test="categoryId!=null"> and s.category_id=#{categoryId}</if><if test="brandId!=null"> and s.brand_id=#{brandId}</if><if test="publishStatus!=null and publishStatus!=''"> and s.publish_status=#{publishStatus}</if> order by s.sort_no,s.spu_id desc</select>
+ <select id="selectPublishedSpuList" resultMap="Spu">
+  select s.*, c.category_name, b.brand_name
+  from mall_spu s
+  join mall_category c on c.category_id = s.category_id and c.del_flag = '0' and c.status = '0'
+  left join mall_brand b on b.brand_id = s.brand_id and b.del_flag = '0'
+  where s.del_flag = '0' and s.publish_status = '1'
+  <if test="categoryId != null">and s.category_id = #{categoryId}</if>
+  <if test="keyword != null and keyword != ''">
+   and (s.product_name like concat('%', #{keyword}, '%')
+     or c.category_name like concat('%', #{keyword}, '%')
+     or b.brand_name like concat('%', #{keyword}, '%'))
+  </if>
+  <choose>
+   <when test="sort == 'sales'">order by s.sales_count desc, s.sort_no asc, s.spu_id desc</when>
+   <when test="sort == 'priceAsc'">order by s.price_min asc, s.sort_no asc, s.spu_id desc</when>
+   <when test="sort == 'priceDesc'">order by s.price_min desc, s.sort_no asc, s.spu_id desc</when>
+   <otherwise>order by s.sort_no asc, s.spu_id desc</otherwise>
+  </choose>
+ </select>
  <select id="selectSpuById" resultMap="Spu">select s.*,c.category_name,b.brand_name from mall_spu s join mall_category c on c.category_id=s.category_id left join mall_brand b on b.brand_id=s.brand_id where s.spu_id=#{spuId} and s.del_flag='0'<if test="publishedOnly"> and s.publish_status='1'</if></select>
  <insert id="insertSpu" useGeneratedKeys="true" keyProperty="spuId">insert into mall_spu(category_id,brand_id,spu_code,product_name,subtitle,main_image,detail_html,price_min,price_max,publish_status,sort_no,sales_count,del_flag,create_by,create_time) values(#{categoryId},#{brandId},#{spuCode},#{productName},#{subtitle},#{mainImage},#{detailHtml},#{priceMin},#{priceMax},#{publishStatus},#{sortNo},0,'0',#{createBy},now())</insert>
  <update id="updateSpu">update mall_spu set category_id=#{categoryId},brand_id=#{brandId},spu_code=#{spuCode},product_name=#{productName},subtitle=#{subtitle},main_image=#{mainImage},detail_html=#{detailHtml},price_min=#{priceMin},price_max=#{priceMax},publish_status=#{publishStatus},sort_no=#{sortNo},update_by=#{updateBy},update_time=now() where spu_id=#{spuId}</update>

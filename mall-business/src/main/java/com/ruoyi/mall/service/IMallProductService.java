@@ -5,6 +5,7 @@ import com.ruoyi.mall.domain.product.MallBrand;
 import com.ruoyi.mall.domain.product.MallCategory;
 import com.ruoyi.mall.domain.product.MallSpec;
 import com.ruoyi.mall.domain.product.MallSpu;
+import com.ruoyi.mall.domain.product.dto.MallCatalogProductQuery;
 
 public interface IMallProductService
 {
@@ -19,6 +20,7 @@ public interface IMallProductService
     int deleteBrand(Long brandId);
 
     List<MallSpu> selectProducts(MallSpu query, boolean publishedOnly);
+    List<MallSpu> selectPublishedProducts(MallCatalogProductQuery query);
     MallSpu selectProductDetail(Long spuId, boolean publishedOnly);
     int saveProduct(MallSpu spu);
     int updatePublishStatus(Long spuId, String publishStatus, String updateBy);

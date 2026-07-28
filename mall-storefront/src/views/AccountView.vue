@@ -4,6 +4,11 @@ import { useCascaderAreaData } from '@vant/area-data'
 import { addAddress, getAddresses, getProfile, loginBySms, logoutMember, sendSmsCode } from '../api/member'
 import { getOrders } from '../api/order'
 import { getCart } from '../api/cart'
+import { useCartStore } from '../stores/cart'
+import { useNoticeStore } from '../stores/notice'
+
+const cart = useCartStore()
+const notice = useNoticeStore()
 
 const phone = ref('')
 const code = ref('')
@@ -69,11 +74,13 @@ async function login() {
     sessionStorage.setItem('mall-user-token', response.data.data.token)
     member.value = response.data.data.member
     message.value = response.data.data.newMember ? '账号已创建并登录' : '登录成功'
-  } catch (error) { message.value = error.response?.data?.msg || '登录失败，请检查验证码' }
+    await cart.load().catch(() => {})
+    notice.show(message.value)
+  } catch (error) { message.value = error.response?.data?.msg || '登录失败，请检查验证码'; notice.show(message.value, 'error') }
   finally { loading.value = false }
 }
 async function logout() {
-  try { await logoutMember() } finally { sessionStorage.removeItem('mall-user-token'); member.value = null; message.value = '已退出登录' }
+  try { await logoutMember() } finally { sessionStorage.removeItem('mall-user-token'); cart.reset(); member.value = null; message.value = '已退出登录'; notice.show(message.value) }
 }
 async function saveAddress() {
   const value = addressForm.value

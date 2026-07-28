@@ -13,6 +13,7 @@ import com.ruoyi.mall.domain.product.MallProductMedia;
 import com.ruoyi.mall.domain.product.MallSku;
 import com.ruoyi.mall.domain.product.MallSpec;
 import com.ruoyi.mall.domain.product.MallSpu;
+import com.ruoyi.mall.domain.product.dto.MallCatalogProductQuery;
 import com.ruoyi.mall.mapper.MallProductMapper;
 import com.ruoyi.mall.service.IMallProductService;
 
@@ -69,6 +70,26 @@ public class MallProductServiceImpl implements IMallProductService
     {
         if (publishedOnly) query.setPublishStatus("1");
         return productMapper.selectSpuList(query);
+    }
+
+    @Override
+    public List<MallSpu> selectPublishedProducts(MallCatalogProductQuery query)
+    {
+        MallCatalogProductQuery normalized = new MallCatalogProductQuery();
+        if (query != null)
+        {
+            normalized.setCategoryId(query.getCategoryId());
+            String keyword = StringUtils.isNotBlank(query.getKeyword()) ? query.getKeyword() : query.getProductName();
+            normalized.setKeyword(StringUtils.isBlank(keyword) ? null : keyword.trim());
+            normalized.setProductName(query.getProductName());
+            normalized.setSort(query.getSort());
+        }
+        if (!"sales".equals(normalized.getSort()) && !"priceAsc".equals(normalized.getSort())
+                && !"priceDesc".equals(normalized.getSort()))
+        {
+            normalized.setSort("default");
+        }
+        return productMapper.selectPublishedSpuList(normalized);
     }
 
     @Override

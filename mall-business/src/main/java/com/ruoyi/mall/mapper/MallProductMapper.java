@@ -9,6 +9,7 @@ import com.ruoyi.mall.domain.product.MallSku;
 import com.ruoyi.mall.domain.product.MallSpec;
 import com.ruoyi.mall.domain.product.MallSpecValue;
 import com.ruoyi.mall.domain.product.MallSpu;
+import com.ruoyi.mall.domain.product.dto.MallCatalogProductQuery;
 
 public interface MallProductMapper
 {
@@ -25,6 +26,7 @@ public interface MallProductMapper
     int deleteBrand(Long brandId);
 
     List<MallSpu> selectSpuList(MallSpu query);
+    List<MallSpu> selectPublishedSpuList(MallCatalogProductQuery query);
     MallSpu selectSpuById(@Param("spuId") Long spuId, @Param("publishedOnly") boolean publishedOnly);
     int insertSpu(MallSpu spu);
     int updateSpu(MallSpu spu);
