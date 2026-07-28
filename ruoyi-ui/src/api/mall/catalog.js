@@ -1,0 +1,16 @@
+import request from '@/utils/request'
+
+export const listCategories = query => request({ url: '/mall/catalog/categories', method: 'get', params: query })
+export const addCategory = data => request({ url: '/mall/catalog/categories', method: 'post', data })
+export const updateCategory = data => request({ url: '/mall/catalog/categories', method: 'put', data })
+export const delCategory = id => request({ url: '/mall/catalog/categories/' + id, method: 'delete' })
+export const listBrands = query => request({ url: '/mall/catalog/brands', method: 'get', params: query })
+export const addBrand = data => request({ url: '/mall/catalog/brands', method: 'post', data })
+export const updateBrand = data => request({ url: '/mall/catalog/brands', method: 'put', data })
+export const delBrand = id => request({ url: '/mall/catalog/brands/' + id, method: 'delete' })
+export const listProducts = query => request({ url: '/mall/catalog/products', method: 'get', params: query })
+export const getProduct = id => request({ url: '/mall/catalog/products/' + id, method: 'get' })
+export const addProduct = data => request({ url: '/mall/catalog/products', method: 'post', data })
+export const updateProduct = data => request({ url: '/mall/catalog/products', method: 'put', data })
+export const publishProduct = (id, status) => request({ url: '/mall/catalog/products/' + id + '/publish/' + status, method: 'put' })
+export const delProduct = id => request({ url: '/mall/catalog/products/' + id, method: 'delete' })
