@@ -14,6 +14,8 @@ public interface MallPaymentMapper
 
     MallPayment selectSuccessByOrderIdForUpdate(@Param("orderId") Long orderId);
 
+    MallPayment selectByPaymentNo(@Param("paymentNo") String paymentNo);
+
     int insertPayment(MallPayment payment);
 
     int updateCreationResult(@Param("paymentId") Long paymentId, @Param("status") String status,

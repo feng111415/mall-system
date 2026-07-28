@@ -3,11 +3,18 @@ package com.ruoyi.mall.governance.service;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.common.utils.StringUtils;
 import com.ruoyi.mall.application.port.InventoryPort;
+import com.ruoyi.mall.order.domain.MallOrder;
+import com.ruoyi.mall.order.mapper.MallOrderMapper;
+import com.ruoyi.mall.payment.domain.MallPayment;
+import com.ruoyi.mall.payment.mapper.MallPaymentMapper;
+import com.ruoyi.mall.aftersale.domain.MallRefund;
+import com.ruoyi.mall.aftersale.mapper.MallRefundMapper;
 import com.ruoyi.mall.governance.domain.MallCompensationTask;
 import com.ruoyi.mall.governance.mapper.MallCompensationMapper;
 
@@ -18,11 +25,25 @@ public class MallCompensationService
     private static final int DEFAULT_MAX_RETRIES = 5;
     private final MallCompensationMapper mapper;
     private final InventoryPort inventoryPort;
+    private final MallPaymentMapper paymentMapper;
+    private final MallRefundMapper refundMapper;
+    private final MallOrderMapper orderMapper;
 
+    /** Constructor retained for isolated inventory compensation tests. */
     public MallCompensationService(MallCompensationMapper mapper, InventoryPort inventoryPort)
+    {
+        this(mapper, inventoryPort, null, null, null);
+    }
+
+    @Autowired
+    public MallCompensationService(MallCompensationMapper mapper, InventoryPort inventoryPort,
+            MallPaymentMapper paymentMapper, MallRefundMapper refundMapper, MallOrderMapper orderMapper)
     {
         this.mapper = mapper;
         this.inventoryPort = inventoryPort;
+        this.paymentMapper = paymentMapper;
+        this.refundMapper = refundMapper;
+        this.orderMapper = orderMapper;
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -98,14 +119,58 @@ public class MallCompensationService
         {
             case "INVENTORY_RELEASE" -> inventoryPort.release(requireBusinessKey(task));
             case "INVENTORY_CONFIRM" -> inventoryPort.confirm(requireBusinessKey(task), true);
+            case "PAYMENT_CONFIRM" -> confirmPayment(task);
+            case "REFUND_CONFIRM" -> confirmRefund(task);
             default -> throw new ServiceException("暂未注册补偿处理器：" + task.getTaskType());
         }
+    }
+
+    private void confirmPayment(MallCompensationTask task)
+    {
+        requireGovernanceDependencies(paymentMapper, orderMapper);
+        MallPayment payment = paymentMapper.selectByPaymentNoForUpdate(requireBusinessKey(task));
+        if (payment == null) throw new ServiceException("支付单不存在");
+        if ("SUCCESS".equals(payment.getStatus())) return;
+        if (!"PAYING".equals(payment.getStatus())) throw new ServiceException("支付单状态不允许补偿");
+        MallOrder order = orderMapper.selectByIdForUpdate(payment.getOrderId(), null);
+        if (order == null) throw new ServiceException("订单不存在");
+        if ("PENDING_SHIPMENT".equals(order.getStatus()) && "PAID".equals(order.getPaymentStatus())) return;
+        if (!"PENDING_PAYMENT".equals(order.getStatus()) || !"PAYING".equals(order.getPaymentStatus()))
+            throw new ServiceException("订单状态不允许支付补偿");
+        if (orderMapper.markPaymentSuccess(order.getOrderId()) != 1)
+            throw new ServiceException("订单支付状态补偿失败");
+        if (paymentMapper.updateSuccess(payment.getPaymentId()) != 1)
+            throw new ServiceException("支付单状态补偿失败");
+        inventoryPort.confirm(order.getOrderNo(), true);
+    }
+
+    private void confirmRefund(MallCompensationTask task)
+    {
+        requireGovernanceDependencies(refundMapper, orderMapper);
+        MallRefund refund = refundMapper.selectByRefundNoForUpdate(requireBusinessKey(task));
+        if (refund == null) throw new ServiceException("退款单不存在");
+        if ("SUCCESS".equals(refund.getStatus())) return;
+        if (!"REFUNDING".equals(refund.getStatus())) throw new ServiceException("退款单状态不允许补偿");
+        MallOrder order = orderMapper.selectByIdForUpdate(refund.getOrderId(), null);
+        if (order == null || !"AFTER_SALE".equals(order.getStatus()) || !"REFUNDING".equals(order.getPaymentStatus()))
+            throw new ServiceException("订单状态不允许退款补偿");
+        if (StringUtils.isBlank(refund.getProviderRefundNo()))
+            throw new ServiceException("缺少外部退款流水号，不能跳过渠道确认");
+        if (refundMapper.markSuccess(refund.getRefundId(), refund.getProviderRefundNo()) != 1)
+            throw new ServiceException("退款单状态补偿失败");
+        if (orderMapper.markRefundSuccess(order.getOrderId()) != 1)
+            throw new ServiceException("订单退款状态补偿失败");
     }
 
     private String requireBusinessKey(MallCompensationTask task)
     {
         if (StringUtils.isBlank(task.getBusinessKey())) throw new ServiceException("补偿业务键为空");
         return task.getBusinessKey();
+    }
+
+    private void requireGovernanceDependencies(Object payment, Object order)
+    {
+        if (payment == null || order == null) throw new IllegalStateException("支付退款补偿依赖未配置");
     }
 
     private String normalizeError(String error)

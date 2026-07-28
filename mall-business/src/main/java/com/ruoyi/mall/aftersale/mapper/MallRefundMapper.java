@@ -8,6 +8,7 @@ public interface MallRefundMapper
 {
     MallRefund selectByOrderIdForUpdate(@Param("orderId") Long orderId);
     MallRefund selectByIdForUpdate(@Param("refundId") Long refundId);
+    MallRefund selectByRefundNoForUpdate(@Param("refundNo") String refundNo);
     MallRefund selectMemberById(@Param("refundId") Long refundId, @Param("memberId") Long memberId);
     List<MallRefund> selectMemberList(@Param("memberId") Long memberId);
     int insert(MallRefund refund);

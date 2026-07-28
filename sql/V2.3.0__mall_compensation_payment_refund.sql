@@ -1,0 +1,3 @@
+-- Register the payment/refund compensation task types used by the shared task executor.
+-- Task rows are created by application flows with business keys: payment_no or refund_no.
+-- No data migration is required because task_type is intentionally extensible.

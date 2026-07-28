@@ -25,6 +25,9 @@
     <select id="selectSuccessByOrderIdForUpdate" resultMap="Payment">
         select * from mall_payment where order_id=#{orderId} and status='SUCCESS' order by payment_id desc limit 1 for update
     </select>
+    <select id="selectByPaymentNo" resultMap="Payment">
+        select * from mall_payment where payment_no=#{paymentNo}
+    </select>
     <insert id="insertPayment" useGeneratedKeys="true" keyProperty="paymentId">
         insert ignore into mall_payment(payment_no,order_id,order_no,member_id,payment_method,amount,status,idempotency_key,create_time,update_time)
         values(#{paymentNo},#{orderId},#{orderNo},#{memberId},#{paymentMethod},#{amount},#{status},#{idempotencyKey},now(),now())

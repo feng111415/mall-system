@@ -12,14 +12,23 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import com.ruoyi.mall.application.port.InventoryPort;
+import com.ruoyi.mall.aftersale.domain.MallRefund;
+import com.ruoyi.mall.aftersale.mapper.MallRefundMapper;
 import com.ruoyi.mall.governance.domain.MallCompensationTask;
 import com.ruoyi.mall.governance.mapper.MallCompensationMapper;
 import com.ruoyi.mall.governance.service.MallCompensationService;
+import com.ruoyi.mall.order.domain.MallOrder;
+import com.ruoyi.mall.order.mapper.MallOrderMapper;
+import com.ruoyi.mall.payment.domain.MallPayment;
+import com.ruoyi.mall.payment.mapper.MallPaymentMapper;
 
 class MallCompensationServiceTest
 {
     @Mock private MallCompensationMapper mapper;
     @Mock private InventoryPort inventoryPort;
+    @Mock private MallPaymentMapper paymentMapper;
+    @Mock private MallRefundMapper refundMapper;
+    @Mock private MallOrderMapper orderMapper;
     private MallCompensationService service;
 
     @BeforeEach
@@ -62,6 +71,45 @@ class MallCompensationServiceTest
 
         assertEquals(1, service.runDueTasks());
         verify(mapper).markFailure(eq(1L), eq("MANUAL"), any(), any());
+    }
+
+    @Test
+    void paymentTaskConfirmsPaymentAndInventoryWithoutRepeatingSuccess()
+    {
+        MallCompensationService fullService = new MallCompensationService(mapper, inventoryPort,
+                paymentMapper, refundMapper, orderMapper);
+        MallCompensationTask task = task("PAYMENT_CONFIRM", "PAY-1", "PENDING");
+        MallPayment payment = new MallPayment(); payment.setPaymentId(3L); payment.setPaymentNo("PAY-1");
+        payment.setOrderId(9L); payment.setStatus("PAYING");
+        MallOrder order = new MallOrder(); order.setOrderId(9L); order.setOrderNo("ORDER-1");
+        order.setStatus("PENDING_PAYMENT"); order.setPaymentStatus("PAYING");
+        when(mapper.selectDue(50)).thenReturn(List.of(task));
+        when(mapper.markProcessing(1L)).thenReturn(1); when(mapper.markSuccess(1L)).thenReturn(1);
+        when(paymentMapper.selectByPaymentNoForUpdate("PAY-1")).thenReturn(payment);
+        when(orderMapper.selectByIdForUpdate(9L, null)).thenReturn(order);
+        when(orderMapper.markPaymentSuccess(9L)).thenReturn(1); when(paymentMapper.updateSuccess(3L)).thenReturn(1);
+
+        assertEquals(1, fullService.runDueTasks());
+        verify(inventoryPort).confirm("ORDER-1", true);
+    }
+
+    @Test
+    void refundTaskOnlyFinalizesWhenProviderRefundNumberExists()
+    {
+        MallCompensationService fullService = new MallCompensationService(mapper, inventoryPort,
+                paymentMapper, refundMapper, orderMapper);
+        MallCompensationTask task = task("REFUND_CONFIRM", "REF-1", "PENDING");
+        MallRefund refund = new MallRefund(); refund.setRefundId(4L); refund.setRefundNo("REF-1");
+        refund.setOrderId(9L); refund.setStatus("REFUNDING"); refund.setProviderRefundNo("PROVIDER-1");
+        MallOrder order = new MallOrder(); order.setOrderId(9L); order.setStatus("AFTER_SALE"); order.setPaymentStatus("REFUNDING");
+        when(mapper.selectDue(50)).thenReturn(List.of(task));
+        when(mapper.markProcessing(1L)).thenReturn(1); when(mapper.markSuccess(1L)).thenReturn(1);
+        when(refundMapper.selectByRefundNoForUpdate("REF-1")).thenReturn(refund);
+        when(orderMapper.selectByIdForUpdate(9L, null)).thenReturn(order);
+        when(refundMapper.markSuccess(4L, "PROVIDER-1")).thenReturn(1); when(orderMapper.markRefundSuccess(9L)).thenReturn(1);
+
+        assertEquals(1, fullService.runDueTasks());
+        verify(orderMapper).markRefundSuccess(9L);
     }
 
     private MallCompensationTask task(String type, String key, String status)
