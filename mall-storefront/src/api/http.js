@@ -16,4 +16,15 @@ http.interceptors.request.use(config => {
   return config
 })
 
+http.interceptors.response.use(response => {
+  const body = response.data
+  if (body && typeof body.code === 'number' && body.code !== 200) {
+    if (body.code === 401) sessionStorage.removeItem('mall-user-token')
+    const error = new Error(body.msg || '请求失败')
+    error.response = response
+    return Promise.reject(error)
+  }
+  return response
+}, error => Promise.reject(error))
+
 export default http
