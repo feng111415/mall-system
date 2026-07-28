@@ -16,6 +16,7 @@ import com.ruoyi.common.enums.BusinessType;
 import com.ruoyi.mall.reconciliation.domain.dto.MallReconciliationCheckRequest;
 import com.ruoyi.mall.reconciliation.domain.dto.MallReconciliationHandleRequest;
 import com.ruoyi.mall.reconciliation.service.MallReconciliationService;
+import com.ruoyi.mall.reconciliation.domain.MallReconciliationAlert;
 
 @RestController
 @RequestMapping("/mall/reconciliation/diffs")
@@ -60,4 +61,16 @@ public class MallReconciliationAdminController extends BaseController
     {
         return success(service.createCompensation(diffId, request == null ? null : request.getRemark(), getUsername()));
     }
+
+    @PreAuthorize("@ss.hasPermi('mall:reconciliation:alert:list')")
+    @GetMapping("/alerts")
+    public AjaxResult alerts(@RequestParam(required = false) String status,
+            @RequestParam(required = false) Integer limit, @RequestParam(required = false) Integer offset)
+    { return success(service.alerts(status, limit, offset)); }
+
+    @PreAuthorize("@ss.hasPermi('mall:reconciliation:alert:ack')")
+    @Log(title = "确认商城对账告警", businessType = BusinessType.UPDATE)
+    @PostMapping("/alerts/{alertId}/ack")
+    public AjaxResult acknowledge(@PathVariable Long alertId)
+    { return success(service.acknowledgeAlert(alertId, getUsername())); }
 }

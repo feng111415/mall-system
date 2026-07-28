@@ -13,5 +13,6 @@
     <select id="selectById" resultMap="Diff">select <include refid="columns"/> from mall_reconciliation_diff where diff_id=#{diffId}</select>
     <select id="selectByBusinessCode" resultMap="Diff">select <include refid="columns"/> from mall_reconciliation_diff where diff_type=#{diffType} and business_no=#{businessNo} and diff_code=#{diffCode}</select>
  <select id="selectList" resultMap="Diff">select <include refid="columns"/> from mall_reconciliation_diff <where><if test="diffType != null and diffType != ''">and diff_type=#{diffType}</if><if test="status != null and status != ''">and status=#{status}</if><if test="businessNo != null and businessNo != ''">and business_no like concat('%',#{businessNo},'%')</if></where> order by diff_id desc limit #{limit} offset #{offset}</select>
+ <select id="selectUnresolved" resultMap="Diff">select <include refid="columns"/> from mall_reconciliation_diff where status in ('OPEN','MANUAL') and update_time &lt;= #{cutoffTime} order by diff_id asc limit #{limit}</select>
  <update id="updateStatus">update mall_reconciliation_diff set status=#{status},handle_remark=#{remark},resolved_time=case when #{status} in ('RESOLVED','IGNORED') then now() else resolved_time end,update_time=now() where diff_id=#{diffId} and status in ('OPEN','PROCESSING','MANUAL')</update>
 </mapper>

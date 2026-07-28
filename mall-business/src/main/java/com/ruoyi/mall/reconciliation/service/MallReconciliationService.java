@@ -14,12 +14,14 @@ import com.ruoyi.mall.payment.mapper.MallPaymentMapper;
 import com.ruoyi.mall.reconciliation.domain.MallReconciliationDiff;
 import com.ruoyi.mall.reconciliation.domain.MallReconciliationResult;
 import com.ruoyi.mall.reconciliation.mapper.MallReconciliationMapper;
+import com.ruoyi.mall.reconciliation.domain.MallReconciliationAlert;
+import com.ruoyi.mall.reconciliation.mapper.MallReconciliationAlertMapper;
 import com.ruoyi.mall.governance.service.MallCompensationService;
 
 @Service
 public class MallReconciliationService {
-    private final MallReconciliationMapper mapper; private final MallPaymentMapper paymentMapper; private final MallRefundMapper refundMapper; private final MallCompensationService compensationService;
-    public MallReconciliationService(MallReconciliationMapper mapper, MallPaymentMapper paymentMapper, MallRefundMapper refundMapper, MallCompensationService compensationService){this.mapper=mapper;this.paymentMapper=paymentMapper;this.refundMapper=refundMapper;this.compensationService=compensationService;}
+    private final MallReconciliationMapper mapper; private final MallPaymentMapper paymentMapper; private final MallRefundMapper refundMapper; private final MallCompensationService compensationService; private final MallReconciliationAlertMapper alertMapper;
+    public MallReconciliationService(MallReconciliationMapper mapper, MallPaymentMapper paymentMapper, MallRefundMapper refundMapper, MallCompensationService compensationService, MallReconciliationAlertMapper alertMapper){this.mapper=mapper;this.paymentMapper=paymentMapper;this.refundMapper=refundMapper;this.compensationService=compensationService;this.alertMapper=alertMapper;}
     public List<MallReconciliationDiff> list(String type,String status,String businessNo,Integer limit,Integer offset){int l=limit==null?20:Math.min(Math.max(limit,1),100);int o=offset==null?0:Math.max(offset,0);return mapper.selectList(type,status,businessNo,l,o);}
     @Transactional(rollbackFor=Exception.class)
     public MallReconciliationDiff reconcile(MallReconciliationResult result){
@@ -48,4 +50,15 @@ public class MallReconciliationService {
         compensationService.create(taskType, diff.getBusinessNo(), diff.getOrderNo(), remark);
         return handle(diffId, "MANUAL", remark);
     }
+    @Transactional(rollbackFor=Exception.class)
+    public int generateAlerts() {
+        int created=0; java.time.LocalDateTime cutoff=java.time.LocalDateTime.now().minusMinutes(30);
+        for (MallReconciliationDiff diff : mapper.selectUnresolved(cutoff, 100)) {
+            MallReconciliationAlert alert=new MallReconciliationAlert(); alert.setAlertNo("RA-"+UUID.randomUUID().toString().replace("-","")); alert.setDiffId(diff.getDiffId()); alert.setAlertLevel("HIGH"); alert.setAlertMessage("对账差异超过30分钟未处理："+diff.getDiffNo());
+            if(alertMapper.insertIgnore(alert)==1) created++;
+        } return created;
+    }
+    public List<MallReconciliationAlert> alerts(String status,Integer limit,Integer offset){int l=limit==null?20:Math.min(Math.max(limit,1),100);int o=offset==null?0:Math.max(offset,0);return alertMapper.selectList(status,l,o);}
+    @Transactional(rollbackFor=Exception.class)
+    public MallReconciliationAlert acknowledgeAlert(Long alertId,String operator){if(alertId==null||alertId<=0)throw new ServiceException("告警参数无效");if(alertMapper.acknowledge(alertId,operator)==0)throw new ServiceException("告警不存在或已确认");return alertMapper.selectById(alertId);}
 }

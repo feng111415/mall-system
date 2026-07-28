@@ -11,5 +11,7 @@ public interface MallReconciliationMapper {
             @Param("businessNo") String businessNo, @Param("diffCode") String diffCode);
     List<MallReconciliationDiff> selectList(@Param("diffType") String diffType, @Param("status") String status,
             @Param("businessNo") String businessNo, @Param("limit") int limit, @Param("offset") int offset);
+    List<MallReconciliationDiff> selectUnresolved(@Param("cutoffTime") java.time.LocalDateTime cutoffTime,
+            @Param("limit") int limit);
     int updateStatus(@Param("diffId") Long diffId, @Param("status") String status, @Param("remark") String remark);
 }
