@@ -2,7 +2,7 @@
 
 > 新会话开始时，请先完整阅读本文件，再读取 `CONTEXT.md` 和本文件列出的相关文档。
 >
-> 最后更新：2026-07-28。商城 V0.2 前五项已完成真实跑通，第五项等待用户验收；**不得开始第六项个人中心与地址簿体验优化**，除非用户明确授权。
+> 最后更新：2026-07-28。商城 V0.2 前五项已完成真实跑通并推送 GitHub，第五项等待用户验收；明天从第五项确认继续，**不得提前开始第六项**。
 
 ## 1. 项目定位
 
@@ -17,7 +17,7 @@
 | 仓库目录 | `C:\Users\Administrator\Desktop\RuoYiWork\RuoYi-Vue-master` |
 | Git 分支 | `dev` |
 | 远程仓库 | `https://github.com/feng111415/mall-system.git` |
-| 当前已提交基线 | `ddb9547 test: 增加商城前台全链路验收脚本` |
+| 当前已提交基线 | `cf2ef81 feat: 完成商城 V0.2 前五项体验升级` |
 | 商城用户端 | `http://localhost:5174` |
 | 商城后端 | `http://localhost:8080` |
 | 后台联调后端 | `http://localhost:18080` |
@@ -244,7 +244,7 @@ powershell -ExecutionPolicy Bypass -File scripts/mall-storefront-e2e.ps1
 
 ## 9. 当前必须执行的工作：第五项用户验收
 
-第五项已完成开发、自动化回归和真实 Edge 浏览器验收，当前等待用户查看页面并确认结果；未获得明确授权前不得开始第六项。
+第五项已完成开发、自动化回归、真实 Edge 浏览器验收和 GitHub 推送。用户要求记录进度并于明天继续；恢复工作时先确认第五项，再决定是否开始第六项。
 
 第五项已确认：
 
@@ -257,14 +257,7 @@ powershell -ExecutionPolicy Bypass -File scripts/mall-storefront-e2e.ps1
 
 ## 10. 当前 Git 工作区处理原则
 
-以下 V0.2 文件已暂存：
-
-```text
-doc/development/mall-v0.2-api-contract.md
-sql/V2.7.0__mall_v0_2_catalog_seed.sql
-```
-
-其余 V0.2 代码修改仍未暂存，V0.2 尚未提交。后续只能在完成第 1 至第 5 项用户验收、进行代码审查和完整回归后，再由用户确认是否统一提交至 `dev`。
+V0.2 前五项已提交为 `cf2ef81` 并推送到 `origin/dev`，本地与远程分支一致。当前仓库除用户目录 `ai-web/` 外没有未提交项目改动。
 
 不得处理的未跟踪目录：`ai-web/`。
 
@@ -273,5 +266,5 @@ sql/V2.7.0__mall_v0_2_catalog_seed.sql
 新会话可直接发送：
 
 ```text
-请先读取 C:\Users\Administrator\Desktop\RuoYiWork\RuoYi-Vue-master\PROJECT_HANDOFF.md 和 CONTEXT.md，继续商城 V0.2。第五项购物车与结算体验已完成并等待用户验收，不要开始第六项；保留 ai-web/，不要修改 ry-vue，也不要清理或提交现有工作区。
+请先读取 C:\Users\Administrator\Desktop\RuoYiWork\RuoYi-Vue-master\PROJECT_HANDOFF.md 和 CONTEXT.md，继续商城 V0.2。前五项已完成并推送 GitHub，先确认第五项购物车与结算体验，再决定是否开始第六项；保留 ai-web/，不要修改 ry-vue，也不要清理现有工作区。
 ```
