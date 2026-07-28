@@ -1,6 +1,8 @@
 <script setup>
 import { onMounted, onUnmounted, ref } from 'vue'
-import { getProfile, loginBySms, logoutMember, sendSmsCode } from '../api/member'
+import { getAddresses, getProfile, loginBySms, logoutMember, sendSmsCode } from '../api/member'
+import { getOrders } from '../api/order'
+import { getCart } from '../api/cart'
 
 const phone = ref('')
 const code = ref('')
@@ -9,13 +11,31 @@ const message = ref('')
 const loading = ref(false)
 const seconds = ref(0)
 const member = ref(null)
+const addresses = ref([])
+const orderCount = ref(0)
+const cartCount = ref(0)
+const profileLoading = ref(false)
 let timer
 
 onMounted(async () => {
   if (!sessionStorage.getItem('mall-user-token')) return
-  try { member.value = (await getProfile()).data.data } catch { sessionStorage.removeItem('mall-user-token') }
+  await loadProfile()
 })
 onUnmounted(() => clearInterval(timer))
+
+async function loadProfile() {
+  profileLoading.value = true
+  try {
+    const [profileResponse, addressResponse, orderResponse, cartResponse] = await Promise.all([
+      getProfile(), getAddresses(), getOrders({ limit: 50 }), getCart()
+    ])
+    member.value = profileResponse.data.data
+    addresses.value = addressResponse.data.data || []
+    orderCount.value = (orderResponse.data.data || []).length
+    cartCount.value = (cartResponse.data.data?.items || []).length
+  } catch { sessionStorage.removeItem('mall-user-token') }
+  finally { profileLoading.value = false }
+}
 
 async function sendCode() {
   if (!/^1[3-9]\d{9}$/.test(phone.value)) return message.value = '请输入正确的中国大陆手机号'
@@ -50,10 +70,22 @@ async function logout() {
 <template>
   <section class="account-wrap">
     <div class="page-intro"><span class="section-kicker">个人中心</span><h1>{{ member ? `你好，${member.nickname}` : '欢迎回来' }}</h1><p>{{ member ? `手机号 ${member.maskedPhone || member.phone}` : '使用手机号验证码安全登录，未注册号码验证后将创建商城账号' }}</p></div>
-    <div v-if="member" class="profile-panel">
+    <p v-if="profileLoading" class="loading-note">正在加载个人中心...</p>
+    <template v-else-if="member">
+    <div class="profile-panel">
       <div class="profile-avatar">{{ member.nickname?.slice(0, 1) }}</div><div><strong>{{ member.nickname }}</strong><p>会员编号 M{{ member.memberId }}</p></div>
       <button class="add-button" @click="logout">退出登录</button>
     </div>
+    <div class="account-overview">
+      <router-link to="/orders"><strong>{{ orderCount }}</strong><span>我的订单</span></router-link>
+      <router-link to="/cart"><strong>{{ cartCount }}</strong><span>购物车商品</span></router-link>
+      <div><strong>{{ addresses.length }}</strong><span>收货地址</span></div>
+    </div>
+    <div class="account-sections">
+      <section class="account-section"><div class="section-heading"><div><span class="section-kicker">账户资料</span><h2>登录信息</h2></div></div><dl class="profile-details"><div><dt>手机号</dt><dd>{{ member.maskedPhone }}</dd></div><div><dt>会员编号</dt><dd>M{{ member.memberId }}</dd></div><div><dt>最近登录</dt><dd>{{ member.lastLoginTime || '本次登录' }}</dd></div></dl></section>
+      <section class="account-section"><div class="section-heading"><div><span class="section-kicker">收货地址</span><h2>地址簿</h2></div><router-link class="text-link" to="/checkout">去结算管理地址</router-link></div><div v-if="addresses.length" class="account-address-list"><article v-for="address in addresses" :key="address.addressId" class="account-address"><strong>{{ address.receiverName }} {{ address.receiverPhone }}</strong><span>{{ address.province }} {{ address.city }} {{ address.district }} {{ address.detailAddress }}</span><em v-if="address.isDefault === '1'">默认地址</em></article></div><p v-else class="loading-note">暂未保存收货地址，下单时可以添加。</p></section>
+    </div>
+    </template>
     <div v-else class="login-panel">
       <label>手机号<input v-model.trim="phone" inputmode="numeric" maxlength="11" placeholder="请输入手机号" /></label>
       <label>短信验证码<div class="code-field"><input v-model.trim="code" inputmode="numeric" maxlength="6" placeholder="6 位验证码" /><button type="button" :disabled="loading || seconds > 0" @click="sendCode">{{ seconds ? `${seconds}s 后重发` : '获取验证码' }}</button></div></label>
