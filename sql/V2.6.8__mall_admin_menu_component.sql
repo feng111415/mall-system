@@ -15,3 +15,6 @@ where menu_id=3004 and (component is null or component='');
 
 update sys_menu set component='mall/inventory/index', update_by='system', update_time=now()
 where menu_id=3050 and (component is null or component='');
+
+update sys_menu set icon='warehouse', update_by='system', update_time=now()
+where menu_id=3050 and (icon is null or icon='' or icon='goods');
