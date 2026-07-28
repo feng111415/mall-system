@@ -20,7 +20,7 @@ import com.ruoyi.mall.order.domain.MallOrder;
 import com.ruoyi.mall.order.domain.MallOrderItem;
 import com.ruoyi.mall.order.domain.MallOrderOperationLog;
 import com.ruoyi.mall.order.domain.MallOrderStatus;
-import com.ruoyi.mall.order.domain.MallPaymentStatus;
+import com.ruoyi.mall.order.domain.MallOrderPaymentStatus;
 import com.ruoyi.mall.order.domain.dto.MallCreateOrderRequest;
 import com.ruoyi.mall.order.mapper.MallOrderMapper;
 import com.ruoyi.mall.risk.service.MallRiskService;
@@ -43,7 +43,6 @@ public class MallOrderCreateService
         this(mapper, cartService, memberService, null, null);
     }
 
-    @Autowired
     public MallOrderCreateService(MallOrderMapper mapper, IMallCartService cartService,
             MallMemberAuthService memberService, InventoryPort inventoryPort)
     {
@@ -118,7 +117,7 @@ public class MallOrderCreateService
                 ? BigDecimal.ZERO : item.getLineAmount()).reduce(BigDecimal.ZERO, BigDecimal::add);
         MallOrder order = new MallOrder();
         order.setMemberId(memberId); order.setStatus(MallOrderStatus.PENDING_PAYMENT.name());
-        order.setPaymentStatus(MallPaymentStatus.UNPAID.name()); order.setIdempotencyKey(request.getIdempotencyKey());
+        order.setPaymentStatus(MallOrderPaymentStatus.UNPAID.name()); order.setIdempotencyKey(request.getIdempotencyKey());
         order.setRiskStatus("PENDING_CHECK");
         order.setProductAmount(productAmount); order.setShippingFee(BigDecimal.ZERO);
         order.setDiscountAmount(BigDecimal.ZERO); order.setPayableAmount(productAmount);

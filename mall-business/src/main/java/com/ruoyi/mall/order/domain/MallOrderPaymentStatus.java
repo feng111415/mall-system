@@ -1,6 +1,6 @@
 package com.ruoyi.mall.order.domain;
 
-public enum MallPaymentStatus
+public enum MallOrderPaymentStatus
 {
     UNPAID,
     PAYING,
