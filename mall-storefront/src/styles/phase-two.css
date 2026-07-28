@@ -19,6 +19,15 @@
 .account-address { position: relative; display: flex; flex-direction: column; gap: 7px; padding: 14px 0; border-bottom: 1px solid var(--line); font-size: 12px; }
 .account-address span { color: var(--muted); line-height: 1.6; }
 .account-address em { color: var(--red); font-style: normal; font-size: 11px; }
+.address-actions { display: flex; align-items: center; gap: 16px; }
+.text-button { border: 0; padding: 0; background: transparent; color: var(--red); font-size: 12px; }
+.address-form { display: grid; gap: 10px; padding: 16px 0 20px; border-bottom: 1px solid var(--line); }
+.address-form input:not([type="checkbox"]) { width: 100%; border: 1px solid var(--line); background: var(--paper); padding: 10px; outline: 0; font-size: 12px; }
+.address-form input:not([type="checkbox"]):focus { border-color: var(--ink); }
+.address-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.default-address { display: flex; align-items: center; gap: 7px; color: var(--muted); font-size: 12px; }
+.default-address input { accent-color: var(--ink); }
+.address-form .primary-button { justify-content: center; width: fit-content; }
 @media (max-width: 800px) { .account-overview { grid-template-columns: repeat(3, 1fr); } .account-overview > * { padding-right: 10px; margin-right: 10px; } .account-sections { grid-template-columns: 1fr; gap: 28px; } }
 .detail-layout { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(320px, .9fr); gap: 64px; padding: 36px 0; }
 .detail-image { background: #eceae5; aspect-ratio: 1 / 1; overflow: hidden; }
