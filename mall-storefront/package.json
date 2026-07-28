@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@vant/area-data": "^2.1.0",
     "axios": "1.7.9",
     "pinia": "3.0.3",
     "vant": "4.9.19",

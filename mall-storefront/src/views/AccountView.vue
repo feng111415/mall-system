@@ -1,5 +1,6 @@
 <script setup>
-import { onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { useCascaderAreaData } from '@vant/area-data'
 import { addAddress, getAddresses, getProfile, loginBySms, logoutMember, sendSmsCode } from '../api/member'
 import { getOrders } from '../api/order'
 import { getCart } from '../api/cart'
@@ -18,6 +19,12 @@ const profileLoading = ref(false)
 const addressFormOpen = ref(false)
 const addressSaving = ref(false)
 const addressForm = ref({ receiverName: '', receiverPhone: '', province: '', city: '', district: '', detailAddress: '', postalCode: '', isDefault: '0' })
+const regionOptions = useCascaderAreaData()
+const provinceCode = ref('')
+const cityCode = ref('')
+const districtCode = ref('')
+const cityOptions = computed(() => regionOptions.find(item => item.value === provinceCode.value)?.children || [])
+const districtOptions = computed(() => cityOptions.value.find(item => item.value === cityCode.value)?.children || [])
 let timer
 
 onMounted(async () => {
@@ -82,10 +89,34 @@ async function saveAddress() {
     if (saved) addresses.value = [saved, ...addresses.value]
     addressFormOpen.value = false
     addressForm.value = { receiverName: '', receiverPhone: '', province: '', city: '', district: '', detailAddress: '', postalCode: '', isDefault: '0' }
+    provinceCode.value = ''
+    cityCode.value = ''
+    districtCode.value = ''
     message.value = '收货地址已保存'
   } catch (error) {
     message.value = error.response?.data?.msg || '收货地址保存失败，请稍后重试'
   } finally { addressSaving.value = false }
+}
+
+function handleProvinceChange() {
+  const province = regionOptions.find(item => item.value === provinceCode.value)
+  addressForm.value.province = province?.text || ''
+  addressForm.value.city = ''
+  addressForm.value.district = ''
+  cityCode.value = ''
+  districtCode.value = ''
+}
+
+function handleCityChange() {
+  const city = cityOptions.value.find(item => item.value === cityCode.value)
+  addressForm.value.city = city?.text || ''
+  addressForm.value.district = ''
+  districtCode.value = ''
+}
+
+function handleDistrictChange() {
+  const district = districtOptions.value.find(item => item.value === districtCode.value)
+  addressForm.value.district = district?.text || ''
 }
 </script>
 
@@ -105,7 +136,7 @@ async function saveAddress() {
     </div>
     <div class="account-sections">
       <section class="account-section"><div class="section-heading"><div><span class="section-kicker">账户资料</span><h2>登录信息</h2></div></div><dl class="profile-details"><div><dt>手机号</dt><dd>{{ member.maskedPhone }}</dd></div><div><dt>会员编号</dt><dd>M{{ member.memberId }}</dd></div><div><dt>最近登录</dt><dd>{{ member.lastLoginTime || '本次登录' }}</dd></div></dl></section>
-      <section class="account-section"><div class="section-heading"><div><span class="section-kicker">收货地址</span><h2>地址簿</h2></div><div class="address-actions"><button class="text-button" type="button" @click="addressFormOpen = !addressFormOpen">{{ addressFormOpen ? '取消新增' : '新增地址' }}</button><router-link class="text-link" to="/checkout">去结算管理地址</router-link></div></div><div v-if="addressFormOpen" class="address-form"><div class="address-form-grid"><input v-model.trim="addressForm.receiverName" placeholder="收货人姓名" /><input v-model.trim="addressForm.receiverPhone" inputmode="numeric" maxlength="11" placeholder="收货人手机号" /><input v-model.trim="addressForm.province" placeholder="省/自治区" /><input v-model.trim="addressForm.city" placeholder="城市" /><input v-model.trim="addressForm.district" placeholder="区/县" /></div><input v-model.trim="addressForm.detailAddress" placeholder="详细地址" /><input v-model.trim="addressForm.postalCode" maxlength="12" placeholder="邮政编码（可选）" /><label class="default-address"><input v-model="addressForm.isDefault" true-value="1" false-value="0" type="checkbox" />设为默认地址</label><button class="primary-button" type="button" :disabled="addressSaving" @click="saveAddress">{{ addressSaving ? '正在保存...' : '保存地址' }}</button></div><div v-if="addresses.length" class="account-address-list"><article v-for="address in addresses" :key="address.addressId" class="account-address"><strong>{{ address.receiverName }} {{ address.receiverPhone }}</strong><span>{{ address.province }} {{ address.city }} {{ address.district }} {{ address.detailAddress }}</span><em v-if="address.isDefault === '1'">默认地址</em></article></div><p v-else class="loading-note">暂未保存收货地址，下单时可以添加。</p></section>
+      <section class="account-section"><div class="section-heading"><div><span class="section-kicker">收货地址</span><h2>地址簿</h2></div><div class="address-actions"><button class="text-button" type="button" @click="addressFormOpen = !addressFormOpen">{{ addressFormOpen ? '取消新增' : '新增地址' }}</button><router-link class="text-link" to="/checkout">去结算管理地址</router-link></div></div><div v-if="addressFormOpen" class="address-form"><div class="address-form-grid"><input v-model.trim="addressForm.receiverName" placeholder="收货人姓名" /><input v-model.trim="addressForm.receiverPhone" inputmode="numeric" maxlength="11" placeholder="收货人手机号" /><select v-model="provinceCode" @change="handleProvinceChange"><option value="">省/自治区</option><option v-for="item in regionOptions" :key="item.value" :value="item.value">{{ item.text }}</option></select><select v-model="cityCode" :disabled="!provinceCode" @change="handleCityChange"><option value="">城市</option><option v-for="item in cityOptions" :key="item.value" :value="item.value">{{ item.text }}</option></select><select v-model="districtCode" :disabled="!cityCode" @change="handleDistrictChange"><option value="">区/县</option><option v-for="item in districtOptions" :key="item.value" :value="item.value">{{ item.text }}</option></select></div><input v-model.trim="addressForm.detailAddress" placeholder="详细地址" /><input v-model.trim="addressForm.postalCode" maxlength="12" placeholder="邮政编码（可选）" /><label class="default-address"><input v-model="addressForm.isDefault" true-value="1" false-value="0" type="checkbox" />设为默认地址</label><button class="primary-button" type="button" :disabled="addressSaving" @click="saveAddress">{{ addressSaving ? '正在保存...' : '保存地址' }}</button></div><div v-if="addresses.length" class="account-address-list"><article v-for="address in addresses" :key="address.addressId" class="account-address"><strong>{{ address.receiverName }} {{ address.receiverPhone }}</strong><span>{{ address.province }} {{ address.city }} {{ address.district }} {{ address.detailAddress }}</span><em v-if="address.isDefault === '1'">默认地址</em></article></div><p v-else class="loading-note">暂未保存收货地址，下单时可以添加。</p></section>
     </div>
     </template>
     <div v-else class="login-panel">
