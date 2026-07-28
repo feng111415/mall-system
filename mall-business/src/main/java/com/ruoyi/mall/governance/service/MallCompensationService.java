@@ -114,15 +114,19 @@ public class MallCompensationService
 
     private void execute(MallCompensationTask task)
     {
-        if (inventoryPort == null) throw new IllegalStateException("InventoryPort 未配置");
         switch (task.getTaskType())
         {
-            case "INVENTORY_RELEASE" -> inventoryPort.release(requireBusinessKey(task));
-            case "INVENTORY_CONFIRM" -> inventoryPort.confirm(requireBusinessKey(task), true);
+            case "INVENTORY_RELEASE" -> { requireInventoryDependency(); inventoryPort.release(requireBusinessKey(task)); }
+            case "INVENTORY_CONFIRM" -> { requireInventoryDependency(); inventoryPort.confirm(requireBusinessKey(task), true); }
             case "PAYMENT_CONFIRM" -> confirmPayment(task);
             case "REFUND_CONFIRM" -> confirmRefund(task);
             default -> throw new ServiceException("暂未注册补偿处理器：" + task.getTaskType());
         }
+    }
+
+    private void requireInventoryDependency()
+    {
+        if (inventoryPort == null) throw new IllegalStateException("InventoryPort 未配置");
     }
 
     private void confirmPayment(MallCompensationTask task)
@@ -141,6 +145,7 @@ public class MallCompensationService
             throw new ServiceException("订单支付状态补偿失败");
         if (paymentMapper.updateSuccess(payment.getPaymentId()) != 1)
             throw new ServiceException("支付单状态补偿失败");
+        requireInventoryDependency();
         inventoryPort.confirm(order.getOrderNo(), true);
     }
 
