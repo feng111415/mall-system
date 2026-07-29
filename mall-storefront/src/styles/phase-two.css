@@ -389,3 +389,80 @@
   .checkout-item b { font-size: 12px; }
   .checkout-loading aside { display: none; }
 }
+
+/* V0.3 order detail */
+.order-card { display: block; transition: border-color .2s, transform .2s, box-shadow .2s; }
+.order-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(36, 35, 33, .06); }
+.order-card-body { display: grid; grid-template-columns: minmax(0, 1fr) auto 20px; }
+.order-card-body .van-icon { justify-self: end; font-size: 16px; }
+.order-page { max-width: 1240px; margin: auto; padding: 34px 28px 80px; }
+.order-back { display: inline-flex; align-items: center; gap: 7px; color: var(--muted); font-size: 12px; }
+.order-back:hover { color: var(--ink); }
+.order-page-header { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; padding: 48px 0 30px; border-bottom: 1px solid var(--line); }
+.order-page-header h1 { margin: 12px 0 8px; font-size: 34px; font-weight: 400; overflow-wrap: anywhere; }
+.order-page-header p { margin: 0; color: var(--muted); font-size: 12px; }
+.order-state { display: flex; min-width: 150px; align-items: flex-end; gap: 5px; flex-direction: column; }
+.order-state strong { color: var(--red); font-size: 18px; font-weight: 500; }
+.order-state span { color: var(--muted); font-size: 12px; }
+.payment-deadline { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px 20px; padding: 18px 0; border-bottom: 1px solid var(--line); }
+.payment-deadline > div { display: flex; align-items: center; gap: 9px; color: var(--muted); font-size: 12px; }
+.payment-deadline > div .van-icon { color: var(--red); font-size: 18px; }
+.payment-deadline > strong { color: var(--ink); font-size: 26px; font-variant-numeric: tabular-nums; font-weight: 500; }
+.payment-deadline > p { grid-column: 1 / -1; margin: 0; color: var(--red); font-size: 11px; }
+.order-detail-grid { display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: 58px; padding-top: 24px; }
+.order-section { padding: 22px 0 30px; border-bottom: 1px solid var(--line); }
+.order-section-title { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; }
+.order-section-title > span { color: var(--red); font-size: 10px; font-weight: 700; }
+.order-section-title h2 { margin: 0; font-size: 20px; }
+.order-product { display: grid; grid-template-columns: 82px minmax(0, 1fr) auto; align-items: center; gap: 16px; padding: 14px 0; border-top: 1px solid var(--line); }
+.order-product img { width: 82px; height: 82px; object-fit: cover; background: #eceae5; }
+.order-product > div { display: flex; min-width: 0; gap: 7px; flex-direction: column; }
+.order-product > div strong { font-size: 14px; font-weight: 500; }
+.order-product > div small, .order-product > div span { color: var(--muted); font-size: 11px; }
+.order-product > b { align-self: flex-start; padding-top: 2px; font-size: 13px; font-weight: 500; white-space: nowrap; }
+.order-address-detail { line-height: 1.8; }
+.order-address-detail strong { font-size: 14px; font-weight: 500; }
+.order-address-detail p { margin: 7px 0; color: var(--muted); font-size: 12px; }
+.order-address-detail small { color: var(--muted); font-size: 11px; }
+.order-operation-list { display: grid; gap: 0; margin: 0; padding: 0 0 0 8px; list-style: none; }
+.order-operation-list li { position: relative; display: grid; grid-template-columns: 15px minmax(0, 1fr); gap: 12px; padding-bottom: 20px; }
+.order-operation-list li:not(:last-child)::before { position: absolute; top: 13px; bottom: 0; left: 5px; width: 1px; background: var(--line); content: ''; }
+.order-operation-list i { position: relative; z-index: 1; width: 11px; height: 11px; margin-top: 3px; border: 3px solid var(--paper); border-radius: 50%; background: var(--red); box-shadow: 0 0 0 1px var(--red); }
+.order-operation-list strong { font-size: 13px; font-weight: 500; }
+.order-operation-list p { margin: 5px 0; color: var(--muted); font-size: 12px; line-height: 1.6; }
+.order-operation-list small { color: #959189; font-size: 10px; }
+.order-summary-panel { position: sticky; top: 96px; align-self: start; padding: 24px 0; border-top: 2px solid var(--ink); }
+.order-summary-panel > div { display: flex; justify-content: space-between; gap: 16px; padding: 8px 0; color: var(--muted); font-size: 12px; }
+.order-summary-panel > div b { color: var(--ink); font-weight: 500; }
+.order-summary-panel .order-summary-total { align-items: center; margin-top: 10px; padding: 18px 0; border-top: 1px solid var(--line); color: var(--ink); }
+.order-summary-total strong { color: var(--red); font-size: 23px; font-weight: 500; }
+.payment-attempts { margin-top: 12px; padding: 18px 0; border-top: 1px solid var(--line); }
+.payment-attempts h2 { margin: 0 0 12px; font-size: 16px; }
+.payment-attempts article { display: flex; gap: 5px; padding: 9px 0; flex-direction: column; border-bottom: 1px solid var(--line); }
+.payment-attempts article span { color: var(--green); font-size: 11px; }
+.payment-attempts article strong { font-size: 10px; font-weight: 500; overflow-wrap: anywhere; }
+.payment-attempts article small, .payment-attempts > p { margin: 0; color: var(--muted); font-size: 10px; line-height: 1.5; }
+.order-action { width: 100%; justify-content: center; margin-top: 10px; }
+.order-action .van-icon { font-size: 17px; }
+.order-secondary-action { width: 100%; margin-top: 9px; padding: 11px 16px; border: 1px solid var(--line); background: transparent; color: var(--muted); font-size: 12px; }
+.order-secondary-action:hover:not(:disabled) { border-color: var(--ink); color: var(--ink); }
+.order-secondary-action:disabled { opacity: .45; cursor: not-allowed; }
+
+@media (prefers-reduced-motion: reduce) {
+  .order-card { transition: none; }
+  .order-card:hover { transform: none; }
+}
+
+@media (max-width: 800px) {
+  .orders-wrap, .order-page { padding: 18px 18px 72px; }
+  .order-page-header { align-items: flex-start; padding-top: 32px; flex-direction: column; }
+  .order-page-header h1 { font-size: 24px; }
+  .order-state { min-width: 0; align-items: flex-start; }
+  .order-detail-grid { grid-template-columns: 1fr; gap: 0; padding-top: 8px; }
+  .order-summary-panel { position: static; grid-row: 1; margin-top: 8px; }
+  .order-product { grid-template-columns: 68px minmax(0, 1fr); gap: 12px; }
+  .order-product img { width: 68px; height: 68px; }
+  .order-product > b { grid-column: 2; padding-top: 0; }
+  .payment-deadline > strong { font-size: 22px; }
+  .order-card-body { grid-template-columns: minmax(0, 1fr) auto 16px; }
+}

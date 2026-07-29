@@ -6,5 +6,7 @@ public enum MallPaymentStatus
     PAYING,
     SUCCESS,
     FAILED,
-    CLOSED
+    CLOSED,
+    REFUNDING,
+    REFUNDED
 }

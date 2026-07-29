@@ -21,6 +21,7 @@ import com.ruoyi.mall.order.domain.MallOrder;
 import com.ruoyi.mall.order.mapper.MallOrderMapper;
 import com.ruoyi.mall.payment.domain.MallPayment;
 import com.ruoyi.mall.payment.mapper.MallPaymentMapper;
+import com.ruoyi.mall.payment.service.MallLatePaymentRefundService;
 
 class MallCompensationServiceTest
 {
@@ -29,6 +30,7 @@ class MallCompensationServiceTest
     @Mock private MallPaymentMapper paymentMapper;
     @Mock private MallRefundMapper refundMapper;
     @Mock private MallOrderMapper orderMapper;
+    @Mock private MallLatePaymentRefundService latePaymentRefundService;
     private MallCompensationService service;
 
     @BeforeEach
@@ -77,7 +79,7 @@ class MallCompensationServiceTest
     void paymentTaskConfirmsPaymentAndInventoryWithoutRepeatingSuccess()
     {
         MallCompensationService fullService = new MallCompensationService(mapper, inventoryPort,
-                paymentMapper, refundMapper, orderMapper);
+                paymentMapper, refundMapper, orderMapper, latePaymentRefundService);
         MallCompensationTask task = task("PAYMENT_CONFIRM", "PAY-1", "PENDING");
         MallPayment payment = new MallPayment(); payment.setPaymentId(3L); payment.setPaymentNo("PAY-1");
         payment.setOrderId(9L); payment.setStatus("PAYING");
@@ -97,7 +99,7 @@ class MallCompensationServiceTest
     void refundTaskOnlyFinalizesWhenProviderRefundNumberExists()
     {
         MallCompensationService fullService = new MallCompensationService(mapper, inventoryPort,
-                paymentMapper, refundMapper, orderMapper);
+                paymentMapper, refundMapper, orderMapper, latePaymentRefundService);
         MallCompensationTask task = task("REFUND_CONFIRM", "REF-1", "PENDING");
         MallRefund refund = new MallRefund(); refund.setRefundId(4L); refund.setRefundNo("REF-1");
         refund.setOrderId(9L); refund.setStatus("REFUNDING"); refund.setProviderRefundNo("PROVIDER-1");
@@ -110,6 +112,22 @@ class MallCompensationServiceTest
 
         assertEquals(1, fullService.runDueTasks());
         verify(orderMapper).markRefundSuccess(9L);
+    }
+
+    @Test
+    void latePaymentRefundTaskUsesRegisteredRefundHandler()
+    {
+        MallCompensationService fullService = new MallCompensationService(mapper, inventoryPort,
+                paymentMapper, refundMapper, orderMapper, latePaymentRefundService);
+        MallCompensationTask task = task("LATE_PAYMENT_REFUND", "PAY-1", "PENDING");
+        when(mapper.selectDue(50)).thenReturn(List.of(task));
+        when(mapper.markProcessing(1L)).thenReturn(1);
+        when(mapper.markSuccess(1L)).thenReturn(1);
+
+        assertEquals(1, fullService.runDueTasks());
+
+        verify(latePaymentRefundService).refund("PAY-1");
+        verify(mapper).markSuccess(1L);
     }
 
     private MallCompensationTask task(String type, String key, String status)

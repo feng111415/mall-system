@@ -11,11 +11,17 @@ public class MallPaymentService
 {
     private final MallPaymentStateService stateService;
     private final PaymentPort paymentPort;
+    private final MallPaymentResultPreparationService resultPreparationService;
+    private final MallLatePaymentRefundService latePaymentRefundService;
 
-    public MallPaymentService(MallPaymentStateService stateService, PaymentPort paymentPort)
+    public MallPaymentService(MallPaymentStateService stateService, PaymentPort paymentPort,
+            MallPaymentResultPreparationService resultPreparationService,
+            MallLatePaymentRefundService latePaymentRefundService)
     {
         this.stateService = stateService;
         this.paymentPort = paymentPort;
+        this.resultPreparationService = resultPreparationService;
+        this.latePaymentRefundService = latePaymentRefundService;
     }
 
     public MallPayment create(Long memberId, Long orderId, MallCreatePaymentRequest request)
@@ -41,6 +47,15 @@ public class MallPaymentService
 
     public MallPayment mockSuccess(Long memberId, String paymentNo)
     {
-        return stateService.mockSuccess(memberId, paymentNo);
+        MallPayment payment = resultPreparationService.recordMockSuccess(memberId, paymentNo);
+        if (!"REFUNDING".equals(payment.getStatus())) return payment;
+        try
+        {
+            return latePaymentRefundService.refund(payment.getPaymentNo());
+        }
+        catch (RuntimeException exception)
+        {
+            return payment;
+        }
     }
 }

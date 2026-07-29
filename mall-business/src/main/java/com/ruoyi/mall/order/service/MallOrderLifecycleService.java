@@ -7,7 +7,9 @@ import org.springframework.transaction.annotation.Transactional;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.common.utils.StringUtils;
 import com.ruoyi.mall.application.port.InventoryPort;
+import com.ruoyi.mall.application.port.PaymentExpirationPort;
 import com.ruoyi.mall.order.domain.MallOrder;
+import com.ruoyi.mall.order.domain.MallOrderPaymentWindow;
 import com.ruoyi.mall.order.domain.MallOrderStatus;
 import com.ruoyi.mall.order.domain.MallOrderOperationLog;
 import com.ruoyi.mall.order.mapper.MallOrderMapper;
@@ -16,14 +18,16 @@ import com.ruoyi.mall.order.mapper.MallOrderMapper;
 public class MallOrderLifecycleService
 {
     private static final int TIMEOUT_BATCH_SIZE = 100;
-    private static final int PAYMENT_TIMEOUT_MINUTES = 30;
     private final MallOrderMapper mapper;
     private final InventoryPort inventoryPort;
+    private final PaymentExpirationPort paymentExpirationPort;
 
-    public MallOrderLifecycleService(MallOrderMapper mapper, InventoryPort inventoryPort)
+    public MallOrderLifecycleService(MallOrderMapper mapper, InventoryPort inventoryPort,
+            PaymentExpirationPort paymentExpirationPort)
     {
         this.mapper = mapper;
         this.inventoryPort = inventoryPort;
+        this.paymentExpirationPort = paymentExpirationPort;
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -43,14 +47,28 @@ public class MallOrderLifecycleService
     @Transactional(rollbackFor = Exception.class)
     public int closeExpiredOrders()
     {
-        LocalDateTime cutoffTime = LocalDateTime.now().minusMinutes(PAYMENT_TIMEOUT_MINUTES);
-        List<MallOrder> candidates = mapper.selectTimeoutCandidates(cutoffTime, TIMEOUT_BATCH_SIZE);
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime unpaidCutoffTime = now.minusMinutes(MallOrderPaymentWindow.CREATE_MINUTES);
+        LocalDateTime payingCutoffTime = now.minusMinutes(MallOrderPaymentWindow.RESULT_MINUTES);
+        List<MallOrder> candidates = mapper.selectTimeoutCandidates(
+                unpaidCutoffTime, payingCutoffTime, TIMEOUT_BATCH_SIZE);
         int closed = 0;
         for (MallOrder candidate : candidates)
         {
+            if (isPayingPending(candidate))
+            {
+                if (candidate.getCreateTime() == null || candidate.getCreateTime().isAfter(payingCutoffTime)
+                        || !paymentExpirationPort.closePendingPayment(candidate.getOrderId())) continue;
+                MallOrder order = mapper.selectByIdForUpdate(candidate.getOrderId(), null);
+                if (!isPayingPending(order) || order.getCreateTime() == null
+                        || order.getCreateTime().isAfter(payingCutoffTime)) continue;
+                closeExpiredPayment(order, "支付结果等待超时自动关闭");
+                closed++;
+                continue;
+            }
             MallOrder order = mapper.selectByIdForUpdate(candidate.getOrderId(), null);
             if (order == null || !isUnpaidPending(order) || order.getCreateTime() == null
-                    || order.getCreateTime().isAfter(cutoffTime)) continue;
+                    || order.getCreateTime().isAfter(unpaidCutoffTime)) continue;
             close(order, MallOrderStatus.CLOSED.name(), "支付超时自动关闭", "SYSTEM", "order-timeout");
             closed++;
         }
@@ -63,6 +81,20 @@ public class MallOrderLifecycleService
         if (inventoryPort == null) throw new IllegalStateException("InventoryPort 未配置");
         if (mapper.updateStatus(order.getOrderId(), order.getStatus(), targetStatus, reason) != 1)
             throw new ServiceException("订单状态已变化，请刷新后重试");
+        completeClose(order, targetStatus, reason, operatorType, operatorId);
+    }
+
+    private void closeExpiredPayment(MallOrder order, String reason)
+    {
+        if (mapper.closeExpired(order.getOrderId(), order.getPaymentStatus(), reason) != 1)
+            throw new ServiceException("订单状态已变化，请刷新后重试");
+        order.setPaymentStatus("FAILED");
+        completeClose(order, MallOrderStatus.CLOSED.name(), reason, "SYSTEM", "order-timeout");
+    }
+
+    private void completeClose(MallOrder order, String targetStatus, String reason,
+            String operatorType, String operatorId)
+    {
         inventoryPort.release(order.getOrderNo());
 
         MallOrderOperationLog log = new MallOrderOperationLog();
@@ -83,6 +115,12 @@ public class MallOrderLifecycleService
     {
         return order != null && MallOrderStatus.PENDING_PAYMENT.name().equals(order.getStatus())
                 && "UNPAID".equals(order.getPaymentStatus());
+    }
+
+    private boolean isPayingPending(MallOrder order)
+    {
+        return order != null && MallOrderStatus.PENDING_PAYMENT.name().equals(order.getStatus())
+                && "PAYING".equals(order.getPaymentStatus());
     }
 
     private String normalizeReason(String reason, String fallback)

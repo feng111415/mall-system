@@ -9,6 +9,7 @@
         <result property="status" column="status"/><result property="idempotencyKey" column="idempotency_key"/>
         <result property="providerPaymentNo" column="provider_payment_no"/><result property="paymentUrl" column="payment_url"/>
         <result property="failureReason" column="failure_reason"/><result property="paidTime" column="paid_time"/>
+        <result property="providerRefundNo" column="provider_refund_no"/><result property="refundTime" column="refund_time"/>
         <result property="createTime" column="create_time"/><result property="updateTime" column="update_time"/>
     </resultMap>
 
@@ -28,6 +29,11 @@
     <select id="selectByPaymentNo" resultMap="Payment">
         select * from mall_payment where payment_no=#{paymentNo}
     </select>
+    <select id="selectMemberOrderPayments" resultMap="Payment">
+        select p.* from mall_payment p join mall_order o on o.order_id=p.order_id
+        where p.order_id=#{orderId} and p.member_id=#{memberId} and o.member_id=#{memberId}
+        order by p.payment_id desc
+    </select>
     <insert id="insertPayment" useGeneratedKeys="true" keyProperty="paymentId">
         insert ignore into mall_payment(payment_no,order_id,order_no,member_id,payment_method,amount,status,idempotency_key,create_time,update_time)
         values(#{paymentNo},#{orderId},#{orderNo},#{memberId},#{paymentMethod},#{amount},#{status},#{idempotencyKey},now(),now())
@@ -40,5 +46,19 @@
     <update id="updateSuccess">
         update mall_payment set status='SUCCESS',paid_time=now(),update_time=now()
         where payment_id=#{paymentId} and status='PAYING'
+    </update>
+    <update id="closePendingByOrder">
+        update mall_payment set status='CLOSED',failure_reason='支付结果等待超时',update_time=now()
+        where order_id=#{orderId} and status in ('CREATING','PAYING')
+    </update>
+    <update id="markLatePaymentRefunding">
+        update mall_payment set status='REFUNDING',paid_time=now(),failure_reason='订单关闭后收到支付成功结果',
+            update_time=now()
+        where payment_id=#{paymentId} and status in ('CLOSED','PAYING')
+    </update>
+    <update id="markLatePaymentRefunded">
+        update mall_payment set status='REFUNDED',provider_refund_no=#{providerRefundNo},refund_time=now(),
+            update_time=now()
+        where payment_id=#{paymentId} and status='REFUNDING'
     </update>
 </mapper>

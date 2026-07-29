@@ -45,12 +45,27 @@ class MallPaymentStateServiceTest
         when(paymentMapper.insertPayment(any())).thenAnswer(invocation -> {
             MallPayment payment = invocation.getArgument(0); payment.setPaymentId(11L); return 1;
         });
+        when(orderMapper.markPaymentPaying(1L)).thenReturn(1);
 
         MallPaymentStateService.PaymentBegin begin = service.beginPayment(7L, 1L, "pay-1");
 
         assertEquals(true, begin.shouldCallProvider());
         assertEquals("CREATING", begin.payment().getStatus());
         assertEquals(new BigDecimal("12.50"), begin.payment().getAmount());
+        verify(orderMapper).markPaymentPaying(1L);
+    }
+
+    @Test
+    void beginPaymentRejectsNewAttemptAfterThirtyMinutes()
+    {
+        MallOrder order = order("PENDING_PAYMENT", "UNPAID");
+        order.setCreateTime(LocalDateTime.now().minusMinutes(30));
+        when(paymentMapper.selectByOrderIdempotency(7L, 1L, "pay-late")).thenReturn(null);
+        when(orderMapper.selectByIdForUpdate(1L, 7L)).thenReturn(order);
+
+        assertThrows(ServiceException.class, () -> service.beginPayment(7L, 1L, "pay-late"));
+
+        verify(paymentMapper, never()).insertPayment(any());
     }
 
     @Test
@@ -58,14 +73,27 @@ class MallPaymentStateServiceTest
     {
         MallPayment payment = payment("CREATING"); payment.setPaymentId(11L);
         when(paymentMapper.selectByIdForUpdate(11L)).thenReturn(payment);
-        when(orderMapper.selectByIdForUpdate(1L, 7L)).thenReturn(order("PENDING_PAYMENT", "UNPAID"));
-        when(orderMapper.markPaymentPaying(1L)).thenReturn(1);
+        when(orderMapper.selectByIdForUpdate(1L, 7L)).thenReturn(order("PENDING_PAYMENT", "PAYING"));
         when(paymentMapper.updateCreationResult(11L, "PAYING", "PROVIDER-1", "/pay/1", null)).thenReturn(1);
 
         MallPayment result = service.finishCreation(11L, new PaymentCreateResult(true, "PROVIDER-1", "/pay/1", "ok"));
 
         assertEquals("PAYING", result.getStatus());
-        verify(orderMapper).markPaymentPaying(1L);
+        verify(orderMapper, never()).markPaymentPaying(1L);
+    }
+
+    @Test
+    void failedProviderCreationRestoresOrderForRetry()
+    {
+        MallPayment payment = payment("CREATING"); payment.setPaymentId(11L);
+        when(paymentMapper.selectByIdForUpdate(11L)).thenReturn(payment);
+        when(orderMapper.resetPaymentUnpaid(1L)).thenReturn(1);
+
+        MallPayment result = service.finishCreation(11L,
+                new PaymentCreateResult(false, null, null, "渠道繁忙"));
+
+        assertEquals("FAILED", result.getStatus());
+        verify(orderMapper).resetPaymentUnpaid(1L);
     }
 
     @Test
@@ -99,14 +127,41 @@ class MallPaymentStateServiceTest
     }
 
     @Test
-    void cannotPayClosedOrder()
+    void lateSuccessMovesClosedOrderToRefundingWithoutRestoringIt()
+    {
+        MallPayment payment = payment("CLOSED");
+        when(paymentMapper.selectByPaymentNoForUpdate("PAY-1")).thenReturn(payment);
+        when(orderMapper.selectByIdForUpdate(1L, 7L)).thenReturn(order("CLOSED", "FAILED"));
+        when(paymentMapper.markLatePaymentRefunding(11L)).thenReturn(1);
+        when(orderMapper.markLatePaymentRefunding(1L)).thenReturn(1);
+        when(orderMapper.insertOperationLog(any())).thenReturn(1);
+
+        MallPayment result = service.mockSuccess(7L, "PAY-1");
+
+        assertEquals("REFUNDING", result.getStatus());
+        verify(orderMapper).markLatePaymentRefunding(1L);
+        verify(inventoryPort, never()).confirm(any(), any(Boolean.class));
+        verify(orderMapper, never()).markPaymentSuccess(anyLong());
+    }
+
+    @Test
+    void callbackAfterResultDeadlineClosesOrderBeforeRefunding()
     {
         MallPayment payment = payment("PAYING");
+        MallOrder order = order("PENDING_PAYMENT", "PAYING");
+        order.setCreateTime(LocalDateTime.now().minusMinutes(36));
         when(paymentMapper.selectByPaymentNoForUpdate("PAY-1")).thenReturn(payment);
-        when(orderMapper.selectByIdForUpdate(1L, 7L)).thenReturn(order("CLOSED", "UNPAID"));
+        when(orderMapper.selectByIdForUpdate(1L, 7L)).thenReturn(order);
+        when(orderMapper.closeExpired(1L, "PAYING", "支付结果等待超时自动关闭")).thenReturn(1);
+        when(paymentMapper.markLatePaymentRefunding(11L)).thenReturn(1);
+        when(orderMapper.markLatePaymentRefunding(1L)).thenReturn(1);
+        when(orderMapper.insertOperationLog(any())).thenReturn(1);
 
-        assertThrows(ServiceException.class, () -> service.mockSuccess(7L, "PAY-1"));
-        verify(inventoryPort, never()).confirm(any(), any(Boolean.class));
+        MallPayment result = service.mockSuccess(7L, "PAY-1");
+
+        assertEquals("REFUNDING", result.getStatus());
+        verify(inventoryPort).release("M20260727150000000001");
+        verify(orderMapper, never()).markPaymentSuccess(anyLong());
     }
 
     private MallOrder order(String status, String paymentStatus)

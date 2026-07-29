@@ -17,10 +17,13 @@ public interface MallOrderMapper
     List<MallOrderItem> selectMemberOrderItems(@Param("orderId") Long orderId,
             @Param("memberId") Long memberId);
 
+    List<MallOrderOperationLog> selectMemberOrderOperations(@Param("orderId") Long orderId,
+            @Param("memberId") Long memberId);
+
     MallOrder selectByIdForUpdate(@Param("orderId") Long orderId, @Param("memberId") Long memberId);
 
-    List<MallOrder> selectTimeoutCandidates(@Param("cutoffTime") LocalDateTime cutoffTime,
-            @Param("limit") int limit);
+    List<MallOrder> selectTimeoutCandidates(@Param("unpaidCutoffTime") LocalDateTime unpaidCutoffTime,
+            @Param("payingCutoffTime") LocalDateTime payingCutoffTime, @Param("limit") int limit);
 
     MallOrder selectByIdempotencyKey(@Param("memberId") Long memberId,
             @Param("idempotencyKey") String idempotencyKey);
@@ -34,9 +37,18 @@ public interface MallOrderMapper
     int updateStatus(@Param("orderId") Long orderId, @Param("fromStatus") String fromStatus,
             @Param("toStatus") String toStatus, @Param("cancelReason") String cancelReason);
 
+    int closeExpired(@Param("orderId") Long orderId, @Param("paymentStatus") String paymentStatus,
+            @Param("cancelReason") String cancelReason);
+
     int markPaymentPaying(@Param("orderId") Long orderId);
 
+    int resetPaymentUnpaid(@Param("orderId") Long orderId);
+
     int markPaymentSuccess(@Param("orderId") Long orderId);
+
+    int markLatePaymentRefunding(@Param("orderId") Long orderId);
+
+    int markLatePaymentRefunded(@Param("orderId") Long orderId);
 
     int markShipped(@Param("orderId") Long orderId);
 

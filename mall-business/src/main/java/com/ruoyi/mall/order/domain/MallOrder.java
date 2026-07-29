@@ -29,9 +29,16 @@ public class MallOrder implements Serializable
     private String cancelReason;
     private Integer version;
     private LocalDateTime createTime;
+    private LocalDateTime payTime;
     private LocalDateTime closeTime;
     private LocalDateTime updateTime;
     private List<MallOrderItem> items;
+    private List<MallOrderOperationLog> operations;
+    private LocalDateTime paymentCreateDeadline;
+    private LocalDateTime paymentResultDeadline;
+    private Boolean canCreatePayment;
+    private Boolean canConfirmPayment;
+    private Boolean canCancel;
 
     public Long getOrderId() { return orderId; }
     public void setOrderId(Long orderId) { this.orderId = orderId; }
@@ -75,10 +82,24 @@ public class MallOrder implements Serializable
     public void setVersion(Integer version) { this.version = version; }
     public LocalDateTime getCreateTime() { return createTime; }
     public void setCreateTime(LocalDateTime createTime) { this.createTime = createTime; }
+    public LocalDateTime getPayTime() { return payTime; }
+    public void setPayTime(LocalDateTime payTime) { this.payTime = payTime; }
     public LocalDateTime getCloseTime() { return closeTime; }
     public void setCloseTime(LocalDateTime closeTime) { this.closeTime = closeTime; }
     public LocalDateTime getUpdateTime() { return updateTime; }
     public void setUpdateTime(LocalDateTime updateTime) { this.updateTime = updateTime; }
     public List<MallOrderItem> getItems() { return items; }
     public void setItems(List<MallOrderItem> items) { this.items = items; }
+    public List<MallOrderOperationLog> getOperations() { return operations; }
+    public void setOperations(List<MallOrderOperationLog> operations) { this.operations = operations; }
+    public LocalDateTime getPaymentCreateDeadline() { return paymentCreateDeadline; }
+    public void setPaymentCreateDeadline(LocalDateTime value) { this.paymentCreateDeadline = value; }
+    public LocalDateTime getPaymentResultDeadline() { return paymentResultDeadline; }
+    public void setPaymentResultDeadline(LocalDateTime value) { this.paymentResultDeadline = value; }
+    public Boolean getCanCreatePayment() { return canCreatePayment; }
+    public void setCanCreatePayment(Boolean canCreatePayment) { this.canCreatePayment = canCreatePayment; }
+    public Boolean getCanConfirmPayment() { return canConfirmPayment; }
+    public void setCanConfirmPayment(Boolean canConfirmPayment) { this.canConfirmPayment = canConfirmPayment; }
+    public Boolean getCanCancel() { return canCancel; }
+    public void setCanCancel(Boolean canCancel) { this.canCancel = canCancel; }
 }

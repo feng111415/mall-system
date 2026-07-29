@@ -13,6 +13,7 @@ import com.ruoyi.mall.order.domain.MallOrder;
 import com.ruoyi.mall.order.mapper.MallOrderMapper;
 import com.ruoyi.mall.payment.domain.MallPayment;
 import com.ruoyi.mall.payment.mapper.MallPaymentMapper;
+import com.ruoyi.mall.payment.service.MallLatePaymentRefundService;
 import com.ruoyi.mall.aftersale.domain.MallRefund;
 import com.ruoyi.mall.aftersale.mapper.MallRefundMapper;
 import com.ruoyi.mall.governance.domain.MallCompensationTask;
@@ -28,22 +29,25 @@ public class MallCompensationService
     private final MallPaymentMapper paymentMapper;
     private final MallRefundMapper refundMapper;
     private final MallOrderMapper orderMapper;
+    private final MallLatePaymentRefundService latePaymentRefundService;
 
     /** Constructor retained for isolated inventory compensation tests. */
     public MallCompensationService(MallCompensationMapper mapper, InventoryPort inventoryPort)
     {
-        this(mapper, inventoryPort, null, null, null);
+        this(mapper, inventoryPort, null, null, null, null);
     }
 
     @Autowired
     public MallCompensationService(MallCompensationMapper mapper, InventoryPort inventoryPort,
-            MallPaymentMapper paymentMapper, MallRefundMapper refundMapper, MallOrderMapper orderMapper)
+            MallPaymentMapper paymentMapper, MallRefundMapper refundMapper, MallOrderMapper orderMapper,
+            MallLatePaymentRefundService latePaymentRefundService)
     {
         this.mapper = mapper;
         this.inventoryPort = inventoryPort;
         this.paymentMapper = paymentMapper;
         this.refundMapper = refundMapper;
         this.orderMapper = orderMapper;
+        this.latePaymentRefundService = latePaymentRefundService;
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -120,8 +124,15 @@ public class MallCompensationService
             case "INVENTORY_CONFIRM" -> { requireInventoryDependency(); inventoryPort.confirm(requireBusinessKey(task), true); }
             case "PAYMENT_CONFIRM" -> confirmPayment(task);
             case "REFUND_CONFIRM" -> confirmRefund(task);
+            case "LATE_PAYMENT_REFUND" -> refundLatePayment(task);
             default -> throw new ServiceException("暂未注册补偿处理器：" + task.getTaskType());
         }
+    }
+
+    private void refundLatePayment(MallCompensationTask task)
+    {
+        if (latePaymentRefundService == null) throw new IllegalStateException("异常支付退款依赖未配置");
+        latePaymentRefundService.refund(requireBusinessKey(task));
     }
 
     private void requireInventoryDependency()

@@ -1,10 +1,12 @@
 package com.ruoyi.mall.order.service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.stereotype.Service;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.mall.order.domain.MallOrder;
 import com.ruoyi.mall.order.domain.MallOrderStatus;
+import com.ruoyi.mall.order.domain.MallOrderPaymentWindow;
 import com.ruoyi.mall.order.mapper.MallOrderMapper;
 
 @Service
@@ -35,6 +37,16 @@ public class MallOrderQueryService
         MallOrder order = mapper.selectMemberOrder(orderId, memberId);
         if (order == null) throw new ServiceException("订单不存在");
         order.setItems(mapper.selectMemberOrderItems(orderId, memberId));
+        order.setOperations(mapper.selectMemberOrderOperations(orderId, memberId));
+        LocalDateTime now = LocalDateTime.now();
+        order.setPaymentCreateDeadline(MallOrderPaymentWindow.createDeadline(order));
+        order.setPaymentResultDeadline(MallOrderPaymentWindow.resultDeadline(order));
+        boolean pending = MallOrderStatus.PENDING_PAYMENT.name().equals(order.getStatus());
+        order.setCanCreatePayment(pending && "UNPAID".equals(order.getPaymentStatus())
+                && MallOrderPaymentWindow.canCreatePayment(order, now));
+        order.setCanConfirmPayment(pending && "PAYING".equals(order.getPaymentStatus())
+                && !MallOrderPaymentWindow.isResultExpired(order, now));
+        order.setCanCancel(pending && "UNPAID".equals(order.getPaymentStatus()));
         return order;
     }
 

@@ -1,6 +1,7 @@
 package com.ruoyi.mall.payment.web;
 
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -11,6 +12,7 @@ import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.mall.member.service.MallMemberTokenService;
 import com.ruoyi.mall.payment.domain.dto.MallCreatePaymentRequest;
 import com.ruoyi.mall.payment.service.MallPaymentService;
+import com.ruoyi.mall.payment.service.MallPaymentQueryService;
 
 @Anonymous
 @RestController
@@ -19,11 +21,23 @@ public class MallPaymentPortalController
 {
     private final MallPaymentService paymentService;
     private final MallMemberTokenService tokenService;
+    private final MallPaymentQueryService paymentQueryService;
 
-    public MallPaymentPortalController(MallPaymentService paymentService, MallMemberTokenService tokenService)
+    public MallPaymentPortalController(MallPaymentService paymentService, MallMemberTokenService tokenService,
+            MallPaymentQueryService paymentQueryService)
     {
         this.paymentService = paymentService;
         this.tokenService = tokenService;
+        this.paymentQueryService = paymentQueryService;
+    }
+
+    @GetMapping("/orders/{orderId}/payments")
+    public AjaxResult listForOrder(
+            @RequestHeader(value = "Authorization", required = false) String authorization,
+            @PathVariable Long orderId)
+    {
+        return AjaxResult.success(paymentQueryService.listForOrder(
+                tokenService.requireMemberId(authorization), orderId));
     }
 
     @PostMapping("/orders/{orderId}/payment")

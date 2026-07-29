@@ -8,6 +8,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import java.util.List;
+import java.time.LocalDateTime;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -15,6 +16,7 @@ import org.mockito.MockitoAnnotations;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.mall.order.domain.MallOrder;
 import com.ruoyi.mall.order.domain.MallOrderItem;
+import com.ruoyi.mall.order.domain.MallOrderOperationLog;
 import com.ruoyi.mall.order.mapper.MallOrderMapper;
 import com.ruoyi.mall.order.service.MallOrderQueryService;
 
@@ -44,12 +46,19 @@ class MallOrderQueryServiceTest
     void detailLoadsItemsForCurrentMemberOnly()
     {
         MallOrder order = new MallOrder(); order.setOrderId(1L);
+        order.setStatus("PENDING_PAYMENT"); order.setPaymentStatus("UNPAID");
+        LocalDateTime created = LocalDateTime.now(); order.setCreateTime(created);
         when(mapper.selectMemberOrder(1L, 7L)).thenReturn(order);
         when(mapper.selectMemberOrderItems(1L, 7L)).thenReturn(List.of(new MallOrderItem()));
+        when(mapper.selectMemberOrderOperations(1L, 7L)).thenReturn(List.of(new MallOrderOperationLog()));
 
         MallOrder result = service.detail(7L, 1L);
 
         assertEquals(1, result.getItems().size());
+        assertEquals(1, result.getOperations().size());
+        assertEquals(created.plusMinutes(30), result.getPaymentCreateDeadline());
+        assertEquals(created.plusMinutes(35), result.getPaymentResultDeadline());
+        assertEquals(true, result.getCanCreatePayment());
         verify(mapper).selectMemberOrderItems(1L, 7L);
     }
 

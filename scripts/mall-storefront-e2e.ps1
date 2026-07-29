@@ -38,8 +38,34 @@ $preview = Api 'GET' "$api/checkout/preview" $auth; if ($preview.code -ne 200 -o
 $orderKey = [guid]::NewGuid().ToString(); $order = Api 'POST' "$api/orders" $auth @{ idempotencyKey = $orderKey; addressId = $addressId; remark = 'E2E test order' }; $orderId = $order.data.orderId
 $replay = Api 'POST' "$api/orders" $auth @{ idempotencyKey = $orderKey; addressId = $addressId; remark = 'E2E test order' }
 if ($order.code -ne 200 -or $orderId -le 0 -or $replay.data.orderId -ne $orderId) { throw 'order create/idempotency failed' }; Pass 'order create and replay' "order=$($order.data.orderNo)"
-$payment = Api 'POST' "$api/orders/$orderId/payment" $auth @{ idempotencyKey = [guid]::NewGuid().ToString() }; $paymentNo = $payment.data.paymentNo; $paid = Api 'POST' "$api/payments/$paymentNo/mock-success" $auth
-if ($payment.code -ne 200 -or [string]::IsNullOrWhiteSpace($paymentNo) -or $paid.code -ne 200 -or $paid.data.status -ne 'SUCCESS') { throw 'payment failed' }; Pass 'payment and mock success' $paymentNo
+$orderRoute = Invoke-WebRequest -UseBasicParsing -Uri "$web/orders/$orderId"
+$unpaidDetail = Api 'GET' "$api/orders/$orderId" $auth
+if ($orderRoute.StatusCode -ne 200 -or $unpaidDetail.code -ne 200 -or
+    [string]::IsNullOrWhiteSpace($unpaidDetail.data.paymentCreateDeadline) -or
+    [string]::IsNullOrWhiteSpace($unpaidDetail.data.paymentResultDeadline) -or
+    -not $unpaidDetail.data.canCreatePayment -or -not $unpaidDetail.data.canCancel -or
+    @($unpaidDetail.data.items).Count -eq 0 -or @($unpaidDetail.data.operations).Count -eq 0) {
+  throw 'module 1 order detail contract failed'
+}
+Pass 'independent order detail' 'route, snapshots, timeline and payment deadlines'
+$paymentKey = [guid]::NewGuid().ToString(); $payment = Api 'POST' "$api/orders/$orderId/payment" $auth @{ idempotencyKey = $paymentKey }; $paymentNo = $payment.data.paymentNo
+$payingDetail = Api 'GET' "$api/orders/$orderId" $auth; $paymentAttempts = Api 'GET' "$api/orders/$orderId/payments" $auth
+$attempt = @($paymentAttempts.data | Where-Object { $_.paymentNo -eq $paymentNo })[0]
+if ($payment.code -ne 200 -or [string]::IsNullOrWhiteSpace($paymentNo) -or
+    $payingDetail.data.paymentStatus -ne 'PAYING' -or -not $payingDetail.data.canConfirmPayment -or
+    $paymentAttempts.code -ne 200 -or -not $attempt -or -not [string]::IsNullOrWhiteSpace($attempt.idempotencyKey)) {
+  throw 'payment creation or member payment history failed'
+}
+Pass 'payment creation state' "payment=$paymentNo, order=PAYING"
+$otherPhone = '138' + (Get-Random -Minimum 10000000 -Maximum 99999999); Api 'POST' "$api/member/sms-code" @{} @{ phone = $otherPhone } | Out-Null
+$otherLogin = Api 'POST' "$api/member/login" @{} @{ phone = $otherPhone; code = '123456'; agreed = $true; userAgreementVersion = '1.0'; privacyPolicyVersion = '1.0' }
+$otherAuth = @{ Authorization = "Bearer $($otherLogin.data.token)" }; $otherPayments = Api 'GET' "$api/orders/$orderId/payments" $otherAuth
+if ($otherPayments.code -ne 200 -or @($otherPayments.data).Count -ne 0) { throw 'another member could read payment history' }
+Pass 'payment history ownership guard'
+$paid = Api 'POST' "$api/payments/$paymentNo/mock-success" $auth
+if ($paid.code -ne 200 -or $paid.data.status -ne 'SUCCESS') { throw 'payment confirmation failed' }; Pass 'mock payment success' $paymentNo
 $orderDetail = Api 'GET' "$api/orders/$orderId" $auth; $orders = Api 'GET' "$api/orders?limit=50" $auth; $listed = @($orders.data | Where-Object { $_.orderId -eq $orderId }).Count
-if ($orderDetail.code -ne 200 -or $orderDetail.data.status -notin @('PENDING_SHIPMENT', 'PAID') -or $orders.code -ne 200 -or $listed -eq 0) { throw 'order query failed' }; Pass 'order detail and list' "status=$($orderDetail.data.status)"
+if ($orderDetail.code -ne 200 -or $orderDetail.data.status -notin @('PENDING_SHIPMENT', 'PAID') -or
+    $orderDetail.data.paymentStatus -ne 'PAID' -or [string]::IsNullOrWhiteSpace($orderDetail.data.payTime) -or
+    $orders.code -ne 200 -or $listed -eq 0) { throw 'order query failed' }; Pass 'order detail and list' "status=$($orderDetail.data.status)"
 Write-Host 'E2E PASS: login -> catalog -> cart -> address -> checkout -> order -> payment' -ForegroundColor Cyan

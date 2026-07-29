@@ -19,7 +19,9 @@ public class MallPayment implements Serializable
     private String providerPaymentNo;
     private String paymentUrl;
     private String failureReason;
+    private String providerRefundNo;
     private LocalDateTime paidTime;
+    private LocalDateTime refundTime;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
 
@@ -47,8 +49,12 @@ public class MallPayment implements Serializable
     public void setPaymentUrl(String paymentUrl) { this.paymentUrl = paymentUrl; }
     public String getFailureReason() { return failureReason; }
     public void setFailureReason(String failureReason) { this.failureReason = failureReason; }
+    public String getProviderRefundNo() { return providerRefundNo; }
+    public void setProviderRefundNo(String providerRefundNo) { this.providerRefundNo = providerRefundNo; }
     public LocalDateTime getPaidTime() { return paidTime; }
     public void setPaidTime(LocalDateTime paidTime) { this.paidTime = paidTime; }
+    public LocalDateTime getRefundTime() { return refundTime; }
+    public void setRefundTime(LocalDateTime refundTime) { this.refundTime = refundTime; }
     public LocalDateTime getCreateTime() { return createTime; }
     public void setCreateTime(LocalDateTime createTime) { this.createTime = createTime; }
     public LocalDateTime getUpdateTime() { return updateTime; }
