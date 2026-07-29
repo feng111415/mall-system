@@ -1,52 +1,56 @@
 # 商城系统项目交接总览
 
-> 新会话开始时，请先完整阅读本文件，再读取 `CONTEXT.md` 和本文件列出的相关文档。
+> 新会话开始时，先完整阅读本文件和 `CONTEXT.md`，再开始任何修改。
 >
-> 最后更新：2026-07-29。商城 V0.2 前五项已完成真实跑通并通过用户验收，第六项已完成开发并等待用户验收；确认后进入第七项。
+> 最后更新：2026-07-29。商城 V0.1 和 V0.2 全部完成、回归通过并已推送 GitHub；后续工作必须由用户明确给出新范围。
 
-## 1. 项目定位
+## 1. 项目状态
 
-这是基于 RuoYi-Vue 的前后端分离商城测试项目。后台运营端复用若依能力，商城用户端为独立 Vue 3 应用；商城业务后端以独立模块接入若依工程。
+这是基于 RuoYi-Vue 的前后端分离单商户 B2C 商城测试项目。后台运营端复用若依能力，商城用户端是独立 Vue 3 应用，商城业务后端以独立模块接入若依工程。
 
-当前目标是将 V0.1 的基础交易闭环升级为 V0.2：优先完善用户端商品浏览、商品详情和加购体验，风格保持简洁生活方式商城，但需提升信息层次、反馈和交互。
+当前已完成：
 
-## 2. 仓库与环境
+- **V0.1**：会员、商品、库存、购物车、地址、结算、订单、Mock 支付、履约售后、风控治理、后台运营和数据库迁移。
+- **V0.2**：用户端商品浏览、全局框架、商品详情与加购、购物车结算、个人中心地址簿、最终视觉验收和完整回归。
+- 当前没有未完成的 V0.2 阶段；下一步由用户决定新的需求或版本范围。
+
+## 2. 仓库与运行环境
 
 | 项目项 | 当前值 |
 | --- | --- |
 | 仓库目录 | `C:\Users\Administrator\Desktop\RuoYiWork\RuoYi-Vue-master` |
 | Git 分支 | `dev` |
 | 远程仓库 | `https://github.com/feng111415/mall-system.git` |
-| 当前已提交基线 | `3f9b6e0 docs: 记录 V0.2 第五项开发进度` |
+| 最新功能提交 | `21d756f feat: 完成商城 V0.2 第六项地址簿体验` |
 | 商城用户端 | `http://localhost:5174` |
 | 商城后端 | `http://localhost:8080` |
-| 后台联调后端 | `http://localhost:18080` |
-| 若依后台 | `http://localhost:18081` |
 | Redis | `127.0.0.1:6379` |
+| MySQL | `127.0.0.1:3306`，Windows 服务 `MySQL84` |
 | 测试数据库 | `mall_migration_test_20260728` |
 | Mock 短信验证码 | `123456` |
 
-当前通常应有以下端口监听：`5174`、`6379`、`8080`、`18080`、`18081`。
+本轮结束时，`5174`、`6379`、`8080` 已在本机运行。`18080` 和 `18081` 是历史临时后台联调端口，不是商城用户端验收的常驻依赖。
 
-### 重要边界
+### 当前工作区规则
 
-- 不得修改原业务库 `ry-vue`；迁移与验证使用独立测试库。
-- `ai-web/` 是用户的未跟踪目录，必须保留、忽略，禁止提交、删除或重构。
-- V0.2 仍有工作区修改和暂存内容，尚未统一提交。不要为了清理工作区执行 reset、checkout 或删除未跟踪文件。
-- 当前只是测试项目，用户明确说暂时不打包；不要擅自构建 Docker 镜像或发布。
+- `ai-web/` 是用户的未跟踪目录，必须保留；禁止提交、删除、移动或重构。
+- 不修改原业务库 `ry-vue`；所有迁移、联调和验收只使用 `mall_migration_test_20260728`。
+- 当前是测试项目，不打包 Docker、不发布、不执行生产部署。
+- 后续项目改动完成验证后，必须提交并推送 GitHub `dev`。
+- 不执行 `git reset --hard`、`git checkout --`、清理未跟踪目录等破坏性操作。
 
-## 3. 技术架构与目录
+## 3. 架构与目录
 
 ```text
-mall-storefront (Vue 3 + Vite，商城用户端)
+mall-storefront (Vue 3 + Vite + Pinia + Vue Router + Vant)
        |
        | /api/mall/**，商城独立 Bearer Token
        v
-mall-business (Spring Boot 商城业务模块)
+mall-business (Spring Boot 商城模块)
        |
        +-- Controller -> Service -> Mapper -> MySQL
-       +-- Redis（验证码、缓存、Token 等基础能力）
-       +-- 复用 RuoYi 的框架、安全、任务、日志等通用能力
+       +-- Redis（验证码、缓存、Token）
+       +-- 复用 RuoYi 框架、安全、日志、任务等通用能力
 
 ruoyi-ui / ruoyi-admin (若依后台运营端)
 ```
@@ -56,215 +60,158 @@ ruoyi-ui / ruoyi-admin (若依后台运营端)
 ```text
 mall-storefront/                         商城用户端
 mall-business/                           商城业务后端
+ruoyi-admin/                             后端启动模块
 sql/                                     版本化数据库迁移
-scripts/mall-storefront-e2e.ps1          API 全链路验收脚本
-doc/                                     需求、架构、验收和开发记录
-doc/development/mall-v0.2-api-contract.md V0.2 商品接口契约
+scripts/mall-storefront-e2e.ps1          商城 API 全链路验收
+doc/                                     需求、架构、验收、开发记录
+doc/architecture/                        架构图与设计资料
 ```
 
-完整架构说明和图：`doc/商城系统-架构设计说明书.md`、`doc/architecture/`。
+核心文档：
 
-## 4. 开发规则（必须遵守）
+```text
+CONTEXT.md                               领域术语和统一语言
+doc/商城系统-需求分析说明书.md             需求基线
+doc/商城系统-架构设计说明书.md             架构说明和图
+doc/商城系统-订单状态设计.md               订单状态机
+doc/商城系统-开发进度.md                   简版进度
+doc/development/商城开发记录.md             历史开发记录
+doc/development/mall-v0.2-api-contract.md V0.2 商品查询契约
+```
 
-### 后端分层与接口
+## 4. 不可突破的开发规则
 
-- 固定分层：`Controller -> Service -> Mapper`，不得在 Controller 直接写业务或 SQL。
-- 商城用户端接口统一以 `/api/mall/**` 开头，返回统一使用 `AjaxResult`。
-- 会员身份使用商城独立的 Bearer Token，不混用后台管理员登录态。
-- 写操作使用 DTO、`@Valid` 校验和事务；DTO 不能被 Controller 绕过。
-- 数据库变更必须使用可重复验证的版本化 SQL 迁移，不手工改测试库结构。
-- 客户端传入的排序字段只能映射到服务端白名单，禁止将字段原样拼接进 SQL。
-- 收货地址的查询、修改、删除、设默认和下单必须校验地址归属当前会员。
-- 下单和支付必须保留幂等控制、库存二次校验；防止重复点击、刷单和超卖。
+### 后端与数据
+
+- 固定分层：`Controller -> Service -> Mapper`；Controller 不写业务规则或 SQL。
+- 商城用户端接口统一 `/api/mall/**`，返回统一使用 `AjaxResult`。
+- 会员使用商城独立 Bearer Token，绝不混用若依后台管理员 Token。
+- 写操作使用 DTO、`@Valid` 和事务；Controller 不得绕过 DTO。
+- 数据库变更只能使用版本化 SQL 迁移，不能手工改测试库结构。
+- 客户端排序字段必须映射到服务端白名单，禁止原样拼接进 SQL。
+- 地址查询、修改、删除、设默认和下单必须按当前会员校验资源归属。
+- 下单与支付必须保留幂等控制、库存二次校验和防超卖逻辑。
 
 ### 安全与治理
 
-- 短信验证码登录需考虑手机号格式合规、验证码时效、次数限制和错误次数限制。
-- Token 不在 URL、日志或响应中泄露；接口按身份和资源归属鉴权。
-- 关键写操作保留操作日志；版本通过 Git 分支、标签、提交与发布脚本管理，可回滚。
-- 后台权限采用 RuoYi 的 RBAC；商城会员权限与后台管理员权限隔离。
+- 短信验证码需要保持手机号校验、过期、重发间隔、日限额和错误次数限制。
+- Token 不得出现在 URL、日志或响应中。
+- 关键写操作保留操作日志；版本通过 Git 分支、提交和发布脚本管理。
+- 后台权限使用 RuoYi RBAC；商城会员权限与管理员权限严格隔离。
 
 ### 前端
 
-- 用户端技术栈：Vue 3、Vite、Vue Router、Pinia（既有项目模式），不要引入与现有架构冲突的状态或请求方案。
-- 风格：简洁生活方式商城，增强层次、状态反馈、加载骨架、空状态和移动端体验；不要做营销落地页式的大横幅堆叠。
-- 适配桌面和移动端，移动端五栏底部导航可用且不得有横向溢出。
-- 新接口、新页面必须按既有 API/Store/组件组织方式接入，不能把请求、业务判断散落在页面中。
+- 延续 Vue 3、Vite、Vue Router、Pinia、Vant 的既有组织方式，不引入冲突的请求或状态方案。
+- 新请求集中在 `src/api/`，全局状态集中在 Store，页面不散落底层请求实现。
+- 保持简洁生活方式商城风格，覆盖加载、空状态、错误反馈、交互忙碌态和移动端体验。
+- 桌面与移动端都必须验收；移动端五栏底部导航可用，页面不得横向溢出。
 
-## 5. V0.1 已有能力
+## 5. V0.1 已完成能力
 
-V0.1 已完成基础商城链路：
+- 手机号 + 短信验证码注册登录，开发环境固定验证码为 `123456`。
+- 独立会员 Token、会员资料、协议同意和收货地址。
+- 分类、品牌、SPU、SKU、库存快照、库存预占和库存流水。
+- 购物车、结算预览、订单创建、订单快照、订单幂等和 Mock 支付。
+- 订单列表、物流履约、售后退款、基础风控、补偿任务、支付退款对账与告警。
+- 若依运营后台、RBAC 菜单权限、操作审计、版本化数据库迁移和全链路验收脚本。
 
-- 手机号 + 短信验证码注册登录，固定 Mock 验证码为 `123456`。
-- 商品、SKU、库存、购物车、地址、结算、订单、Mock 支付、订单列表和详情。
-- 防重复下单/支付的幂等控制，库存扣减及二次校验。
-- 后台运营模块、数据库迁移、基础风控与操作治理。
-- API 全链路脚本已覆盖登录、浏览、加购、地址、结算、下单、幂等重放和支付。
+## 6. V0.2 完成清单
 
-历史资料按需要读取：
-
-```text
-doc/商城系统-需求分析说明书.md
-doc/商城系统-架构设计说明书.md
-doc/商城系统-订单状态设计.md
-doc/商城系统-开发进度.md
-doc/商城系统-验收记录.md
-doc/商城系统-数据库迁移验证.md
-doc/商城系统-前后端联调记录.md
-doc/development/商城开发记录.md
-```
-
-## 6. V0.2 需求与执行顺序
-
-已与用户确认的 V0.2 目标：
-
-1. 用户端优先。
-2. 必要时可补充后端接口，但必须遵循上述第一版架构和规则。
-3. 测试库补充 8 个演示商品。
-4. 在简洁生活方式风格上增强层次、反馈和互动。
-5. 按阶段逐项完成和验证；当前等待第六项验收。
-
-| 序号 | 阶段 | 状态 | 当前结果 |
+| 序号 | 阶段 | 状态 | 结果 |
 | --- | --- | --- | --- |
-| 1 | 接口与数据基线 | 已完成 | 商品契约、8 个演示 SPU、17 个 SKU、17 条库存快照 |
-| 2 | 商品浏览 | 已完成 | 首页真实数据、分类、搜索、排序、骨架与空状态 |
+| 1 | 接口与数据基线 | 已完成 | 商品契约、8 个 SPU、17 个 SKU、17 条库存快照 |
+| 2 | 商品浏览 | 已完成 | 首页真实商品、分类、搜索、排序、骨架和空状态 |
 | 3 | 全局框架 | 已完成 | 桌面导航、移动五栏、全局通知、购物车角标同步 |
-| 4 | 商品详情与加购 | 已完成并验收 | SKU/数量/库存、加购反馈、相关推荐、最近浏览 |
-| 5 | 购物车与结算体验 | 已完成并验收 | 全选、数量与库存反馈、失效清理、结算步骤、地址、备注、支付结果 |
-| 6 | 个人中心与地址簿体验 | 已完成，待用户验收 | 地址编辑、删除、默认地址切换、表单反馈和移动端交互 |
-| 7 | 视觉验收、回归、提交 | 未开始 | 最后统一审查、回归、Git 提交 |
+| 4 | 商品详情与加购 | 已完成并验收 | SKU、数量、库存、加购反馈、相关推荐和最近浏览 |
+| 5 | 购物车与结算体验 | 已完成并验收 | 全选、数量金额、失效处理、地址、备注、结算进度和支付结果 |
+| 6 | 个人中心与地址簿 | 已完成并验收 | 地址编辑、删除、默认切换、表单反馈和移动端交互 |
+| 7 | 视觉验收、回归、提交 | 已完成 | 构建、53 项后端测试、14 项 API、14 个浏览器视图和 GitHub 同步 |
 
-## 7. V0.2 已完成内容
+### 商品与浏览
 
-### 7.1 数据与契约
+- 测试库含 8 个已上架 SPU、17 个有效 SKU、17 条库存快照，覆盖家居、数码、穿搭、咖啡和出行。
+- `GET /api/mall/catalog/products` 支持 `categoryId`、`keyword`、`sort`；排序只允许 `default`、`sales`、`priceAsc`、`priceDesc`。
+- 首页显示全部 8 个真实商品；商品列表提供分类、关键词、销量与价格排序、加载骨架和空状态。
 
-新增文件：
+### 商品详情、购物车与结算
 
-```text
-sql/V2.7.0__mall_v0_2_catalog_seed.sql
-doc/development/mall-v0.2-api-contract.md
-```
+- 商品详情默认选中可售 SKU；切换 SKU 后价格与库存同步；售罄 SKU 禁止加购；数量受库存边界限制。
+- 详情页安全清理 `detailHtml` 后渲染，提供相关推荐与最近浏览。
+- 购物车支持全选、数量调整、删除、刷新、失效清理、库存提示和粘性结算栏。
+- 结算页提供地址选择、费用明细、订单备注（最多 200 字）、确认订单、模拟支付和订单入口。
+- 订单备注已经由订单详情接口确认落库；重复提交与重复支付受幂等控制。
 
-迁移已在独立测试库重复执行验证。当前数据：8 个已上架 SPU、17 个有效 SKU、17 条库存快照。商品覆盖家居、数码、穿搭、咖啡、出行，包含正常库存、低库存与售罄 SKU。
+### 个人中心与地址簿
 
-### 7.2 商品浏览接口
+- 会员 API 已接入地址新增、查询、修改、删除；后端持续按 `addressId + memberId` 校验归属。
+- 个人中心提供新增/编辑共用表单、省市区级联、收货人/手机号/地区/详细地址字段校验和错误反馈。
+- 地址卡片支持设为默认、编辑、页面内删除确认、忙碌态及全局成功/失败通知。
+- 地址编辑、设默认、删除后会刷新列表和地址数量；移动端操作区改为单列布局。
 
-扩展接口：
+## 7. 最近完整验证
 
-```text
-GET /api/mall/catalog/products
-参数：categoryId、keyword、sort
-sort 白名单：default、sales、priceAsc、priceDesc
-```
+| 验证项 | 命令或方式 | 结果 |
+| --- | --- | --- |
+| 后端全量测试 | `mvn -pl mall-business -am test` | 53 项通过，0 失败 |
+| 用户端生产构建 | `npm.cmd run build`（`mall-storefront`） | 通过 |
+| API 全链路 | `powershell -ExecutionPolicy Bypass -File scripts/mall-storefront-e2e.ps1` | 14 项通过 |
+| 真实 Edge 交互 | 登录、加购、购物车、结算、支付、地址簿 | 通过 |
+| 最终视觉审查 | 7 条核心路由，1440px + 390px | 14 个视图通过，无控制台错误、无图片加载失败、无横向溢出 |
 
-涉及文件：
+最终视觉审查覆盖：`/`、`/catalog`、`/product/1`、`/cart`、`/checkout`、`/orders`、`/account`。两种视口均满足 `scrollWidth == clientWidth`。
 
-```text
-mall-business/src/main/java/com/ruoyi/mall/domain/product/dto/MallCatalogProductQuery.java
-mall-business/.../MallProductPortalController.java
-mall-business/.../IMallProductService.java
-mall-business/.../MallProductServiceImpl.java
-mall-business/.../MallProductMapper.java
-mall-business/src/main/resources/mapper/mall/product/MallProductMapper.xml
-mall-business/.../MallProductServiceImplTest.java
-```
+验证只写入独立测试库 `mall_migration_test_20260728`；原库 `ry-vue` 未修改。
 
-已验证销量、价格升序和关键字筛选，非法 `sort` 会回退默认排序，未进入动态 SQL。
+## 8. 环境启动与停止
 
-### 7.3 用户端界面
-
-新增：
-
-```text
-mall-storefront/src/components/StoreProductCard.vue
-mall-storefront/src/stores/notice.js
-```
-
-主要改动：
-
-```text
-mall-storefront/src/App.vue
-mall-storefront/src/stores/cart.js
-mall-storefront/src/styles/phase-two.css
-mall-storefront/src/views/HomeView.vue
-mall-storefront/src/views/CatalogView.vue
-mall-storefront/src/views/ProductDetailView.vue
-mall-storefront/src/views/CartView.vue
-mall-storefront/src/views/AccountView.vue
-```
-
-当前页面能力：
-
-- 首页展示真实热销商品、分类场景和加载骨架。
-- 商品列表支持关键词、分类、综合/销量/价格排序和空状态。
-- 全局搜索可清除，顶部购物车角标会同步；有统一成功/失败通知。
-- 商品详情默认选择可售 SKU；SKU 切换时价格和库存同步；售罄 SKU 禁止加购；数量限制为 `1..库存`；重复点击有防护。
-- 商品详情会安全清理 `detailHtml` 后再渲染，展示相关推荐，并将最近浏览商品 ID 写入 localStorage。
-- 购物车的数量修改、选择和删除已有全局反馈；登录/退出与 Token 失效会同步清空或刷新角标。
-
-### 7.4 购物车与结算体验
-
-- 购物车支持全选/取消全选、按商品更新数量、移除商品、清理失效商品和手动刷新。
-- 商品行明确展示可售、低库存、库存不足和失效状态，以及单价、数量和小计。
-- 结算栏展示已选件数、合计金额和不能结算的具体原因；移动端结算栏不被通知或底部导航遮挡。
-- 结算页增加确认订单、模拟支付、支付完成三步状态；地址默认标记、商品金额拆分和订单汇总更清晰。
-- 订单备注随下单请求提交，限制 200 字；支付完成后可直接进入订单中心。
-- 没有新增后端或数据库能力，继续复用既有购物车、结算、订单幂等和 Mock 支付接口。
-
-## 8. 已完成验证
-
-后端单元测试：
+### 启动前检查
 
 ```powershell
-mvn -pl mall-business -am test
+Get-Service MySQL84
+Get-NetTCPConnection -State Listen -LocalPort 5174,6379,8080
 ```
 
-最近完整结果：`53 tests passed`。
-
-前端构建：
+### Redis
 
 ```powershell
-Set-Location mall-storefront
-npm.cmd run build
+Set-Location C:\Users\Administrator\Desktop\RuoYiWork\tools\redis
+.\redis-server.exe --bind 127.0.0.1 --port 6379 --protected-mode yes
 ```
 
-结果：通过。
+### 商城后端
 
-API 全链路验收：
+后端必须显式连接测试库，禁止使用配置文件默认的 `ry-vue`：
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File scripts/mall-storefront-e2e.ps1
+Set-Location C:\Users\Administrator\Desktop\RuoYiWork\RuoYi-Vue-master
+$env:RUOYI_DATASOURCE_URL='jdbc:mysql://127.0.0.1:3306/mall_migration_test_20260728?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai'
+$env:RUOYI_DATASOURCE_USERNAME='root'
+$env:RUOYI_DATASOURCE_PASSWORD='julietren76'
+$env:MALL_SMS_MOCK_CODE='123456'
+java -Xms256m -Xmx1024m -jar ruoyi-admin\target\ruoyi-admin.jar --server.port=8080
 ```
 
-最近多次通过，覆盖：路由可访问、后端健康检查、匿名购物车拦截、短信登录、商品/SKU 浏览、重复加购后的数量正确为 2、无地址结算拦截、地址新增与查询、结算预览、订单创建、订单幂等重放、Mock 支付、订单详情与列表。
+健康检查：
 
-已使用本机 Edge 无头截图检查首页、商品列表、商品详情的桌面/移动布局和移动端五栏导航。截图临时位于 `C:\Windows\Temp\mall-*.png`。
+```powershell
+Invoke-RestMethod http://127.0.0.1:8080/api/mall/health
+```
 
-第五项浏览器验收已真实跑通：两种商品加购、数量更新、全选切换、结算预览、默认地址、订单备注、订单创建、Mock 支付和订单备注落库均通过；桌面与 390px 移动布局无横向溢出或关键元素重叠。
+### 商城用户端
 
-## 9. 当前必须执行的工作：第六项用户验收
+```powershell
+Set-Location C:\Users\Administrator\Desktop\RuoYiWork\RuoYi-Vue-master\mall-storefront
+npm.cmd run dev -- --host 0.0.0.0
+```
 
-第五项已完成开发、自动化回归、真实 Edge 浏览器验收并通过用户确认。第六项已完成开发、自动化回归和真实 Edge 浏览器验收，当前等待用户确认；确认后再开始第七项。
+访问：`http://localhost:5174/`。
 
-第六项已完成：
+停止临时进程时，只停止对应 Java、Node 或 Redis 进程；不要停止 MySQL84 服务、删除测试库或清理 `ai-web/`。
 
-1. 地址新增和编辑共用表单，收货人、手机号、地区和详细地址校验有效。
-2. 编辑地址后列表刷新，修改后的收货信息可在个人中心和结算页继续使用。
-3. 设为默认会更新默认标记并取消同一会员的旧默认地址。
-4. 删除操作需要页面内确认，删除后列表和地址数量同步刷新。
-5. API 归属校验继续按会员 Token 生效，未访问其他会员地址。
-6. 桌面端和 390px 移动端无横向溢出，地址卡片操作区不遮挡内容。
-
-## 10. 当前 Git 工作区处理原则
-
-V0.2 前五项已提交为 `cf2ef81` 并推送到 `origin/dev`，本地与远程分支一致。当前仓库除用户目录 `ai-web/` 外没有未提交项目改动。
-
-不得处理的未跟踪目录：`ai-web/`。
-
-## 11. 新会话建议开场指令
+## 9. 新会话入口
 
 新会话可直接发送：
 
 ```text
-请先读取 C:\Users\Administrator\Desktop\RuoYiWork\RuoYi-Vue-master\PROJECT_HANDOFF.md 和 CONTEXT.md，继续商城 V0.2。前五项已完成并验收，第六项个人中心与地址簿已开发完成，先确认第六项再开始第七项；保留 ai-web/，不要修改 ry-vue，也不要清理现有工作区。
+请先读取 C:\Users\Administrator\Desktop\RuoYiWork\RuoYi-Vue-master\PROJECT_HANDOFF.md 和 CONTEXT.md。商城 V0.1、V0.2 已完成并通过完整回归，当前没有进行中的需求。请先根据我接下来的明确需求评估范围；保留 ai-web/，不要修改 ry-vue，不要清理工作区，也不要擅自发布或打包 Docker。
 ```
