@@ -171,7 +171,8 @@ doc/development/mall-v0.2-api-contract.md V0.2 商品查询契约
 - 无支付单订单到第 30 分钟关闭；已创建支付单订单等待到第 35 分钟，再关闭支付单与订单并释放库存。
 - 关闭后收到支付成功结果时，订单保持 `CLOSED`，支付进入 `REFUNDING -> REFUNDED`；补偿任务与状态变更同事务持久化，再尝试即时原路退款。
 - 新增会员接口 `GET /api/mall/orders/{orderId}/payments`，SQL 同时校验订单和支付记录的会员归属，返回前清除幂等键。
-- 数据库版本为 `V2.8.0__mall_payment_deadline.sql`；回滚脚本位于 `sql/rollback/V2.8.0__mall_payment_deadline_rollback.sql`。
+- 数据库版本为 `V2.8.0__mall_payment_deadline.sql` 和 `V2.8.1__mall_order_timeout_job.sql`；对应回滚脚本位于 `sql/rollback/`。
+- V2.8.1 注册每分钟执行一次的 Quartz 订单超时任务。超时订单保持 `CLOSED` 终态并展示“支付超时已关闭”，释放库存后不会计入每会员最多 3 笔进行中待付款订单。
 
 本模块验收结果：后端 65 项单元测试通过，用户端生产构建通过，API 全链路 17 项通过；Edge 1440px/390px 订单详情无横向溢出、控制台错误或图片失败；V2.8 空库升级、回滚、再升级通过；迟到支付集成验证确认订单关闭、支付退款、库存释放和补偿任务一致。
 

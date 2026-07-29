@@ -112,6 +112,10 @@ async function cancelCurrentOrder() {
 function formatPrice(value) { return Number(value || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2 }) }
 function formatTime(value) { return value ? new Date(value).toLocaleString('zh-CN', { hour12: false }) : '-' }
 function statusLabel(status) { return statusLabels[status] || status || '-' }
+function orderStatusLabel(value) {
+  if (value?.status === 'CLOSED' && (value.cancelReason || '').includes('超时')) return '支付超时已关闭'
+  return statusLabel(value?.status)
+}
 function paymentLabel(status) { return paymentLabels[status] || status || '-' }
 function attemptLabel(status) { return attemptLabels[status] || status || '-' }
 </script>
@@ -124,7 +128,7 @@ function attemptLabel(status) { return attemptLabels[status] || status || '-' }
     <template v-else-if="order">
       <header class="order-page-header">
         <div><span class="section-kicker">订单详情</span><h1>{{ order.orderNo }}</h1><p>下单于 {{ formatTime(order.createTime) }}</p></div>
-        <div class="order-state"><strong>{{ statusLabel(order.status) }}</strong><span>{{ paymentLabel(order.paymentStatus) }}</span></div>
+        <div class="order-state"><strong>{{ orderStatusLabel(order) }}</strong><span>{{ paymentLabel(order.paymentStatus) }}</span></div>
       </header>
 
       <section v-if="order.status === 'PENDING_PAYMENT'" class="payment-deadline" aria-live="polite">

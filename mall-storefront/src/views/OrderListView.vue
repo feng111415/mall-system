@@ -37,7 +37,10 @@ async function loadOrders() {
   }
 }
 
-function statusLabel(status) { return statusLabels[status] || status }
+function statusLabel(order) {
+  if (order.status === 'CLOSED' && (order.cancelReason || '').includes('超时')) return '支付超时已关闭'
+  return statusLabels[order.status] || order.status
+}
 function formatPrice(value) { return Number(value || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2 }) }
 function formatTime(value) { return value ? new Date(value).toLocaleString('zh-CN', { hour12: false }) : '-' }
 </script>
@@ -56,7 +59,7 @@ function formatTime(value) { return value ? new Date(value).toLocaleString('zh-C
     <p v-if="loading" class="loading-note">正在读取订单...</p>
     <div v-else-if="orders.length" class="order-list">
       <router-link v-for="item in orders" :key="item.orderId" class="order-card" :to="`/orders/${item.orderId}`">
-        <div class="order-card-head"><span>{{ item.orderNo }}</span><strong>{{ statusLabel(item.status) }}</strong></div>
+        <div class="order-card-head"><span>{{ item.orderNo }}</span><strong>{{ statusLabel(item) }}</strong></div>
         <div class="order-card-body"><span>{{ formatTime(item.createTime) }}</span><b>¥{{ formatPrice(item.payableAmount) }}</b><VanIcon name="arrow" aria-hidden="true" /></div>
       </router-link>
     </div>
