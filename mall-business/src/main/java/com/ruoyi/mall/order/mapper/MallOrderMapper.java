@@ -52,6 +52,8 @@ public interface MallOrderMapper
 
     int markShipped(@Param("orderId") Long orderId);
 
+    int markCompleted(@Param("orderId") Long orderId);
+
     int markRefunding(@Param("orderId") Long orderId, @Param("fromStatus") String fromStatus);
 
     int markRefundSuccess(@Param("orderId") Long orderId);

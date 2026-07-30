@@ -17,7 +17,7 @@ public interface LogisticsPort
      * @return 运单创建结果
      */
     LogisticsCreateResult createShipment(String orderNo, String companyCode,
-            String receiverName, String receiverAddress);
+            String trackingNo, String receiverName, String receiverAddress);
 
     /** 物流运单创建结果。 */
     record LogisticsCreateResult(boolean success, String trackingNo, String message)

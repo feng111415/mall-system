@@ -2,7 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Icon as VanIcon } from 'vant'
-import { cancelOrder, getOrderDetail } from '../api/order'
+import { cancelOrder, getOrderDetail, getOrderLogistics, confirmReceipt } from '../api/order'
 import { createPayment, getOrderPayments, mockPaymentSuccess } from '../api/payment'
 import { useNoticeStore } from '../stores/notice'
 
@@ -14,6 +14,7 @@ const payments = ref([])
 const loading = ref(true)
 const busy = ref(false)
 const message = ref('')
+const logistics = ref(null)
 const now = ref(Date.now())
 let timer
 
@@ -58,6 +59,10 @@ async function loadDetail() {
     ])
     order.value = orderResponse.data.data
     payments.value = paymentResponse.data.data || []
+    logistics.value = null
+    if (['SHIPPED', 'COMPLETED', 'AFTER_SALE'].includes(order.value.status)) {
+      try { logistics.value = (await getOrderLogistics(orderId)).data.data } catch { logistics.value = null }
+    }
   } catch (error) {
     order.value = null
     message.value = error.response?.data?.msg || '订单详情读取失败'
@@ -109,6 +114,15 @@ async function cancelCurrentOrder() {
   } finally { busy.value = false }
 }
 
+async function receiveOrder() {
+  if (busy.value || !order.value || !logistics.value) return
+  busy.value = true
+  message.value = ''
+  try { await confirmReceipt(order.value.orderId); notice.show('已确认收货'); await loadDetail() }
+  catch (error) { message.value = error.response?.data?.msg || '确认收货失败'; notice.show(message.value, 'error') }
+  finally { busy.value = false }
+}
+
 function formatPrice(value) { return Number(value || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2 }) }
 function formatTime(value) { return value ? new Date(value).toLocaleString('zh-CN', { hour12: false }) : '-' }
 function statusLabel(status) { return statusLabels[status] || status || '-' }
@@ -118,6 +132,7 @@ function orderStatusLabel(value) {
 }
 function paymentLabel(status) { return paymentLabels[status] || status || '-' }
 function attemptLabel(status) { return attemptLabels[status] || status || '-' }
+function logisticsNodeLabel(status) { return ({ SHIPPED: '已发货', IN_TRANSIT: '运输中', OUT_FOR_DELIVERY: '派送中', DELIVERED: '已签收', EXCEPTION: '运输异常', CORRECTION: '更正说明' })[status] || status || '-' }
 </script>
 
 <template>
@@ -159,6 +174,16 @@ function attemptLabel(status) { return attemptLabels[status] || status || '-' }
               <li v-for="item in operations" :key="item.operationId"><i></i><div><strong>{{ statusLabel(item.toStatus) }}</strong><p>{{ item.remark || '订单状态已更新' }}</p><small>{{ formatTime(item.createTime) }}</small></div></li>
             </ol>
           </section>
+
+          <section v-if="logistics" class="order-section order-logistics-section">
+            <div class="order-section-title"><span>04</span><h2>物流信息</h2></div>
+            <div class="logistics-summary"><span>{{ logistics.companyName }}</span><strong>{{ logistics.trackingNo }}</strong></div>
+            <ol class="logistics-timeline">
+              <li v-for="(node, index) in logistics.nodes" :key="node.nodeId" :class="{ current: index === 0 }">
+                <i class="logistics-dot"></i><div><strong>{{ logisticsNodeLabel(node.nodeStatus) }} · {{ node.title }}</strong><p>{{ node.description }}<template v-if="node.location">（{{ node.location }}）</template></p><small>{{ formatTime(node.eventTime) }}</small></div>
+              </li>
+            </ol>
+          </section>
         </main>
 
         <aside class="order-summary-panel">
@@ -180,6 +205,7 @@ function attemptLabel(status) { return attemptLabels[status] || status || '-' }
           <button v-if="order.canCreatePayment" class="primary-button order-action" :disabled="busy" @click="startPayment"><VanIcon name="balance-pay" />{{ busy ? '正在处理...' : '创建模拟支付' }}</button>
           <button v-if="order.canConfirmPayment && latestPayment?.status === 'PAYING'" class="primary-button order-action" :disabled="busy" @click="confirmPayment"><VanIcon name="passed" />{{ busy ? '正在处理...' : '模拟支付成功' }}</button>
           <button v-if="order.canCancel" class="order-secondary-action" :disabled="busy" @click="cancelCurrentOrder">取消订单</button>
+          <button v-if="order.status === 'SHIPPED' && logistics?.status === 'DELIVERED'" class="primary-button order-action" :disabled="busy" @click="receiveOrder"><VanIcon name="passed" />{{ busy ? '正在处理...' : '确认收货' }}</button>
         </aside>
       </div>
     </template>

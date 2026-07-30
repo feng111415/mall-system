@@ -4,6 +4,7 @@ import java.util.List;
 import org.apache.ibatis.annotations.Param;
 import com.ruoyi.mall.logistics.domain.MallLogisticsNode;
 import com.ruoyi.mall.logistics.domain.MallLogisticsShipment;
+import com.ruoyi.mall.logistics.domain.MallFulfillmentOrder;
 
 public interface MallLogisticsMapper
 {
@@ -19,4 +20,13 @@ public interface MallLogisticsMapper
     int insertShipment(MallLogisticsShipment shipment);
 
     int insertNode(MallLogisticsNode node);
+
+    MallLogisticsNode selectLatestNode(@Param("shipmentId") Long shipmentId);
+
+    int updateShipmentDelivered(@Param("shipmentId") Long shipmentId);
+
+    List<MallLogisticsShipment> selectDeliveredBefore(@Param("cutoffTime") java.time.LocalDateTime cutoffTime);
+
+    List<MallFulfillmentOrder> selectFulfillmentOrders(@Param("orderNo") String orderNo,
+            @Param("status") String status, @Param("limit") int limit, @Param("offset") int offset);
 }

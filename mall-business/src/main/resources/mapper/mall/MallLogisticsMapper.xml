@@ -40,4 +40,32 @@
         insert into mall_logistics_node(shipment_id,tracking_no,node_status,title,description,location,event_time,create_time)
         values(#{shipmentId},#{trackingNo},#{nodeStatus},#{title},#{description},#{location},#{eventTime},now())
     </insert>
+    <select id="selectLatestNode" resultMap="Node">
+        select node_id,shipment_id,tracking_no,node_status,title,description,location,event_time,create_time
+        from mall_logistics_node where shipment_id=#{shipmentId} order by event_time desc,node_id desc limit 1
+    </select>
+    <update id="updateShipmentDelivered">
+        update mall_logistics_shipment set status='DELIVERED',delivered_time=now(),update_time=now()
+        where shipment_id=#{shipmentId} and status='IN_TRANSIT'
+    </update>
+    <select id="selectDeliveredBefore" resultMap="Shipment">
+        select <include refid="shipmentColumns"/> from mall_logistics_shipment
+        where status='DELIVERED' and delivered_time &lt;= #{cutoffTime}
+        order by delivered_time,shipment_id limit 100
+    </select>
+    <resultMap id="FulfillmentOrder" type="com.ruoyi.mall.logistics.domain.MallFulfillmentOrder">
+        <id property="orderId" column="order_id"/><result property="orderNo" column="order_no"/>
+        <result property="status" column="order_status"/><result property="receiverName" column="receiver_name"/>
+        <result property="shipmentId" column="shipment_id"/><result property="companyName" column="company_name"/>
+        <result property="trackingNo" column="tracking_no"/>
+    </resultMap>
+    <select id="selectFulfillmentOrders" resultMap="FulfillmentOrder">
+        select o.order_id,o.order_no,o.status order_status,o.receiver_name,
+            s.shipment_id,s.company_name,s.tracking_no
+        from mall_order o left join mall_logistics_shipment s on s.order_id=o.order_id
+        where o.status in ('PENDING_SHIPMENT','SHIPPED','COMPLETED')
+        <if test="orderNo != null and orderNo != ''">and o.order_no like concat('%',#{orderNo},'%')</if>
+        <if test="status != null and status != ''">and o.status=#{status}</if>
+        order by o.create_time desc,o.order_id desc limit #{limit} offset #{offset}
+    </select>
 </mapper>

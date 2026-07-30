@@ -80,4 +80,12 @@ public class MallOrderPortalController
         return AjaxResult.success(logisticsService.detailForMember(
                 tokenService.requireMemberId(authorization), orderId));
     }
+
+    @PostMapping("/{orderId}/confirm-receipt")
+    public AjaxResult confirmReceipt(@RequestHeader(value = MallMemberTokenService.MALL_AUTHORIZATION_HEADER, required = false) String authorization,
+            @PathVariable Long orderId)
+    {
+        return AjaxResult.success("已确认收货", logisticsService.confirmReceipt(
+                tokenService.requireMemberId(authorization), orderId));
+    }
 }

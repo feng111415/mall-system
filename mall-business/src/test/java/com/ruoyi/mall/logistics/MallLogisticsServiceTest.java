@@ -7,8 +7,12 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.anyLong;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import java.time.LocalDateTime;
+import com.ruoyi.mall.logistics.domain.MallLogisticsNode;
+import com.ruoyi.mall.logistics.domain.dto.MallLogisticsNodeRequest;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import com.ruoyi.common.exception.ServiceException;
@@ -46,11 +50,11 @@ class MallLogisticsServiceTest
         MallOrder order = order("PENDING_SHIPMENT", "PAID");
         when(orderMapper.selectByIdForUpdate(9L, null)).thenReturn(order);
         when(logisticsMapper.selectByOrderIdForUpdate(9L)).thenReturn(null);
-        when(logisticsPort.createShipment(eq(order.getOrderNo()), eq("MOCK"), any(), any()))
+        when(logisticsPort.createShipment(eq(order.getOrderNo()), eq("MOCK"), eq("TRACK-1"), any(), any()))
                 .thenReturn(new LogisticsPort.LogisticsCreateResult(true, "MOCK-TRACK-1", "ok"));
         when(orderMapper.markShipped(9L)).thenReturn(1);
 
-        MallLogisticsShipment result = service.shipByAdmin(9L, null, "admin");
+        MallLogisticsShipment result = service.shipByAdmin(9L, "MOCK", "模拟物流", "TRACK-1", "admin");
 
         assertEquals("MOCK-TRACK-1", result.getTrackingNo());
         assertEquals("IN_TRANSIT", result.getStatus());
@@ -69,8 +73,8 @@ class MallLogisticsServiceTest
         when(logisticsMapper.selectByOrderIdForUpdate(9L)).thenReturn(existing);
         when(logisticsMapper.selectNodes(12L)).thenReturn(java.util.List.of());
 
-        assertEquals(existing, service.shipByAdmin(9L, "MOCK", "admin"));
-        verify(logisticsPort, never()).createShipment(any(), any(), any(), any());
+        assertEquals(existing, service.shipByAdmin(9L, "MOCK", "模拟物流", "TRACK-1", "admin"));
+        verify(logisticsPort, never()).createShipment(any(), any(), any(), any(), any());
         verify(orderMapper, never()).markShipped(any());
     }
 
@@ -80,8 +84,8 @@ class MallLogisticsServiceTest
         when(orderMapper.selectByIdForUpdate(9L, null)).thenReturn(order("PENDING_PAYMENT", "UNPAID"));
         when(logisticsMapper.selectByOrderIdForUpdate(9L)).thenReturn(null);
 
-        assertThrows(ServiceException.class, () -> service.shipByAdmin(9L, "MOCK", "admin"));
-        verify(logisticsPort, never()).createShipment(any(), any(), any(), any());
+        assertThrows(ServiceException.class, () -> service.shipByAdmin(9L, "MOCK", "模拟物流", "TRACK-1", "admin"));
+        verify(logisticsPort, never()).createShipment(any(), any(), any(), any(), any());
     }
 
     @Test
@@ -90,6 +94,67 @@ class MallLogisticsServiceTest
         when(logisticsMapper.selectMemberShipment(9L, 7L)).thenReturn(null);
 
         assertThrows(ServiceException.class, () -> service.detailForMember(7L, 9L));
+    }
+
+    @Test
+    void appendsOnlyAllowedChronologicalNode()
+    {
+        MallLogisticsShipment shipment = new MallLogisticsShipment(); shipment.setShipmentId(11L); shipment.setTrackingNo("TRACK-1");
+        MallLogisticsNode latest = new MallLogisticsNode(); latest.setEventTime(LocalDateTime.of(2026, 7, 30, 10, 0));
+        when(logisticsMapper.selectById(11L)).thenReturn(shipment);
+        when(logisticsMapper.selectLatestNode(11L)).thenReturn(latest);
+        when(logisticsMapper.insertNode(any())).thenReturn(1);
+        when(logisticsMapper.selectNodes(11L)).thenReturn(java.util.List.of());
+        MallLogisticsNodeRequest request = new MallLogisticsNodeRequest(); request.setNodeStatus("IN_TRANSIT");
+        request.setTitle("运输中"); request.setDescription("包裹已离开仓库"); request.setEventTime("2026-07-30T11:00:00");
+
+        assertEquals(shipment, service.appendNode(11L, request, "admin"));
+        verify(logisticsMapper).insertNode(any());
+        request.setEventTime("2026-07-30T09:00:00");
+        assertThrows(ServiceException.class, () -> service.appendNode(11L, request, "admin"));
+    }
+
+    @Test
+    void cannotAppendNodeAfterDelivered()
+    {
+        MallLogisticsShipment shipment = new MallLogisticsShipment();
+        shipment.setShipmentId(11L); shipment.setOrderId(9L); shipment.setOrderNo("ORDER-9");
+        shipment.setTrackingNo("TRACK-1"); shipment.setStatus("DELIVERED");
+        MallLogisticsNode latest = new MallLogisticsNode();
+        latest.setNodeStatus("DELIVERED"); latest.setEventTime(LocalDateTime.of(2026, 7, 30, 10, 0));
+        when(logisticsMapper.selectById(11L)).thenReturn(shipment);
+        when(logisticsMapper.selectLatestNode(11L)).thenReturn(latest);
+        MallLogisticsNodeRequest request = new MallLogisticsNodeRequest();
+        request.setNodeStatus("CORRECTION"); request.setTitle("更正"); request.setDescription("更正说明");
+        request.setEventTime("2026-07-30T11:00:00");
+
+        assertThrows(ServiceException.class, () -> service.appendNode(11L, request, "admin"));
+        verify(logisticsMapper, never()).insertNode(any());
+        verify(orderMapper, never()).insertOperationLog(any());
+    }
+
+    @Test
+    void memberCanConfirmOnlySignedShipment()
+    {
+        MallLogisticsShipment shipment = new MallLogisticsShipment(); shipment.setShipmentId(11L); shipment.setOrderId(9L); shipment.setOrderNo("ORDER-9");
+        MallLogisticsNode delivered = new MallLogisticsNode(); delivered.setNodeStatus("DELIVERED"); delivered.setEventTime(LocalDateTime.now());
+        when(logisticsMapper.selectMemberShipment(9L, 7L)).thenReturn(shipment);
+        when(logisticsMapper.selectLatestNode(11L)).thenReturn(delivered);
+        when(orderMapper.markCompleted(9L)).thenReturn(1);
+        when(logisticsMapper.selectNodes(11L)).thenReturn(java.util.List.of(delivered));
+        assertEquals(shipment, service.confirmReceipt(7L, 9L));
+        verify(orderMapper).markCompleted(9L);
+        verify(orderMapper).insertOperationLog(any());
+    }
+
+    @Test
+    void autoConfirmsDeliveredOrdersAfterSevenDays()
+    {
+        MallLogisticsShipment shipment = new MallLogisticsShipment(); shipment.setOrderId(9L); shipment.setOrderNo("ORDER-9");
+        when(logisticsMapper.selectDeliveredBefore(any(LocalDateTime.class))).thenReturn(java.util.List.of(shipment));
+        when(orderMapper.markCompleted(9L)).thenReturn(1);
+        assertEquals(1, service.autoConfirmReceipts());
+        verify(orderMapper).insertOperationLog(any());
     }
 
     private MallOrder order(String status, String paymentStatus)
