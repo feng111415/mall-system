@@ -81,11 +81,11 @@
     </select>
 
     <select id="selectByIdForUpdate" resultMap="Order">
-        select order_id,order_no,member_id,status,payment_status,idempotency_key,
+        select order_id,order_no,member_id,status,payment_status,risk_status,idempotency_key,
             product_amount,shipping_fee,discount_amount,payable_amount,
             receiver_name,receiver_phone,receiver_province,receiver_city,
             receiver_district,receiver_detail_address,remark,cancel_reason,version,
-            create_time,close_time,update_time
+            create_time,pay_time,close_time,update_time
         from mall_order
         where order_id=#{orderId}
         <if test="memberId != null">and member_id=#{memberId}</if>

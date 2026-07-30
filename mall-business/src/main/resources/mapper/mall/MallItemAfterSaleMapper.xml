@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.mall.aftersale.item.mapper.MallItemAfterSaleMapper">
+  <resultMap id="AfterSale" type="com.ruoyi.mall.aftersale.item.domain.MallItemAfterSale">
+    <id property="afterSaleId" column="after_sale_id"/><result property="afterSaleNo" column="after_sale_no"/>
+    <result property="orderId" column="order_id"/><result property="orderNo" column="order_no"/><result property="memberId" column="member_id"/>
+    <result property="type" column="type"/><result property="reasonCode" column="reason_code"/><result property="reason" column="reason"/>
+    <result property="evidenceUrl" column="evidence_url"/><result property="status" column="status"/><result property="refundAmount" column="refund_amount"/>
+    <result property="shippingRefundAmount" column="shipping_refund_amount"/><result property="returnCompanyCode" column="return_company_code"/>
+    <result property="returnTrackingNo" column="return_tracking_no"/><result property="riskSignal" column="risk_signal"/>
+    <result property="failureReason" column="failure_reason"/><result property="providerRefundNo" column="provider_refund_no"/>
+    <result property="deadlineTime" column="deadline_time"/><result property="refundTime" column="refund_time"/>
+    <result property="createTime" column="create_time"/><result property="updateTime" column="update_time"/>
+  </resultMap>
+  <resultMap id="Item" type="com.ruoyi.mall.aftersale.item.domain.MallItemAfterSaleItem">
+    <id property="afterSaleItemId" column="after_sale_item_id"/><result property="afterSaleId" column="after_sale_id"/>
+    <result property="orderItemId" column="order_item_id"/><result property="skuId" column="sku_id"/><result property="productName" column="product_name"/>
+    <result property="skuName" column="sku_name"/><result property="orderQuantity" column="order_quantity"/><result property="requestedQuantity" column="requested_quantity"/>
+    <result property="unitPrice" column="unit_price"/><result property="refundAmount" column="refund_amount"/>
+  </resultMap>
+  <sql id="columns">after_sale_id,after_sale_no,order_id,order_no,member_id,type,reason_code,reason,evidence_url,status,refund_amount,shipping_refund_amount,return_company_code,return_tracking_no,risk_signal,failure_reason,provider_refund_no,deadline_time,refund_time,create_time,update_time</sql>
+  <select id="selectById" resultMap="AfterSale">select <include refid="columns"/> from mall_item_after_sale where after_sale_id=#{afterSaleId}</select>
+  <select id="selectByIdForUpdate" resultMap="AfterSale">select <include refid="columns"/> from mall_item_after_sale where after_sale_id=#{afterSaleId} for update</select>
+  <select id="selectMemberById" resultMap="AfterSale">select <include refid="columns"/> from mall_item_after_sale where after_sale_id=#{afterSaleId} and member_id=#{memberId}</select>
+  <select id="selectMemberByIdForUpdate" resultMap="AfterSale">select <include refid="columns"/> from mall_item_after_sale where after_sale_id=#{afterSaleId} and member_id=#{memberId} for update</select>
+  <select id="selectMemberList" resultMap="AfterSale">select <include refid="columns"/> from mall_item_after_sale where member_id=#{memberId} order by create_time desc,after_sale_id desc</select>
+  <select id="selectItems" resultMap="Item">select after_sale_item_id,after_sale_id,order_item_id,sku_id,product_name,sku_name,order_quantity,requested_quantity,unit_price,refund_amount from mall_item_after_sale_item where after_sale_id=#{afterSaleId} order by after_sale_item_id</select>
+  <select id="selectActiveRequestedQuantity" resultType="int">select coalesce(sum(i.requested_quantity),0) from mall_item_after_sale_item i join mall_item_after_sale a on a.after_sale_id=i.after_sale_id where i.order_item_id=#{orderItemId} and a.status in ('PENDING_REVIEW','APPROVED','RETURN_SHIPPED','REFUNDING','SUCCESS')</select>
+  <insert id="insert" useGeneratedKeys="true" keyProperty="afterSaleId">insert into mall_item_after_sale(after_sale_no,order_id,order_no,member_id,type,reason_code,reason,evidence_url,status,refund_amount,shipping_refund_amount,risk_signal,deadline_time,create_time,update_time) values(#{afterSaleNo},#{orderId},#{orderNo},#{memberId},#{type},#{reasonCode},#{reason},#{evidenceUrl},#{status},#{refundAmount},#{shippingRefundAmount},#{riskSignal},#{deadlineTime},now(),now())</insert>
+  <insert id="insertItem" useGeneratedKeys="true" keyProperty="afterSaleItemId">insert into mall_item_after_sale_item(after_sale_id,order_item_id,sku_id,product_name,sku_name,order_quantity,requested_quantity,unit_price,refund_amount) values(#{afterSaleId},#{orderItemId},#{skuId},#{productName},#{skuName},#{orderQuantity},#{requestedQuantity},#{unitPrice},#{refundAmount})</insert>
+  <update id="markApproved">update mall_item_after_sale set status='APPROVED',update_time=now() where after_sale_id=#{afterSaleId} and status='PENDING_REVIEW'</update>
+  <update id="markRejected">update mall_item_after_sale set status='REJECTED',failure_reason=#{reason},update_time=now() where after_sale_id=#{afterSaleId} and status='PENDING_REVIEW'</update>
+  <update id="markReturnTracking">update mall_item_after_sale set return_company_code=#{companyCode},return_tracking_no=#{trackingNo},status='RETURN_SHIPPED',update_time=now() where after_sale_id=#{afterSaleId} and status='APPROVED' and type='RETURN_REFUND'</update>
+  <update id="markRefunding">update mall_item_after_sale set status='REFUNDING',update_time=now() where after_sale_id=#{afterSaleId} and status in ('APPROVED','RETURN_SHIPPED')</update>
+  <update id="markSuccess">update mall_item_after_sale set status='SUCCESS',provider_refund_no=#{providerRefundNo},refund_time=now(),update_time=now() where after_sale_id=#{afterSaleId} and status='REFUNDING'</update>
+  <update id="markFailed">update mall_item_after_sale set status='FAILED',failure_reason=#{reason},update_time=now() where after_sale_id=#{afterSaleId} and status='REFUNDING'</update>
+  <select id="selectAdminList" resultMap="AfterSale">select <include refid="columns"/> from mall_item_after_sale <where><if test="status != null and status != ''">status=#{status}</if></where> order by create_time desc,after_sale_id desc</select>
+</mapper>
