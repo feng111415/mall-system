@@ -6,6 +6,7 @@ import com.ruoyi.mall.risk.domain.MallRiskRecord;
 
 public interface MallRiskMapper
 {
+    Long lockMemberForOrder(@Param("memberId") Long memberId);
     int countPendingOrders(@Param("memberId") Long memberId);
     int insertRecord(MallRiskRecord record);
     List<MallRiskRecord> selectRecords(@Param("decision") String decision,

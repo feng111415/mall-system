@@ -41,7 +41,7 @@ public class MallOrderPortalController
     }
 
     @GetMapping
-    public AjaxResult list(@RequestHeader(value = "Authorization", required = false) String authorization,
+    public AjaxResult list(@RequestHeader(value = MallMemberTokenService.MALL_AUTHORIZATION_HEADER, required = false) String authorization,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) Integer limit,
             @RequestParam(required = false) Integer offset)
@@ -50,14 +50,14 @@ public class MallOrderPortalController
     }
 
     @GetMapping("/{orderId}")
-    public AjaxResult detail(@RequestHeader(value = "Authorization", required = false) String authorization,
+    public AjaxResult detail(@RequestHeader(value = MallMemberTokenService.MALL_AUTHORIZATION_HEADER, required = false) String authorization,
             @PathVariable Long orderId)
     {
         return AjaxResult.success(queryService.detail(tokenService.requireMemberId(authorization), orderId));
     }
 
     @PostMapping
-    public AjaxResult create(@RequestHeader(value = "Authorization", required = false) String authorization,
+    public AjaxResult create(@RequestHeader(value = MallMemberTokenService.MALL_AUTHORIZATION_HEADER, required = false) String authorization,
             @RequestBody MallCreateOrderRequest request)
     {
         return AjaxResult.success("订单创建成功",
@@ -65,7 +65,7 @@ public class MallOrderPortalController
     }
 
     @PostMapping("/{orderId}/cancel")
-    public AjaxResult cancel(@RequestHeader(value = "Authorization", required = false) String authorization,
+    public AjaxResult cancel(@RequestHeader(value = MallMemberTokenService.MALL_AUTHORIZATION_HEADER, required = false) String authorization,
             @PathVariable Long orderId, @RequestBody(required = false) MallCancelOrderRequest request)
     {
         String reason = request == null ? null : request.getReason();
@@ -74,7 +74,7 @@ public class MallOrderPortalController
     }
 
     @GetMapping("/{orderId}/logistics")
-    public AjaxResult logistics(@RequestHeader(value = "Authorization", required = false) String authorization,
+    public AjaxResult logistics(@RequestHeader(value = MallMemberTokenService.MALL_AUTHORIZATION_HEADER, required = false) String authorization,
             @PathVariable Long orderId)
     {
         return AjaxResult.success(logisticsService.detailForMember(

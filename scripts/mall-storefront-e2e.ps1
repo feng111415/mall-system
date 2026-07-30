@@ -18,7 +18,7 @@ $product = @($products.data)[0]; $detail = Api 'GET' "$api/catalog/products/$($p
 if (-not $sku -or -not $sku.skuId) { throw 'product detail has no SKU' }; Pass 'catalog and sku' "SPU=$($product.spuCode), SKU=$($sku.skuCode)"
 $phone = '139' + (Get-Random -Minimum 10000000 -Maximum 99999999); $send = Api 'POST' "$api/member/sms-code" @{} @{ phone = $phone }
 if ($send.code -ne 200) { throw 'SMS send failed' }; $login = Api 'POST' "$api/member/login" @{} @{ phone = $phone; code = '123456'; agreed = $true; userAgreementVersion = '1.0'; privacyPolicyVersion = '1.0' }
-$token = $login.data.token; if ($login.code -ne 200 -or [string]::IsNullOrWhiteSpace($token)) { throw 'login failed' }; $auth = @{ Authorization = "Bearer $token" }
+$token = $login.data.token; if ($login.code -ne 200 -or [string]::IsNullOrWhiteSpace($token)) { throw 'login failed' }; $auth = @{ 'X-Mall-Authorization' = "Bearer $token" }
 $profile = Api 'GET' "$api/member/profile" $auth; if ($profile.code -ne 200 -or $profile.data.memberId -le 0) { throw 'profile failed' }; Pass 'sms login' $phone
 $cartAdd = Api 'POST' "$api/cart/items" $auth @{ skuId = $sku.skuId; quantity = 1 }; $cartAddAgain = Api 'POST' "$api/cart/items" $auth @{ skuId = $sku.skuId; quantity = 1 }; $cartSelect = Api 'PUT' "$api/cart/items/$($sku.skuId)/selected" $auth @{ selected = $true }; $cart = Api 'GET' "$api/cart" $auth
 $cartItem = @($cart.data.items | Where-Object { $_.skuId -eq $sku.skuId })[0]
@@ -59,7 +59,7 @@ if ($payment.code -ne 200 -or [string]::IsNullOrWhiteSpace($paymentNo) -or
 Pass 'payment creation state' "payment=$paymentNo, order=PAYING"
 $otherPhone = '138' + (Get-Random -Minimum 10000000 -Maximum 99999999); Api 'POST' "$api/member/sms-code" @{} @{ phone = $otherPhone } | Out-Null
 $otherLogin = Api 'POST' "$api/member/login" @{} @{ phone = $otherPhone; code = '123456'; agreed = $true; userAgreementVersion = '1.0'; privacyPolicyVersion = '1.0' }
-$otherAuth = @{ Authorization = "Bearer $($otherLogin.data.token)" }; $otherPayments = Api 'GET' "$api/orders/$orderId/payments" $otherAuth
+$otherAuth = @{ 'X-Mall-Authorization' = "Bearer $($otherLogin.data.token)" }; $otherPayments = Api 'GET' "$api/orders/$orderId/payments" $otherAuth
 if ($otherPayments.code -ne 200 -or @($otherPayments.data).Count -ne 0) { throw 'another member could read payment history' }
 Pass 'payment history ownership guard'
 $paid = Api 'POST' "$api/payments/$paymentNo/mock-success" $auth

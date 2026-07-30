@@ -17,6 +17,7 @@ import org.mockito.MockitoAnnotations;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.mall.aftersale.domain.MallRefund;
 import com.ruoyi.mall.aftersale.mapper.MallRefundMapper;
+import com.ruoyi.mall.aftersale.service.MallRefundApprovalStateService;
 import com.ruoyi.mall.aftersale.service.MallRefundService;
 import com.ruoyi.mall.application.port.RefundPort;
 import com.ruoyi.mall.order.domain.MallOrder;
@@ -36,7 +37,8 @@ class MallRefundServiceTest
     void setUp()
     {
         MockitoAnnotations.openMocks(this);
-        service = new MallRefundService(refundMapper, orderMapper, paymentMapper, refundPort);
+        service = new MallRefundService(refundMapper, orderMapper, refundPort,
+                new MallRefundApprovalStateService(refundMapper, orderMapper, paymentMapper));
         when(orderMapper.insertOperationLog(any())).thenReturn(1);
     }
 
@@ -75,13 +77,14 @@ class MallRefundServiceTest
     void approveCallsRefundAdapterAndMarksOrderRefunded()
     {
         MallRefund refund = refund("APPLIED");
+        MallRefund refunding = refund("REFUNDING");
         MallOrder order = order("AFTER_SALE", "REFUNDING");
         MallPayment payment = new MallPayment(); payment.setPaymentNo("PAY-1");
-        when(refundMapper.selectByIdForUpdate(11L)).thenReturn(refund);
+        when(refundMapper.selectByIdForUpdate(11L)).thenReturn(refund, refunding);
         when(orderMapper.selectByIdForUpdate(1L, null)).thenReturn(order);
         when(refundMapper.markRefunding(11L)).thenReturn(1);
         when(paymentMapper.selectSuccessByOrderIdForUpdate(1L)).thenReturn(payment);
-        when(refundPort.refund(anyString(), eq("PAY-1"), any())).thenReturn(
+        when(refundPort.refund(eq("REF-REQUEST-1"), eq("M-1"), eq("PAY-1"), any())).thenReturn(
                 new RefundPort.RefundResult(true, "REF-1", "ok"));
         when(refundMapper.markSuccess(11L, "REF-1")).thenReturn(1);
         when(orderMapper.markRefundSuccess(1L)).thenReturn(1);
@@ -113,7 +116,7 @@ class MallRefundServiceTest
     private MallRefund refund(String status)
     {
         MallRefund refund = new MallRefund();
-        refund.setRefundId(11L); refund.setOrderId(1L); refund.setOrderNo("M-1");
+        refund.setRefundId(11L); refund.setRefundNo("REF-REQUEST-1"); refund.setOrderId(1L); refund.setOrderNo("M-1");
         refund.setMemberId(7L); refund.setRefundAmount(new BigDecimal("99.00"));
         refund.setStatus(status); refund.setOriginalOrderStatus("SHIPPED");
         return refund;

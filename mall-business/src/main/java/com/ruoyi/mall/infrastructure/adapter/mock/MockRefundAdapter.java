@@ -1,7 +1,6 @@
 package com.ruoyi.mall.infrastructure.adapter.mock;
 
 import java.math.BigDecimal;
-import java.util.UUID;
 import org.springframework.stereotype.Component;
 import com.ruoyi.mall.application.port.RefundPort;
 
@@ -10,9 +9,9 @@ import com.ruoyi.mall.application.port.RefundPort;
 public class MockRefundAdapter implements RefundPort
 {
     @Override
-    public RefundResult refund(String orderNo, String paymentNo, BigDecimal amount)
+    public RefundResult refund(String refundNo, String orderNo, String paymentNo, BigDecimal amount)
     {
-        return new RefundResult(true, "MOCK-REFUND-" + UUID.randomUUID().toString().replace("-", ""),
+        return new RefundResult(true, "MOCK-REFUND-" + refundNo,
                 "Mock 退款成功");
     }
 }

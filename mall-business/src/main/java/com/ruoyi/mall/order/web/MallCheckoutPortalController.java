@@ -24,7 +24,7 @@ public class MallCheckoutPortalController
     }
 
     @GetMapping("/preview")
-    public AjaxResult preview(@RequestHeader(value = "Authorization", required = false) String authorization)
+    public AjaxResult preview(@RequestHeader(value = MallMemberTokenService.MALL_AUTHORIZATION_HEADER, required = false) String authorization)
     {
         return AjaxResult.success(service.preview(tokenService.requireMemberId(authorization)));
     }

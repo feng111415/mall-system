@@ -38,7 +38,7 @@ public class MallPaymentStateService implements PaymentExpirationPort
     public PaymentBegin beginPayment(Long memberId, Long orderId, String idempotencyKey)
     {
         MallPayment existing = paymentMapper.selectByOrderIdempotency(orderId, memberId, idempotencyKey);
-        if (existing != null) return new PaymentBegin(existing, false);
+        if (existing != null) return paymentBegin(existing);
         MallOrder order = requirePayableOrder(orderId, memberId);
         if (!MallOrderPaymentWindow.canCreatePayment(order, LocalDateTime.now()))
             throw new ServiceException("订单支付创建期限已结束");
@@ -50,7 +50,7 @@ public class MallPaymentStateService implements PaymentExpirationPort
         if (paymentMapper.insertPayment(payment) == 0)
         {
             existing = paymentMapper.selectByOrderIdempotency(orderId, memberId, idempotencyKey);
-            if (existing != null) return new PaymentBegin(existing, false);
+            if (existing != null) return paymentBegin(existing);
             throw new ServiceException("支付单创建失败，请重试");
         }
         if (orderMapper.markPaymentPaying(order.getOrderId()) != 1)
@@ -84,19 +84,6 @@ public class MallPaymentStateService implements PaymentExpirationPort
                 result.paymentUrl(), null);
         payment.setStatus(MallPaymentStatus.PAYING.name()); payment.setProviderPaymentNo(result.paymentNo());
         payment.setPaymentUrl(result.paymentUrl());
-        return payment;
-    }
-
-    @Transactional(rollbackFor = Exception.class)
-    public MallPayment markCreationFailed(Long paymentId, String reason)
-    {
-        MallPayment payment = findPaymentForUpdate(paymentId);
-        if (MallPaymentStatus.CREATING.name().equals(payment.getStatus()))
-        {
-            paymentMapper.updateCreationResult(paymentId, MallPaymentStatus.FAILED.name(), null, null, reason);
-            orderMapper.resetPaymentUnpaid(payment.getOrderId());
-            payment.setStatus(MallPaymentStatus.FAILED.name()); payment.setFailureReason(reason);
-        }
         return payment;
     }
 
@@ -217,6 +204,11 @@ public class MallPaymentStateService implements PaymentExpirationPort
     {
         return "PAY" + PAYMENT_NO_TIME.format(LocalDateTime.now())
                 + String.format("%06d", ThreadLocalRandom.current().nextInt(1_000_000));
+    }
+
+    private PaymentBegin paymentBegin(MallPayment payment)
+    {
+        return new PaymentBegin(payment, MallPaymentStatus.CREATING.name().equals(payment.getStatus()));
     }
 
     public record PaymentBegin(MallPayment payment, boolean shouldCallProvider) { }

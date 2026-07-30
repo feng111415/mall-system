@@ -20,6 +20,7 @@ import com.ruoyi.mall.member.mapper.MallMemberAuthMapper;
 import com.ruoyi.mall.member.mapper.MallMemberMapper;
 import com.ruoyi.mall.member.service.MallMemberAuthService;
 import com.ruoyi.mall.member.service.MallMemberTokenService;
+import com.ruoyi.mall.member.service.MallSmsVerificationAttemptService;
 
 class MallMemberAuthServiceTest
 {
@@ -36,7 +37,8 @@ class MallMemberAuthServiceTest
     {
         MockitoAnnotations.openMocks(this);
         when(redisTemplate.opsForValue()).thenReturn(valueOperations);
-        service = new MallMemberAuthService(memberMapper, authMapper, tokenService, smsPort, redisTemplate, "123456");
+        service = new MallMemberAuthService(memberMapper, authMapper, tokenService, smsPort,
+                redisTemplate, "123456", new MallSmsVerificationAttemptService(authMapper));
     }
 
     @Test

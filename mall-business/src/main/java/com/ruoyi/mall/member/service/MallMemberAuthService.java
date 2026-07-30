@@ -41,6 +41,7 @@ public class MallMemberAuthService
     private final MallMemberMapper memberMapper;
     private final MallMemberAuthMapper authMapper;
     private final MallMemberTokenService tokenService;
+    private final MallSmsVerificationAttemptService verificationAttemptService;
     private final SmsPort smsPort;
     private final RedisTemplate<Object, Object> redisTemplate;
     private final String mockCode;
@@ -48,11 +49,13 @@ public class MallMemberAuthService
     public MallMemberAuthService(MallMemberMapper memberMapper, MallMemberAuthMapper authMapper,
             MallMemberTokenService tokenService, SmsPort smsPort,
             RedisTemplate<Object, Object> redisTemplate,
-            @Value("${mall.sms.mock-code:}") String mockCode)
+            @Value("${mall.sms.mock-code:}") String mockCode,
+            MallSmsVerificationAttemptService verificationAttemptService)
     {
         this.memberMapper = memberMapper;
         this.authMapper = authMapper;
         this.tokenService = tokenService;
+        this.verificationAttemptService = verificationAttemptService;
         this.smsPort = smsPort;
         this.redisTemplate = redisTemplate;
         this.mockCode = mockCode;
@@ -247,7 +250,7 @@ public class MallMemberAuthService
         if (!MessageDigest.isEqual(expected.getBytes(StandardCharsets.US_ASCII),
                 smsCode.getCodeHash().getBytes(StandardCharsets.US_ASCII)))
         {
-            authMapper.incrementSmsAttempts(smsCode.getSmsId());
+            verificationAttemptService.recordFailedAttempt(smsCode.getSmsId());
             throw new ServiceException("验证码不正确");
         }
     }

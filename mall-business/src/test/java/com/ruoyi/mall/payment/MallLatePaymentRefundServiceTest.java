@@ -16,6 +16,7 @@ import com.ruoyi.mall.order.mapper.MallOrderMapper;
 import com.ruoyi.mall.payment.domain.MallPayment;
 import com.ruoyi.mall.payment.mapper.MallPaymentMapper;
 import com.ruoyi.mall.payment.service.MallLatePaymentRefundService;
+import com.ruoyi.mall.payment.service.MallLatePaymentRefundStateService;
 
 class MallLatePaymentRefundServiceTest
 {
@@ -28,7 +29,8 @@ class MallLatePaymentRefundServiceTest
     void setUp()
     {
         MockitoAnnotations.openMocks(this);
-        service = new MallLatePaymentRefundService(paymentMapper, orderMapper, refundPort);
+        service = new MallLatePaymentRefundService(refundPort,
+                new MallLatePaymentRefundStateService(paymentMapper, orderMapper));
     }
 
     @Test
@@ -43,7 +45,7 @@ class MallLatePaymentRefundServiceTest
         order.setStatus("CLOSED"); order.setPaymentStatus("REFUNDING");
         when(paymentMapper.selectByPaymentNoForUpdate("PAY-1")).thenReturn(payment);
         when(orderMapper.selectByIdForUpdate(1L, null)).thenReturn(order);
-        when(refundPort.refund("ORDER-1", "PAY-1", new BigDecimal("12.50")))
+        when(refundPort.refund("LATE-PAY-1", "ORDER-1", "PAY-1", new BigDecimal("12.50")))
                 .thenReturn(new RefundPort.RefundResult(true, "REFUND-1", "ok"));
         when(paymentMapper.markLatePaymentRefunded(11L, "REFUND-1")).thenReturn(1);
         when(orderMapper.markLatePaymentRefunded(1L)).thenReturn(1);

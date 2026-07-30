@@ -10,6 +10,9 @@
         <result property="operatorType" column="operator_type"/><result property="operatorId" column="operator_id"/>
         <result property="createTime" column="create_time"/>
     </resultMap>
+    <select id="lockMemberForOrder" resultType="long">
+        select member_id from mall_member where member_id=#{memberId} and status='0' for update
+    </select>
     <select id="countPendingOrders" resultType="int">
         select count(1) from mall_order where member_id=#{memberId}
         and status='PENDING_PAYMENT' and payment_status in ('UNPAID','PAYING')

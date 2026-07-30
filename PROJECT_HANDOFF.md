@@ -2,7 +2,7 @@
 
 > 新会话开始时，先完整阅读本文件和 `CONTEXT.md`，再开始任何修改。
 >
-> 最后更新：2026-07-29。商城 V0.1、V0.2 已完成；V0.3 按模块独立设计、开发、测试、验收和提交，模块 1“订单详情与支付时限”已完成。
+> 最后更新：2026-07-30。商城 V0.1、V0.2 已完成；V0.3 按模块独立设计、开发、测试、验收和提交，模块 1“订单详情与支付时限”及基础加固已完成。
 
 ## 1. 项目状态
 
@@ -13,7 +13,8 @@
 - **V0.1**：会员、商品、库存、购物车、地址、结算、订单、Mock 支付、履约售后、风控治理、后台运营和数据库迁移。
 - **V0.2**：用户端商品浏览、全局框架、商品详情与加购、购物车结算、个人中心地址簿、最终视觉验收和完整回归。
 - **V0.3 模块 1**：独立订单详情页、支付尝试记录、订单创建后 30 分钟支付单创建期限、35 分钟支付结果期限、超时关闭及迟到支付自动原路退款。
-- V0.3 必须继续按模块推进；模块 1 提交完成后，等待用户明确确认再进入下一个模块。
+- **V0.3 基础加固**：支付退款幂等、外部 I/O 事务拆分、并发下单上限、短信失败计数持久化，以及商城会员 Token 与若依管理员 Token 隔离。
+- V0.3 后续必须继续按模块推进，等待用户明确确认再进入下一个模块。
 
 ## 2. 仓库与运行环境
 
@@ -22,7 +23,7 @@
 | 仓库目录 | `C:\Users\Administrator\Desktop\RuoYiWork\RuoYi-Vue-master` |
 | Git 分支 | `dev` |
 | 远程仓库 | `https://github.com/feng111415/mall-system.git` |
-| 最新功能提交 | `21d756f feat: 完成商城 V0.2 第六项地址簿体验` |
+| 最新完成阶段 | V0.3 基础加固（本次提交） |
 | 商城用户端 | `http://localhost:5174` |
 | 商城后端 | `http://localhost:8080` |
 | Redis | `127.0.0.1:6379` |
@@ -227,5 +228,24 @@ npm.cmd run dev -- --host 0.0.0.0
 新会话可直接发送：
 
 ```text
-请先读取 C:\Users\Administrator\Desktop\RuoYiWork\RuoYi-Vue-master\PROJECT_HANDOFF.md 和 CONTEXT.md。商城 V0.1、V0.2 已完成并通过完整回归，当前没有进行中的需求。请先根据我接下来的明确需求评估范围；保留 ai-web/，不要修改 ry-vue，不要清理工作区，也不要擅自发布或打包 Docker。
+请先读取 C:\Users\Administrator\Desktop\RuoYiWork\RuoYi-Vue-master\PROJECT_HANDOFF.md 和 CONTEXT.md。商城 V0.1、V0.2、V0.3 模块 1 及基础加固已完成并通过回归，当前没有进行中的需求。请先根据我接下来的明确需求评估范围；保留 ai-web/ 和 prototypes/mall-v0.3-visual-prototype/，不要修改 ry-vue，不要清理工作区，也不要擅自发布或打包 Docker。
 ```
+
+## 11. 2026-07-30 完成记录：V0.3 基础加固
+
+在继续 V0.3 UI、物流和个人中心之前，已完成架构审查发现的高风险问题加固。代码、自动化测试、真实链路验证和收尾复查均已完成，本次随交接文档一并提交到 `dev`。
+
+- 支付与退款 Port 增加稳定的支付单号/退款单号幂等键；Mock Adapter 对相同键返回稳定的通道流水号。
+- 售后退款和异常支付退款拆分为“事务内准备 -> 通道调用 -> 事务内落库”，外部 I/O 不再占用订单、支付或退款行锁；通道结果不完整时保留 `REFUNDING` 以便使用同一幂等键安全重试。
+- 创建订单前锁定会员行后再统计进行中未支付订单，保证“最多 3 笔”在并发下单时为原子约束。
+- 短信验证码错误次数迁移到 `REQUIRES_NEW` 事务，避免登录异常回滚失败计数。
+- 商城前后端改用 `X-Mall-Authorization`；若依后台仍使用 `Authorization`，两种 Token 不再被同一 JWT 过滤器混淆。
+- 新增状态持久化 module：`MallRefundApprovalStateService`、`MallLatePaymentRefundStateService`、`MallSmsVerificationAttemptService`。
+
+已完成验证：
+
+- `mvn -pl mall-business -am test`：67 项通过。
+- `npm.cmd run build`（`mall-storefront`）：通过。
+- `mvn -pl ruoyi-admin -am package -DskipTests`：通过。
+- `/api/mall/health` 健康检查通过；真实登录、下单、支付与退款链路已使用 `X-Mall-Authorization` 验证通过。
+- 收尾差异检查通过；`ai-web/`、`prototypes/mall-v0.3-visual-prototype/` 及用户私人会话资料均未纳入提交。

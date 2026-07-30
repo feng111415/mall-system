@@ -3,6 +3,7 @@ package com.ruoyi.mall.risk.service;
 import java.math.BigDecimal;
 import java.util.List;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.mall.order.domain.MallOrder;
 import com.ruoyi.mall.order.mapper.MallOrderMapper;
@@ -23,9 +24,12 @@ public class MallRiskService
     }
 
     /** 下单前的基础频控，幂等订单在调用方已先返回，不会误伤重复点击。 */
+    @Transactional(rollbackFor = Exception.class)
     public void checkOrder(Long memberId, BigDecimal amount)
     {
         if (memberId == null || memberId <= 0) throw new ServiceException("会员身份无效");
+        if (mapper.lockMemberForOrder(memberId) == null)
+            throw new ServiceException("会员不存在或已停用");
         if (mapper.countPendingOrders(memberId) >= MAX_PENDING_ORDERS)
             throw new ServiceException("待付款订单过多，请先完成支付或取消已有订单");
         if (amount == null || amount.signum() < 0) throw new ServiceException("订单金额无效");

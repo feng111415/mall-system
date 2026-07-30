@@ -49,26 +49,26 @@ public class MallMemberPortalController
     }
 
     @PostMapping("/logout")
-    public AjaxResult logout(@RequestHeader(value = "Authorization", required = false) String authorization)
+    public AjaxResult logout(@RequestHeader(value = MallMemberTokenService.MALL_AUTHORIZATION_HEADER, required = false) String authorization)
     {
         tokenService.logout(authorization);
         return AjaxResult.success("已退出登录");
     }
 
     @GetMapping("/profile")
-    public AjaxResult profile(@RequestHeader(value = "Authorization", required = false) String authorization)
+    public AjaxResult profile(@RequestHeader(value = MallMemberTokenService.MALL_AUTHORIZATION_HEADER, required = false) String authorization)
     {
         return AjaxResult.success(authService.profile(tokenService.requireMemberId(authorization)));
     }
 
     @GetMapping("/addresses")
-    public AjaxResult addresses(@RequestHeader(value = "Authorization", required = false) String authorization)
+    public AjaxResult addresses(@RequestHeader(value = MallMemberTokenService.MALL_AUTHORIZATION_HEADER, required = false) String authorization)
     {
         return AjaxResult.success(authService.addresses(tokenService.requireMemberId(authorization)));
     }
 
     @PostMapping("/addresses")
-    public AjaxResult addAddress(@RequestHeader(value = "Authorization", required = false) String authorization,
+    public AjaxResult addAddress(@RequestHeader(value = MallMemberTokenService.MALL_AUTHORIZATION_HEADER, required = false) String authorization,
             @Valid @RequestBody MallMemberAddress address)
     {
         return AjaxResult.success("地址已新增",
@@ -76,7 +76,7 @@ public class MallMemberPortalController
     }
 
     @PutMapping("/addresses/{addressId}")
-    public AjaxResult updateAddress(@RequestHeader(value = "Authorization", required = false) String authorization,
+    public AjaxResult updateAddress(@RequestHeader(value = MallMemberTokenService.MALL_AUTHORIZATION_HEADER, required = false) String authorization,
             @PathVariable Long addressId, @Valid @RequestBody MallMemberAddress address)
     {
         return AjaxResult.success("地址已更新",
@@ -84,7 +84,7 @@ public class MallMemberPortalController
     }
 
     @DeleteMapping("/addresses/{addressId}")
-    public AjaxResult deleteAddress(@RequestHeader(value = "Authorization", required = false) String authorization,
+    public AjaxResult deleteAddress(@RequestHeader(value = MallMemberTokenService.MALL_AUTHORIZATION_HEADER, required = false) String authorization,
             @PathVariable Long addressId)
     {
         authService.deleteAddress(tokenService.requireMemberId(authorization), addressId);

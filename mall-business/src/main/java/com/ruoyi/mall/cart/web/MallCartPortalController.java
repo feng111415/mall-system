@@ -32,20 +32,20 @@ public class MallCartPortalController
     }
 
     @GetMapping
-    public AjaxResult cart(@RequestHeader(value = "Authorization", required = false) String authorization)
+    public AjaxResult cart(@RequestHeader(value = MallMemberTokenService.MALL_AUTHORIZATION_HEADER, required = false) String authorization)
     {
         return AjaxResult.success(cartService.selectCart(memberId(authorization)));
     }
 
     @PostMapping("/items")
-    public AjaxResult add(@RequestHeader(value = "Authorization", required = false) String authorization,
+    public AjaxResult add(@RequestHeader(value = MallMemberTokenService.MALL_AUTHORIZATION_HEADER, required = false) String authorization,
             @RequestBody MallCartAddRequest request)
     {
         return AjaxResult.success("已加入购物车", cartService.add(memberId(authorization), request));
     }
 
     @PutMapping("/items/{skuId}")
-    public AjaxResult quantity(@RequestHeader(value = "Authorization", required = false) String authorization,
+    public AjaxResult quantity(@RequestHeader(value = MallMemberTokenService.MALL_AUTHORIZATION_HEADER, required = false) String authorization,
             @PathVariable Long skuId, @RequestBody MallCartQuantityRequest request)
     {
         return AjaxResult.success(cartService.updateQuantity(memberId(authorization), skuId,
@@ -53,7 +53,7 @@ public class MallCartPortalController
     }
 
     @PutMapping("/items/{skuId}/selected")
-    public AjaxResult selected(@RequestHeader(value = "Authorization", required = false) String authorization,
+    public AjaxResult selected(@RequestHeader(value = MallMemberTokenService.MALL_AUTHORIZATION_HEADER, required = false) String authorization,
             @PathVariable Long skuId, @RequestBody MallCartSelectedRequest request)
     {
         boolean selected = request != null && Boolean.TRUE.equals(request.getSelected());
@@ -61,7 +61,7 @@ public class MallCartPortalController
     }
 
     @DeleteMapping("/items/{skuId}")
-    public AjaxResult remove(@RequestHeader(value = "Authorization", required = false) String authorization,
+    public AjaxResult remove(@RequestHeader(value = MallMemberTokenService.MALL_AUTHORIZATION_HEADER, required = false) String authorization,
             @PathVariable Long skuId)
     {
         return AjaxResult.success("已移除购物车商品", cartService.remove(memberId(authorization), skuId));

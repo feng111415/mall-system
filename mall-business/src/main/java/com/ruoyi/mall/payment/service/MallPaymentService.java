@@ -32,17 +32,10 @@ public class MallPaymentService
         MallPaymentStateService.PaymentBegin begin = stateService.beginPayment(memberId, orderId,
                 request.getIdempotencyKey());
         if (!begin.shouldCallProvider()) return begin.payment();
-        try
-        {
-            PaymentPort.PaymentCreateResult result = paymentPort.createPayment(begin.payment().getOrderNo(),
-                    begin.payment().getAmount(), "商城订单 " + begin.payment().getOrderNo());
-            return stateService.finishCreation(begin.payment().getPaymentId(), result);
-        }
-        catch (RuntimeException exception)
-        {
-            stateService.markCreationFailed(begin.payment().getPaymentId(), "支付渠道调用失败");
-            throw exception;
-        }
+        PaymentPort.PaymentCreateResult result = paymentPort.createPayment(begin.payment().getPaymentNo(),
+                begin.payment().getOrderNo(), begin.payment().getAmount(),
+                "商城订单 " + begin.payment().getOrderNo());
+        return stateService.finishCreation(begin.payment().getPaymentId(), result);
     }
 
     public MallPayment mockSuccess(Long memberId, String paymentNo)

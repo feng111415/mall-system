@@ -15,8 +15,6 @@ import com.ruoyi.mall.application.port.RefundPort;
 import com.ruoyi.mall.order.domain.MallOrder;
 import com.ruoyi.mall.order.domain.MallOrderOperationLog;
 import com.ruoyi.mall.order.mapper.MallOrderMapper;
-import com.ruoyi.mall.payment.domain.MallPayment;
-import com.ruoyi.mall.payment.mapper.MallPaymentMapper;
 
 @Service
 public class MallRefundService
@@ -24,16 +22,16 @@ public class MallRefundService
     private static final DateTimeFormatter REFUND_NO_TIME = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
     private final MallRefundMapper refundMapper;
     private final MallOrderMapper orderMapper;
-    private final MallPaymentMapper paymentMapper;
     private final RefundPort refundPort;
+    private final MallRefundApprovalStateService approvalStateService;
 
     public MallRefundService(MallRefundMapper refundMapper, MallOrderMapper orderMapper,
-            MallPaymentMapper paymentMapper, RefundPort refundPort)
+            RefundPort refundPort, MallRefundApprovalStateService approvalStateService)
     {
         this.refundMapper = refundMapper;
         this.orderMapper = orderMapper;
-        this.paymentMapper = paymentMapper;
         this.refundPort = refundPort;
+        this.approvalStateService = approvalStateService;
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -41,9 +39,9 @@ public class MallRefundService
     {
         requireMember(memberId);
         if (orderId == null || orderId <= 0) throw new ServiceException("订单参数无效");
+        MallRefund existing = refundMapper.selectByOrderIdForUpdate(orderId);
         MallOrder order = orderMapper.selectByIdForUpdate(orderId, memberId);
         if (order == null) throw new ServiceException("订单不存在");
-        MallRefund existing = refundMapper.selectByOrderIdForUpdate(orderId);
         if (existing != null)
         {
             if (!"REJECTED".equals(existing.getStatus()) && !"FAILED".equals(existing.getStatus()))
@@ -71,38 +69,20 @@ public class MallRefundService
         return refund;
     }
 
-    @Transactional(rollbackFor = Exception.class)
     public MallRefund approve(Long refundId, String operatorId)
     {
-        MallRefund refund = lockRefund(refundId);
-        if ("SUCCESS".equals(refund.getStatus())) return refund;
-        if (!("APPLIED".equals(refund.getStatus()) || "REFUNDING".equals(refund.getStatus())))
-            throw new ServiceException("当前退款单不允许审核");
-        MallOrder order = orderMapper.selectByIdForUpdate(refund.getOrderId(), null);
-        if (order == null || !"AFTER_SALE".equals(order.getStatus()) || !"REFUNDING".equals(order.getPaymentStatus()))
-            throw new ServiceException("订单当前不在退款处理中");
-        if ("APPLIED".equals(refund.getStatus()) && refundMapper.markRefunding(refundId) != 1)
-            throw new ServiceException("退款单状态已变化，请刷新后重试");
-        MallPayment payment = paymentMapper.selectSuccessByOrderIdForUpdate(order.getOrderId());
-        RefundPort.RefundResult result = refundPort.refund(order.getOrderNo(),
-                payment == null ? null : payment.getPaymentNo(), refund.getRefundAmount());
-        if (result == null || !result.success() || StringUtils.isBlank(result.providerRefundNo()))
+        MallRefundApprovalStateService.RefundApproval approval = approvalStateService.prepare(refundId, operatorId);
+        if (!approval.shouldCallProvider()) return approval.completedRefund();
+        RefundPort.RefundResult result = refundPort.refund(approval.refundNo(), approval.orderNo(),
+                approval.paymentNo(), approval.amount());
+        if (result == null || (result.success() && StringUtils.isBlank(result.providerRefundNo())))
+            throw new ServiceException("退款渠道结果不完整，退款单将保留处理中以便安全重试");
+        if (!result.success())
         {
-            String failure = result == null ? "退款渠道未返回结果"
-                    : StringUtils.isBlank(result.providerRefundNo()) ? "退款渠道未返回退款流水号" : result.message();
-            refundMapper.markFailed(refundId, failure);
-            restoreOrderAfterFailure(order, refund.getOriginalOrderStatus(), operatorId, "退款渠道失败：" + failure);
-            refund.setStatus("FAILED"); refund.setFailureReason(failure);
-            return refund;
+            String failure = StringUtils.isBlank(result.message()) ? "退款渠道明确拒绝退款" : result.message();
+            return approvalStateService.completeFailure(approval, failure);
         }
-        if (refundMapper.markSuccess(refundId, result.providerRefundNo()) != 1)
-            throw new ServiceException("退款结果保存失败");
-        if (orderMapper.markRefundSuccess(order.getOrderId()) != 1)
-            throw new ServiceException("订单退款状态保存失败");
-        writeLog(order, "AFTER_SALE", "ADMIN", operatorId, "退款成功");
-        refund.setStatus("SUCCESS"); refund.setProviderRefundNo(result.providerRefundNo());
-        refund.setRefundTime(LocalDateTime.now());
-        return refund;
+        return approvalStateService.completeSuccess(approval, result.providerRefundNo());
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -146,13 +126,6 @@ public class MallRefundService
         MallRefund refund = refundMapper.selectByIdForUpdate(refundId);
         if (refund == null) throw new ServiceException("退款单不存在");
         return refund;
-    }
-
-    private void restoreOrderAfterFailure(MallOrder order, String originalStatus, String operatorId, String reason)
-    {
-        if (orderMapper.restoreAfterRefundReject(order.getOrderId(), originalStatus) != 1)
-            throw new ServiceException("退款失败后订单状态恢复失败");
-        writeLog(order, originalStatus, "SYSTEM", operatorId, reason);
     }
 
     private void writeLog(MallOrder order, String toStatus, String operatorType, String operatorId, String remark)

@@ -33,7 +33,7 @@ public class MallPaymentPortalController
 
     @GetMapping("/orders/{orderId}/payments")
     public AjaxResult listForOrder(
-            @RequestHeader(value = "Authorization", required = false) String authorization,
+            @RequestHeader(value = MallMemberTokenService.MALL_AUTHORIZATION_HEADER, required = false) String authorization,
             @PathVariable Long orderId)
     {
         return AjaxResult.success(paymentQueryService.listForOrder(
@@ -41,7 +41,7 @@ public class MallPaymentPortalController
     }
 
     @PostMapping("/orders/{orderId}/payment")
-    public AjaxResult create(@RequestHeader(value = "Authorization", required = false) String authorization,
+    public AjaxResult create(@RequestHeader(value = MallMemberTokenService.MALL_AUTHORIZATION_HEADER, required = false) String authorization,
             @PathVariable Long orderId, @RequestBody MallCreatePaymentRequest request)
     {
         return AjaxResult.success("支付单创建成功", paymentService.create(
@@ -49,7 +49,7 @@ public class MallPaymentPortalController
     }
 
     @PostMapping("/payments/{paymentNo}/mock-success")
-    public AjaxResult mockSuccess(@RequestHeader(value = "Authorization", required = false) String authorization,
+    public AjaxResult mockSuccess(@RequestHeader(value = MallMemberTokenService.MALL_AUTHORIZATION_HEADER, required = false) String authorization,
             @PathVariable String paymentNo)
     {
         return AjaxResult.success("模拟支付成功", paymentService.mockSuccess(

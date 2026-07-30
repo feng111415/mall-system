@@ -17,7 +17,7 @@ public interface PaymentPort
      * @param subject 订单标题
      * @return 支付单创建结果
      */
-    PaymentCreateResult createPayment(String orderNo, BigDecimal amount, String subject);
+    PaymentCreateResult createPayment(String paymentNo, String orderNo, BigDecimal amount, String subject);
 
     /** 支付单创建结果。 */
     record PaymentCreateResult(boolean success, String paymentNo, String paymentUrl, String message)

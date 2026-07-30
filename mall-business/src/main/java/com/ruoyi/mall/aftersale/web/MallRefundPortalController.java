@@ -29,7 +29,7 @@ public class MallRefundPortalController
     }
 
     @PostMapping("/orders/{orderId}/refund")
-    public AjaxResult apply(@RequestHeader(value = "Authorization", required = false) String authorization,
+    public AjaxResult apply(@RequestHeader(value = MallMemberTokenService.MALL_AUTHORIZATION_HEADER, required = false) String authorization,
             @PathVariable Long orderId, @Valid @RequestBody MallRefundRequest request)
     {
         return AjaxResult.success("退款申请已提交", refundService.apply(
@@ -37,13 +37,13 @@ public class MallRefundPortalController
     }
 
     @GetMapping("/refunds")
-    public AjaxResult list(@RequestHeader(value = "Authorization", required = false) String authorization)
+    public AjaxResult list(@RequestHeader(value = MallMemberTokenService.MALL_AUTHORIZATION_HEADER, required = false) String authorization)
     {
         return AjaxResult.success(refundService.list(tokenService.requireMemberId(authorization)));
     }
 
     @GetMapping("/refunds/{refundId}")
-    public AjaxResult detail(@RequestHeader(value = "Authorization", required = false) String authorization,
+    public AjaxResult detail(@RequestHeader(value = MallMemberTokenService.MALL_AUTHORIZATION_HEADER, required = false) String authorization,
             @PathVariable Long refundId)
     {
         return AjaxResult.success(refundService.detail(tokenService.requireMemberId(authorization), refundId));

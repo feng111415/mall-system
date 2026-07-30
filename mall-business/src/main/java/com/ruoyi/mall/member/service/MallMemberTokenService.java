@@ -13,6 +13,7 @@ import com.ruoyi.common.utils.StringUtils;
 @Service
 public class MallMemberTokenService
 {
+    public static final String MALL_AUTHORIZATION_HEADER = "X-Mall-Authorization";
     private static final String TOKEN_PREFIX = "mall_member:login:";
     private static final int EXPIRE_DAYS = 7;
     private final RedisCache redisCache;

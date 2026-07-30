@@ -56,6 +56,19 @@ class MallPaymentStateServiceTest
     }
 
     @Test
+    void existingCreatingPaymentRetriesProviderWithSamePaymentNumber()
+    {
+        MallPayment existing = payment("CREATING");
+        when(paymentMapper.selectByOrderIdempotency(1L, 7L, "pay-1")).thenReturn(existing);
+
+        MallPaymentStateService.PaymentBegin begin = service.beginPayment(7L, 1L, "pay-1");
+
+        assertEquals(true, begin.shouldCallProvider());
+        assertEquals("PAY-1", begin.payment().getPaymentNo());
+        verify(paymentMapper, never()).insertPayment(any());
+    }
+
+    @Test
     void beginPaymentRejectsNewAttemptAfterThirtyMinutes()
     {
         MallOrder order = order("PENDING_PAYMENT", "UNPAID");

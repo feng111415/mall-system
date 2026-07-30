@@ -31,9 +31,11 @@ class MallRiskServiceTest
     @Test
     void fourthPendingOrderIsBlocked()
     {
+        when(mapper.lockMemberForOrder(7L)).thenReturn(7L);
         when(mapper.countPendingOrders(7L)).thenReturn(3);
 
         assertThrows(ServiceException.class, () -> service.checkOrder(7L, new BigDecimal("99.00")));
+        verify(mapper).lockMemberForOrder(7L);
     }
 
     @Test
