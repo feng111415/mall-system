@@ -8,7 +8,7 @@ public class MallShipOrderRequest
     @NotBlank(message = "物流公司编码不能为空")
     @Size(max = 32, message = "物流公司编码长度不能超过32个字符")
     private String companyCode;
-    @NotBlank(message = "物流公司名称不能为空")
+    /** 兼容旧客户端字段，服务端不信任该值，名称按 companyCode 白名单反查。 */
     @Size(max = 64, message = "物流公司名称长度不能超过64个字符")
     private String companyName;
     @NotBlank(message = "运单号不能为空")

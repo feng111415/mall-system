@@ -89,6 +89,18 @@ class MallLogisticsServiceTest
     }
 
     @Test
+    void rejectsUnknownLogisticsCompany()
+    {
+        MallOrder order = order("PENDING_SHIPMENT", "PAID");
+        when(orderMapper.selectByIdForUpdate(9L, null)).thenReturn(order);
+        when(logisticsMapper.selectByOrderIdForUpdate(9L)).thenReturn(null);
+
+        assertThrows(ServiceException.class,
+                () -> service.shipByAdmin(9L, "UNKNOWN", "任意名称", "TRACK-1", "admin"));
+        verify(logisticsPort, never()).createShipment(any(), any(), any(), any(), any());
+    }
+
+    @Test
     void memberCanOnlyQueryOwnShipment()
     {
         when(logisticsMapper.selectMemberShipment(9L, 7L)).thenReturn(null);

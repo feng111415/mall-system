@@ -11,6 +11,7 @@ import com.ruoyi.mall.logistics.domain.MallLogisticsNode;
 import com.ruoyi.mall.logistics.domain.MallLogisticsShipment;
 import com.ruoyi.mall.logistics.domain.MallLogisticsNodeStatus;
 import com.ruoyi.mall.logistics.domain.MallFulfillmentOrder;
+import com.ruoyi.mall.logistics.domain.MallLogisticsCompany;
 import com.ruoyi.mall.logistics.domain.dto.MallLogisticsNodeRequest;
 import com.ruoyi.mall.logistics.mapper.MallLogisticsMapper;
 import com.ruoyi.mall.order.domain.MallOrder;
@@ -45,7 +46,8 @@ public class MallLogisticsService
         if (!"PENDING_SHIPMENT".equals(order.getStatus()) || !"PAID".equals(order.getPaymentStatus()))
             throw new ServiceException("当前订单不允许发货");
 
-        String normalizedCompany = companyCode.trim().toUpperCase();
+        MallLogisticsCompany company = MallLogisticsCompany.parse(companyCode);
+        String normalizedCompany = company.getCode();
         String normalizedTracking = trackingNo.trim();
         LogisticsPort.LogisticsCreateResult result = logisticsPort.createShipment(order.getOrderNo(),
                 normalizedCompany, normalizedTracking, order.getReceiverName(), fullAddress(order));
@@ -55,7 +57,7 @@ public class MallLogisticsService
         MallLogisticsShipment shipment = new MallLogisticsShipment();
         shipment.setOrderId(order.getOrderId()); shipment.setOrderNo(order.getOrderNo());
         shipment.setMemberId(order.getMemberId()); shipment.setCompanyCode(normalizedCompany);
-        shipment.setCompanyName(companyName.trim()); shipment.setTrackingNo(result.trackingNo());
+        shipment.setCompanyName(company.getName()); shipment.setTrackingNo(result.trackingNo());
         shipment.setStatus("IN_TRANSIT"); shipment.setShippedTime(LocalDateTime.now());
         if (logisticsMapper.insertShipment(shipment) != 1) throw new ServiceException("物流单保存失败");
 
