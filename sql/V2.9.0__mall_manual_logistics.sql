@@ -51,3 +51,12 @@ where not exists(select 1 from sys_menu where menu_id=3962 or perms='mall:logist
 insert into sys_menu(menu_id,menu_name,parent_id,order_num,path,component,query,route_name,is_frame,is_cache,menu_type,visible,status,perms,icon,create_by,create_time,remark)
 select 3963,'追加轨迹',3960,3,'',null,null,'',1,0,'F','0','0','mall:logistics:node','#','system',now(),''
 where not exists(select 1 from sys_menu where menu_id=3963 or perms='mall:logistics:node');
+
+update sys_menu set menu_name=convert(0xe789a9e6b581e5b1a5e7baa6 using utf8mb4), remark=convert(0xe59586e59f8ee6898be5b7a5e789a9e6b581e4b88ee694b6e8b4a7 using utf8mb4)
+where menu_id=3960 or perms='mall:logistics:list';
+update sys_menu set menu_name=convert(0xe789a9e6b581e69fa5e8afa2 using utf8mb4)
+where menu_id=3961 or perms='mall:logistics:query';
+update sys_menu set menu_name=convert(0xe8aea2e58d95e58f91e8b4a7 using utf8mb4)
+where menu_id=3962 or perms='mall:logistics:ship';
+update sys_menu set menu_name=convert(0xe8bfbde58aa0e8bda8e8bfb9 using utf8mb4)
+where menu_id=3963 or perms='mall:logistics:node';
