@@ -12,10 +12,10 @@ const notice = useNoticeStore()
 const search = ref('')
 const searchOpen = ref(false)
 const navItems = [
-  { label: '首页', to: '/', icon: 'home-o' },
-  { label: '全部商品', to: '/catalog', icon: 'apps-o' },
-  { label: '我的订单', to: '/orders', icon: 'orders-o' },
-  { label: '个人中心', to: '/account', icon: 'user-o' }
+  { code: '01', label: '首页', sublabel: 'HOME', to: '/' },
+  { code: '02', label: '全部商品', sublabel: 'SHOP', to: '/catalog' },
+  { code: '03', label: '我的订单', sublabel: 'ORDERS', to: '/orders' },
+  { code: '04', label: '个人中心', sublabel: 'ACCOUNT', to: '/account' }
 ]
 function isActive(path) {
   if (path === '/catalog') return route.path === '/catalog' || route.path.startsWith('/product/')
@@ -49,7 +49,7 @@ watch(() => route.fullPath, () => {
     <header class="site-header">
       <div class="header-inner">
         <router-link class="brand" to="/"><span class="brand-mark">日</span><span><strong>日常商店</strong><small>DAILY STORE</small></span></router-link>
-        <nav class="header-actions"><router-link v-for="item in navItems" :key="item.to" :class="{ active: isActive(item.to) }" :to="item.to"><VanIcon :name="item.icon" /><span>{{ item.label }}</span></router-link></nav>
+        <nav class="header-actions"><router-link v-for="item in navItems" :key="item.to" :class="{ active: isActive(item.to) }" :to="item.to"><small>{{ item.code }}</small><span><strong>{{ item.label }}</strong><em>{{ item.sublabel }}</em></span></router-link></nav>
         <div class="header-tools">
           <form :class="['search-box', { open: searchOpen }]" @submit.prevent="submitSearch">
             <input v-if="searchOpen" v-model="search" autofocus aria-label="搜索商品" placeholder="搜索商品、品牌或分类" />
