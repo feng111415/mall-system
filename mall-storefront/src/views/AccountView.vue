@@ -518,7 +518,7 @@ async function confirmAvatarCrop() {
 
 <template>
   <section class="account-wrap">
-    <div class="page-intro">
+    <div v-if="!member" class="page-intro">
       <span class="section-kicker">个人中心</span>
       <h1>{{ member ? `你好，${member.nickname}` : '欢迎回来' }}</h1>
       <p>{{ member ? `手机号 ${member.maskedPhone || member.phone}` : '使用手机号验证码安全登录，未注册号码验证后将创建商城账号' }}</p>
@@ -527,23 +527,30 @@ async function confirmAvatarCrop() {
     <p v-if="profileLoading" class="loading-note">正在加载个人中心...</p>
 
     <template v-else-if="member">
-      <div class="profile-panel">
-        <div class="profile-avatar">
-          <img v-if="member.avatar" :src="member.avatar" alt="" />
-          <span v-else>{{ member.nickname?.slice(0, 1) }}</span>
+      <section class="account-hero-c">
+        <div class="profile-panel">
+          <div class="profile-avatar">
+            <img v-if="member.avatar" :src="member.avatar" alt="" />
+            <span v-else>{{ member.nickname?.slice(0, 1) }}</span>
+          </div>
+          <div><strong>{{ member.nickname }}</strong><p>普通会员 · 会员编号 M{{ member.memberId }}</p></div>
+          <div class="profile-panel-actions">
+            <button class="text-button" type="button" @click="toggleAvatarEditor"><VanIcon name="photograph" />更换头像</button>
+            <button class="add-button" type="button" @click="logout">退出登录</button>
+          </div>
         </div>
-        <div><strong>{{ member.nickname }}</strong><p>会员编号 M{{ member.memberId }}</p></div>
-        <div class="profile-panel-actions">
-          <button class="text-button" type="button" @click="toggleAvatarEditor"><VanIcon name="photograph" />更换头像</button>
-          <button class="add-button" type="button" @click="logout">退出登录</button>
+        <div class="account-overview">
+          <router-link to="/orders"><strong>{{ orderCount }}</strong><span>订单</span></router-link>
+          <router-link to="/cart"><strong>{{ cartCount }}</strong><span>购物车</span></router-link>
+          <a href="#address-book"><strong>{{ addresses.length }}</strong><span>地址</span></a>
         </div>
-      </div>
+      </section>
 
-      <div class="account-overview">
-        <router-link to="/orders"><strong>{{ orderCount }}</strong><span>我的订单</span></router-link>
-        <router-link to="/cart"><strong>{{ cartCount }}</strong><span>购物车商品</span></router-link>
-        <div><strong>{{ addresses.length }}</strong><span>收货地址</span></div>
-      </div>
+      <nav class="account-shortcuts-c" aria-label="个人中心快捷入口">
+        <router-link to="/orders"><VanIcon name="orders-o" /><span><strong>我的订单</strong><small>查看交易和物流进度</small></span><VanIcon name="arrow" /></router-link>
+        <a href="#address-book"><VanIcon name="location-o" /><span><strong>地址簿</strong><small>{{ addresses.length }} 个常用地址</small></span><VanIcon name="arrow" /></a>
+        <a href="#account-security"><VanIcon name="shield-o" /><span><strong>安全中心</strong><small>管理登录设备</small></span><VanIcon name="arrow" /></a>
+      </nav>
 
       <div class="account-sections">
         <section class="account-section">
@@ -583,7 +590,7 @@ async function confirmAvatarCrop() {
           </div>
         </section>
 
-        <section class="account-section address-book-section">
+        <section id="address-book" class="account-section address-book-section">
           <div class="section-heading">
             <div><span class="section-kicker">收货地址</span><h2>地址簿</h2></div>
             <div class="address-actions">
@@ -675,7 +682,7 @@ async function confirmAvatarCrop() {
           </div>
         </section>
 
-        <section class="account-section session-section">
+        <section id="account-security" class="account-section session-section">
           <div class="section-heading session-heading">
             <div><span class="section-kicker">账户安全</span><h2>登录设备</h2></div>
             <span class="session-quota">30 天内还可更换主设备 {{ sessionOverview.primaryChangesRemaining }} 次</span>

@@ -25,12 +25,11 @@ const productBadge = computed(() => props.badge || (Number(props.product.salesCo
       <div class="product-info">
         <p class="product-category">{{ product.categoryName }} <span v-if="product.brandName">· {{ product.brandName }}</span></p>
         <h3>{{ product.productName }}</h3>
-        <p class="product-subtitle">{{ product.subtitle || '为日常而选的耐用好物' }}</p>
       </div>
     </router-link>
     <div class="product-bottom">
       <span class="price">{{ priceText }}</span>
-      <router-link class="card-action" :to="productLink">选择规格 <span aria-hidden="true">→</span></router-link>
+      <router-link class="card-action" :to="productLink">查看详情 <span aria-hidden="true">↗</span></router-link>
     </div>
   </article>
 </template>

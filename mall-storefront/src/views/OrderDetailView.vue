@@ -50,6 +50,7 @@ const logisticsCompanies = [
 ]
 const activeAfterSaleStatuses = new Set(['PENDING_REVIEW', 'APPROVED', 'RETURN_SHIPPED', 'REFUNDING', 'SUCCESS'])
 const latestPayment = computed(() => payments.value[0] || null)
+const latestLogisticsNode = computed(() => logistics.value?.nodes?.[0] || null)
 const operations = computed(() => [...(order.value?.operations || [])].reverse())
 const activeDeadline = computed(() => order.value?.paymentStatus === 'PAYING'
   ? order.value?.paymentResultDeadline : order.value?.paymentCreateDeadline)
@@ -221,9 +222,15 @@ function logisticsNodeLabel(status) { return ({ SHIPPED: '已发货', IN_TRANSIT
         <p v-if="remainingSeconds === 0">期限已结束，系统正在关闭订单或处理迟到支付。</p>
       </section>
 
+      <section v-if="logistics" class="order-delivery-hero">
+        <div><VanIcon name="logistics" /><span><small>最新物流</small><h2>{{ logistics.status === 'DELIVERED' ? '你的包裹已经送达' : '你的包裹正在向你靠近' }}</h2><p>{{ latestLogisticsNode?.description || '物流信息已更新' }}<template v-if="latestLogisticsNode?.location"> · {{ latestLogisticsNode.location }}</template></p></span></div>
+        <b>当前<br /><strong>{{ logisticsNodeLabel(latestLogisticsNode?.nodeStatus || logistics.status) }}</strong></b>
+      </section>
+      <nav class="order-detail-tabs" aria-label="订单详情导航"><a v-if="logistics" href="#order-logistics">物流进度</a><a href="#order-products">商品信息</a><a href="#order-address">收货信息</a></nav>
+
       <div class="order-detail-grid">
         <main>
-          <section class="order-section">
+          <section id="order-products" class="order-section order-product-section">
             <div class="order-section-title"><span>01</span><h2>商品明细</h2></div>
             <article v-for="item in order.items" :key="item.orderItemId" class="order-product">
               <img :src="item.productImage || '/assets/chair.jpg'" :alt="item.productName" />
@@ -232,7 +239,7 @@ function logisticsNodeLabel(status) { return ({ SHIPPED: '已发货', IN_TRANSIT
             </article>
           </section>
 
-          <section class="order-section">
+          <section id="order-address" class="order-section">
             <div class="order-section-title"><span>02</span><h2>收货信息</h2></div>
             <div class="order-address-detail"><strong>{{ order.receiverName }} · {{ order.receiverPhone }}</strong><p>{{ order.receiverProvince }} {{ order.receiverCity }} {{ order.receiverDistrict }} {{ order.receiverDetailAddress }}</p><small v-if="order.remark">订单备注：{{ order.remark }}</small></div>
           </section>
@@ -244,7 +251,7 @@ function logisticsNodeLabel(status) { return ({ SHIPPED: '已发货', IN_TRANSIT
             </ol>
           </section>
 
-          <section v-if="logistics" class="order-section order-logistics-section">
+          <section v-if="logistics" id="order-logistics" class="order-section order-logistics-section">
             <div class="order-section-title"><span>04</span><h2>物流信息</h2></div>
             <div class="logistics-summary"><span>{{ logistics.companyName }}</span><strong>{{ logistics.trackingNo }}</strong></div>
             <ol class="logistics-timeline">
