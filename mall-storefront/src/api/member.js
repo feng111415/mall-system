@@ -1,7 +1,8 @@
 import http from './http'
+import { getDeviceId } from '../utils/device'
 
 export const sendSmsCode = phone => http.post('/mall/member/sms-code', { phone })
-export const loginBySms = payload => http.post('/mall/member/login', payload)
+export const loginBySms = payload => http.post('/mall/member/login', { ...payload, deviceId: getDeviceId() })
 export const getProfile = () => http.get('/mall/member/profile')
 export const getAvatarPresets = () => http.get('/mall/member/profile/avatar-presets')
 export const updateNickname = nickname => http.put('/mall/member/profile/nickname', { nickname })
@@ -12,6 +13,10 @@ export const uploadAvatar = file => {
   return http.post('/mall/member/profile/avatar/upload', body)
 }
 export const logoutMember = () => http.post('/mall/member/logout')
+export const getMemberSessions = () => http.get('/mall/member/profile/sessions')
+export const revokeMemberSession = sessionId => http.delete(`/mall/member/profile/sessions/${sessionId}`)
+export const sendPrimaryDeviceCode = () => http.post('/mall/member/profile/sessions/primary-mobile/code')
+export const replacePrimaryDevice = code => http.put('/mall/member/profile/sessions/primary-mobile', { code })
 export const getAddresses = () => http.get('/mall/member/addresses')
 export const addAddress = payload => http.post('/mall/member/addresses', payload)
 export const updateAddress = (addressId, payload) => http.put(`/mall/member/addresses/${addressId}`, payload)

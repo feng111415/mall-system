@@ -24,13 +24,15 @@ import com.ruoyi.mall.member.domain.MallMemberConsent;
 import com.ruoyi.mall.member.domain.MallSmsCode;
 import com.ruoyi.mall.member.domain.dto.MallMemberLoginRequest;
 import com.ruoyi.mall.member.domain.vo.MallMemberProfileVo;
+import com.ruoyi.mall.member.domain.vo.MallMemberSessionOverviewVo;
 import com.ruoyi.mall.member.mapper.MallMemberAuthMapper;
 import com.ruoyi.mall.member.mapper.MallMemberMapper;
 
 @Service
 public class MallMemberAuthService
 {
-    private static final String PURPOSE = "REGISTER_LOGIN";
+    private static final String LOGIN_PURPOSE = "REGISTER_LOGIN";
+    private static final String PRIMARY_DEVICE_CHANGE_PURPOSE = "PRIMARY_DEVICE_CHANGE";
     private static final long CODE_VALID_MILLIS = 5 * 60 * 1000L;
     private static final long SEND_INTERVAL_MILLIS = 60 * 1000L;
     private static final int MAX_VERIFY_ATTEMPTS = 5;
@@ -40,21 +42,21 @@ public class MallMemberAuthService
     private final SecureRandom secureRandom = new SecureRandom();
     private final MallMemberMapper memberMapper;
     private final MallMemberAuthMapper authMapper;
-    private final MallMemberTokenService tokenService;
+    private final MallMemberSessionService sessionService;
     private final MallSmsVerificationAttemptService verificationAttemptService;
     private final SmsPort smsPort;
     private final RedisTemplate<Object, Object> redisTemplate;
     private final String mockCode;
 
     public MallMemberAuthService(MallMemberMapper memberMapper, MallMemberAuthMapper authMapper,
-            MallMemberTokenService tokenService, SmsPort smsPort,
+            MallMemberSessionService sessionService, SmsPort smsPort,
             RedisTemplate<Object, Object> redisTemplate,
             @Value("${mall.sms.mock-code:}") String mockCode,
             MallSmsVerificationAttemptService verificationAttemptService)
     {
         this.memberMapper = memberMapper;
         this.authMapper = authMapper;
-        this.tokenService = tokenService;
+        this.sessionService = sessionService;
         this.verificationAttemptService = verificationAttemptService;
         this.smsPort = smsPort;
         this.redisTemplate = redisTemplate;
@@ -63,8 +65,24 @@ public class MallMemberAuthService
 
     public Map<String, Object> sendCode(String phone, String requestIp)
     {
+        return sendVerificationCode(phone, requestIp, LOGIN_PURPOSE, "MALL_LOGIN_CODE");
+    }
+
+    public Map<String, Object> sendPrimaryDeviceCode(MallMemberTokenService.MemberSession current,
+            String requestIp)
+    {
+        sessionService.assertPrimaryChangeAllowed(current);
+        MallMember member = requireActiveMember(current.getMemberId());
+        return sendVerificationCode(member.getPhone(), requestIp, PRIMARY_DEVICE_CHANGE_PURPOSE,
+                "MALL_PRIMARY_DEVICE_CHANGE_CODE");
+    }
+
+    private Map<String, Object> sendVerificationCode(String phone, String requestIp, String purpose,
+            String templateCode)
+    {
         Boolean locked = redisTemplate.opsForValue().setIfAbsent(
-                SEND_LOCK_PREFIX + phone, requestIp, SEND_INTERVAL_MILLIS, java.util.concurrent.TimeUnit.MILLISECONDS);
+                SEND_LOCK_PREFIX + purpose + ":" + phone, requestIp, SEND_INTERVAL_MILLIS,
+                java.util.concurrent.TimeUnit.MILLISECONDS);
         if (!Boolean.TRUE.equals(locked))
         {
             throw new ServiceException("验证码发送过于频繁，请稍后再试");
@@ -82,7 +100,7 @@ public class MallMemberAuthService
                 throw new ServiceException("当前网络请求过于频繁，请稍后再试");
             }
 
-            MallSmsCode latest = authMapper.selectLatestSmsCode(phone, PURPOSE);
+            MallSmsCode latest = authMapper.selectLatestSmsCode(phone, purpose);
             if (latest != null && latest.getCreateTime() != null
                     && System.currentTimeMillis() - latest.getCreateTime().getTime() < SEND_INTERVAL_MILLIS)
             {
@@ -94,7 +112,7 @@ public class MallMemberAuthService
         String salt = randomHex(16);
             MallSmsCode smsCode = new MallSmsCode();
             smsCode.setPhone(phone);
-            smsCode.setPurpose(PURPOSE);
+            smsCode.setPurpose(purpose);
             smsCode.setCodeSalt(salt);
             smsCode.setCodeHash(hashCode(phone, code, salt));
             smsCode.setSendStatus("PENDING");
@@ -104,7 +122,7 @@ public class MallMemberAuthService
             smsCode.setRequestIp(requestIp);
             authMapper.insertSmsCode(smsCode);
 
-            SmsPort.SmsSendResult result = smsPort.sendVerificationCode(phone, "MALL_LOGIN_CODE", code);
+            SmsPort.SmsSendResult result = smsPort.sendVerificationCode(phone, templateCode, code);
             smsCode.setProviderRequestId(result.providerRequestId());
             smsCode.setSendStatus(result.success() ? "SUCCESS" : "FAILED");
             authMapper.updateSmsSendResult(smsCode);
@@ -119,20 +137,20 @@ public class MallMemberAuthService
         }
         catch (ServiceException exception)
         {
-            redisTemplate.delete(SEND_LOCK_PREFIX + phone);
+            redisTemplate.delete(SEND_LOCK_PREFIX + purpose + ":" + phone);
             throw exception;
         }
         catch (RuntimeException exception)
         {
-            redisTemplate.delete(SEND_LOCK_PREFIX + phone);
+            redisTemplate.delete(SEND_LOCK_PREFIX + purpose + ":" + phone);
             throw exception;
         }
     }
 
     @Transactional(noRollbackFor = DuplicateKeyException.class)
-    public Map<String, Object> login(MallMemberLoginRequest request, String requestIp)
+    public Map<String, Object> login(MallMemberLoginRequest request, String requestIp, String userAgent)
     {
-        MallSmsCode smsCode = authMapper.selectLatestSmsCode(request.getPhone(), PURPOSE);
+        MallSmsCode smsCode = authMapper.selectLatestSmsCode(request.getPhone(), LOGIN_PURPOSE);
         validateSmsCode(smsCode, request.getPhone(), request.getCode());
         if (authMapper.consumeSmsCode(smsCode.getSmsId()) != 1)
         {
@@ -156,13 +174,28 @@ public class MallMemberAuthService
         recordConsent(member.getMemberId(), "USER_AGREEMENT", request.getUserAgreementVersion(), requestIp);
         recordConsent(member.getMemberId(), "PRIVACY_POLICY", request.getPrivacyPolicyVersion(), requestIp);
 
-        String token = tokenService.createToken(member.getMemberId());
+        MallMemberSessionService.LoginSession loginSession = sessionService.login(member.getMemberId(),
+                request.getDeviceId(), userAgent, requestIp);
         Map<String, Object> response = new LinkedHashMap<>();
-        response.put("token", token);
-        response.put("expiresIn", 7 * 24 * 60 * 60);
+        response.put("token", loginSession.token());
+        response.put("expiresIn", loginSession.expiresIn());
         response.put("newMember", created);
         response.put("member", MallMemberProfileVo.from(member));
         return response;
+    }
+
+    @Transactional
+    public MallMemberSessionOverviewVo replacePrimaryDevice(
+            MallMemberTokenService.MemberSession current, String code, String requestIp)
+    {
+        MallMember member = requireActiveMember(current.getMemberId());
+        MallSmsCode smsCode = authMapper.selectLatestSmsCode(member.getPhone(), PRIMARY_DEVICE_CHANGE_PURPOSE);
+        validateSmsCode(smsCode, member.getPhone(), code);
+        if (authMapper.consumeSmsCode(smsCode.getSmsId()) != 1)
+        {
+            throw new ServiceException("验证码已使用，请重新获取");
+        }
+        return sessionService.replacePrimary(current, requestIp);
     }
 
     public MallMemberProfileVo profile(Long memberId)

@@ -7,11 +7,15 @@ import {
   deleteAddress,
   getAddresses,
   getAvatarPresets,
+  getMemberSessions,
   getProfile,
   loginBySms,
   logoutMember,
+  replacePrimaryDevice,
+  revokeMemberSession,
   selectPresetAvatar,
   sendSmsCode,
+  sendPrimaryDeviceCode,
   updateNickname,
   uploadAvatar,
   updateAddress
@@ -42,6 +46,14 @@ const avatarPresets = ref([])
 const avatarEditorOpen = ref(false)
 const avatarSaving = ref(false)
 const avatarInput = ref(null)
+const sessionOverview = ref({ sessions: [], primaryChangesRemaining: 0, primaryChangeWindowDays: 30 })
+const sessionBusyId = ref(null)
+const sessionRevokeConfirmId = ref(null)
+const primaryCodeOpen = ref(false)
+const primaryCode = ref('')
+const primarySeconds = ref(0)
+const primaryCodeSending = ref(false)
+const primaryReplacing = ref(false)
 const cropOpen = ref(false)
 const cropImageUrl = ref('')
 const cropZoom = ref(1)
@@ -62,6 +74,7 @@ const districtOptions = computed(() => cityOptions.value.find(item => item.value
 const emptyAddress = () => ({ receiverName: '', receiverPhone: '', province: '', city: '', district: '', detailAddress: '', postalCode: '', isDefault: '0' })
 const addressForm = ref(emptyAddress())
 let timer
+let primaryTimer
 let cropSourceImage = null
 
 onMounted(async () => {
@@ -70,15 +83,16 @@ onMounted(async () => {
 })
 onUnmounted(() => {
   clearInterval(timer)
+  clearInterval(primaryTimer)
   releaseCropImage()
 })
 
 async function loadProfile() {
   profileLoading.value = true
   try {
-    const [profileResponse, addressResponse, orderResponse, cartResponse, presetResponse] = await Promise.all([
+    const [profileResponse, addressResponse, orderResponse, cartResponse, presetResponse, sessionResponse] = await Promise.all([
       getProfile(), getAddresses(), getOrders({ limit: 50 }), getCart(),
-      getAvatarPresets().catch(() => ({ data: { data: [] } }))
+      getAvatarPresets().catch(() => ({ data: { data: [] } })), getMemberSessions()
     ])
     member.value = profileResponse.data.data
     nicknameDraft.value = member.value.nickname
@@ -86,6 +100,7 @@ async function loadProfile() {
     orderCount.value = (orderResponse.data.data || []).length
     cartCount.value = (cartResponse.data.data?.items || []).length
     avatarPresets.value = presetResponse.data.data || []
+    sessionOverview.value = sessionResponse.data.data || sessionOverview.value
   } catch {
     sessionStorage.removeItem('mall-user-token')
   } finally {
@@ -143,12 +158,101 @@ async function logout() {
     cart.reset()
     member.value = null
     addresses.value = []
+    sessionOverview.value = { sessions: [], primaryChangesRemaining: 0, primaryChangeWindowDays: 30 }
+    primaryCodeOpen.value = false
+    primaryCode.value = ''
+    clearInterval(primaryTimer)
     avatarEditorOpen.value = false
     profileEditing.value = false
     releaseCropImage()
     closeAddressForm()
     message.value = '已退出登录'
     notice.show(message.value)
+  }
+}
+
+function formatSessionTime(value) {
+  if (!value) return '未知时间'
+  return new Intl.DateTimeFormat('zh-CN', {
+    month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false
+  }).format(new Date(value))
+}
+
+async function revokeSession(session) {
+  if (session.current || sessionBusyId.value) return
+  sessionBusyId.value = session.sessionId
+  try {
+    const response = await revokeMemberSession(session.sessionId)
+    sessionOverview.value = response.data.data
+    sessionRevokeConfirmId.value = null
+    notice.show('设备已下线')
+  } catch (error) {
+    notice.show(error.response?.data?.msg || '设备下线失败，请稍后重试', 'error')
+  } finally {
+    sessionBusyId.value = null
+  }
+}
+
+function openPrimaryDeviceChange() {
+  primaryCode.value = ''
+  primaryCodeOpen.value = true
+  nextTick(() => {
+    const form = document.querySelector('.primary-device-form')
+    const navigation = document.querySelector('.mobile-nav')
+    if (!form) return
+    const navigationHeight = navigation && getComputedStyle(navigation).display !== 'none'
+      ? navigation.getBoundingClientRect().height : 0
+    const visibleBottom = window.innerHeight - navigationHeight - 12
+    const formBottom = form.getBoundingClientRect().bottom
+    if (formBottom > visibleBottom) {
+      window.scrollBy({
+        top: formBottom - visibleBottom,
+        behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'
+      })
+    }
+  })
+}
+
+function closePrimaryDeviceChange() {
+  if (primaryCodeSending.value || primaryReplacing.value) return
+  primaryCodeOpen.value = false
+  primaryCode.value = ''
+}
+
+async function requestPrimaryDeviceCode() {
+  if (primarySeconds.value || primaryCodeSending.value) return
+  primaryCodeSending.value = true
+  try {
+    await sendPrimaryDeviceCode()
+    primarySeconds.value = 60
+    clearInterval(primaryTimer)
+    primaryTimer = setInterval(() => {
+      if (--primarySeconds.value <= 0) clearInterval(primaryTimer)
+    }, 1000)
+    notice.show('验证码已发送')
+  } catch (error) {
+    notice.show(error.response?.data?.msg || '验证码发送失败，请稍后重试', 'error')
+  } finally {
+    primaryCodeSending.value = false
+  }
+}
+
+async function confirmPrimaryDevice() {
+  if (!/^\d{6}$/.test(primaryCode.value)) {
+    notice.show('请输入 6 位验证码', 'error')
+    return
+  }
+  primaryReplacing.value = true
+  try {
+    const response = await replacePrimaryDevice(primaryCode.value)
+    sessionOverview.value = response.data.data
+    primaryCodeOpen.value = false
+    primaryCode.value = ''
+    notice.show('当前设备已设为主设备')
+  } catch (error) {
+    notice.show(error.response?.data?.msg || '主设备更换失败，请稍后重试', 'error')
+  } finally {
+    primaryReplacing.value = false
   }
 }
 
@@ -569,6 +673,45 @@ async function confirmAvatarCrop() {
             <p>暂未保存收货地址</p>
             <button class="text-button" type="button" @click="openAddressForm()">新增地址</button>
           </div>
+        </section>
+
+        <section class="account-section session-section">
+          <div class="section-heading session-heading">
+            <div><span class="section-kicker">账户安全</span><h2>登录设备</h2></div>
+            <span class="session-quota">30 天内还可更换主设备 {{ sessionOverview.primaryChangesRemaining }} 次</span>
+          </div>
+          <div v-if="sessionOverview.sessions.length" class="session-list">
+            <article v-for="session in sessionOverview.sessions" :key="session.sessionId" class="session-item">
+              <div class="session-icon" aria-hidden="true"><VanIcon :name="session.deviceType === 'MOBILE' ? 'phone-o' : 'desktop-o'" /></div>
+              <div class="session-copy">
+                <div class="session-name">
+                  <strong>{{ session.deviceName }}</strong>
+                  <span v-if="session.current">当前设备</span>
+                  <em v-if="session.primaryMobile">主设备</em>
+                </div>
+                <p>{{ session.loginIp || '未知网络' }} · 登录于 {{ formatSessionTime(session.loginTime) }}</p>
+                <small>有效期至 {{ formatSessionTime(session.expireTime) }}</small>
+              </div>
+              <div class="session-actions">
+                <button v-if="session.current && session.deviceType === 'MOBILE' && !session.primaryMobile" class="text-button" type="button" @click="openPrimaryDeviceChange">设为主设备</button>
+                <button v-if="!session.current" class="session-revoke" type="button" :disabled="Boolean(sessionBusyId)" @click="sessionRevokeConfirmId = session.sessionId"><VanIcon name="close" />下线</button>
+              </div>
+              <div v-if="sessionRevokeConfirmId === session.sessionId" class="session-confirm" role="alert">
+                <span>确认让这台设备退出登录？</span>
+                <button type="button" :disabled="sessionBusyId === session.sessionId" @click="revokeSession(session)">{{ sessionBusyId === session.sessionId ? '处理中...' : '确认下线' }}</button>
+                <button type="button" :disabled="sessionBusyId === session.sessionId" @click="sessionRevokeConfirmId = null">取消</button>
+              </div>
+            </article>
+          </div>
+          <p v-else class="session-empty">暂无在线设备</p>
+          <form v-if="primaryCodeOpen" class="primary-device-form" @submit.prevent="confirmPrimaryDevice">
+            <div>
+              <strong>验证当前手机号</strong>
+              <button class="icon-button" type="button" aria-label="关闭主设备验证" title="关闭" @click="closePrimaryDeviceChange"><VanIcon name="cross" /></button>
+            </div>
+            <label><span>短信验证码</span><div class="primary-code-field"><input v-model.trim="primaryCode" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="6 位验证码" /><button type="button" :disabled="primaryCodeSending || primarySeconds > 0" @click="requestPrimaryDeviceCode">{{ primarySeconds ? `${primarySeconds}s 后重发` : (primaryCodeSending ? '发送中...' : '获取验证码') }}</button></div></label>
+            <button class="primary-button" type="submit" :disabled="primaryReplacing">{{ primaryReplacing ? '验证中...' : '确认设为主设备' }}</button>
+          </form>
         </section>
       </div>
     </template>

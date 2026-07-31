@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.mall.member.mapper.MallMemberSessionMapper">
+    <resultMap id="Device" type="com.ruoyi.mall.member.domain.MallMemberDevice">
+        <id property="memberDeviceId" column="member_device_id"/>
+        <result property="memberId" column="member_id"/>
+        <result property="deviceIdentifier" column="device_identifier"/>
+        <result property="deviceType" column="device_type"/>
+        <result property="deviceName" column="device_name"/>
+        <result property="primaryMobile" column="primary_mobile"/>
+        <result property="firstSeenTime" column="first_seen_time"/>
+        <result property="lastLoginTime" column="last_login_time"/>
+        <result property="lastLoginIp" column="last_login_ip"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+    <resultMap id="Session" type="com.ruoyi.mall.member.domain.MallMemberSession">
+        <id property="sessionId" column="session_id"/>
+        <result property="memberId" column="member_id"/>
+        <result property="memberDeviceId" column="member_device_id"/>
+        <result property="tokenHash" column="token_hash"/>
+        <result property="status" column="status"/>
+        <result property="loginIp" column="login_ip"/>
+        <result property="lastActiveTime" column="last_active_time"/>
+        <result property="expireTime" column="expire_time"/>
+        <result property="offlineReason" column="offline_reason"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="deviceIdentifier" column="device_identifier"/>
+        <result property="deviceType" column="device_type"/>
+        <result property="deviceName" column="device_name"/>
+        <result property="primaryMobile" column="primary_mobile"/>
+    </resultMap>
+    <sql id="deviceColumns">member_device_id,member_id,device_identifier,device_type,device_name,primary_mobile,first_seen_time,last_login_time,last_login_ip,create_time,update_time</sql>
+    <sql id="sessionJoinColumns">s.session_id,s.member_id,s.member_device_id,s.token_hash,s.status,s.login_ip,s.last_active_time,s.expire_time,s.offline_reason,s.create_time,s.update_time,d.device_identifier,d.device_type,d.device_name,d.primary_mobile</sql>
+
+    <select id="selectDevice" resultMap="Device">select <include refid="deviceColumns"/> from mall_member_device where member_id=#{memberId} and device_identifier=#{deviceIdentifier}</select>
+    <select id="selectDeviceById" resultMap="Device">select <include refid="deviceColumns"/> from mall_member_device where member_id=#{memberId} and member_device_id=#{memberDeviceId}</select>
+    <select id="selectPrimaryMobileDevice" resultMap="Device">select <include refid="deviceColumns"/> from mall_member_device where member_id=#{memberId} and device_type='MOBILE' and primary_mobile='1' order by member_device_id limit 1</select>
+    <insert id="insertDevice" useGeneratedKeys="true" keyProperty="memberDeviceId">insert into mall_member_device(member_id,device_identifier,device_type,device_name,primary_mobile,first_seen_time,last_login_time,last_login_ip,create_time,update_time) values(#{memberId},#{deviceIdentifier},#{deviceType},#{deviceName},#{primaryMobile},now(),now(),#{lastLoginIp},now(),now())</insert>
+    <update id="updateDeviceLogin">update mall_member_device set device_name=#{deviceName},last_login_time=now(),last_login_ip=#{lastLoginIp},update_time=now() where member_device_id=#{memberDeviceId} and member_id=#{memberId}</update>
+    <update id="clearPrimaryMobile">update mall_member_device set primary_mobile='0',update_time=now() where member_id=#{memberId} and device_type='MOBILE' and primary_mobile='1'</update>
+    <update id="markPrimaryMobile">update mall_member_device set primary_mobile='1',update_time=now() where member_id=#{memberId} and member_device_id=#{memberDeviceId} and device_type='MOBILE'</update>
+    <update id="expireSessions">update mall_member_session set status='EXPIRED',offline_reason='TOKEN_EXPIRED',update_time=now() where member_id=#{memberId} and status='ACTIVE' and expire_time &lt;= #{now}</update>
+    <select id="selectActiveSessionsForUpdate" resultMap="Session">select <include refid="sessionJoinColumns"/> from mall_member_session s join mall_member_device d on d.member_device_id=s.member_device_id where s.member_id=#{memberId} and s.status='ACTIVE' and s.expire_time&gt;#{now} order by s.create_time,s.session_id for update</select>
+    <select id="selectActiveSessions" resultMap="Session">select <include refid="sessionJoinColumns"/> from mall_member_session s join mall_member_device d on d.member_device_id=s.member_device_id where s.member_id=#{memberId} and s.status='ACTIVE' and s.expire_time&gt;#{now} order by s.create_time desc,s.session_id desc</select>
+    <select id="selectActiveSession" resultMap="Session">select <include refid="sessionJoinColumns"/> from mall_member_session s join mall_member_device d on d.member_device_id=s.member_device_id where s.member_id=#{memberId} and s.session_id=#{sessionId} and s.status='ACTIVE' and s.expire_time&gt;#{now}</select>
+    <insert id="insertSession" useGeneratedKeys="true" keyProperty="sessionId">insert into mall_member_session(member_id,member_device_id,token_hash,status,login_ip,last_active_time,expire_time,create_time,update_time) values(#{memberId},#{memberDeviceId},#{tokenHash},'ACTIVE',#{loginIp},now(),#{expireTime},now(),now())</insert>
+    <update id="markSessionOffline">update mall_member_session set status=#{status},offline_reason=#{reason},update_time=now() where session_id=#{sessionId} and status='ACTIVE'</update>
+    <select id="countPrimaryChangesSince" resultType="int">select count(1) from mall_member_device_audit where member_id=#{memberId} and action_type='PRIMARY_MOBILE_REPLACED' and create_time&gt;=#{sinceTime}</select>
+    <insert id="insertDeviceAudit" useGeneratedKeys="true" keyProperty="auditId">insert into mall_member_device_audit(member_id,action_type,old_member_device_id,new_member_device_id,request_ip,create_time) values(#{memberId},#{actionType},#{oldMemberDeviceId},#{newMemberDeviceId},#{requestIp},now())</insert>
+</mapper>

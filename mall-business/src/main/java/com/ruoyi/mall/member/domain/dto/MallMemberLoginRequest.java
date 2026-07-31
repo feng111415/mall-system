@@ -23,6 +23,10 @@ public class MallMemberLoginRequest
     @NotBlank(message = "隐私政策版本不能为空")
     private String privacyPolicyVersion;
 
+    @NotBlank(message = "设备标识不能为空")
+    @Pattern(regexp = "^[a-f0-9]{32}$", message = "设备标识格式不正确")
+    private String deviceId;
+
     public String getPhone() { return phone; }
     public void setPhone(String phone) { this.phone = phone; }
     public String getCode() { return code; }
@@ -33,4 +37,6 @@ public class MallMemberLoginRequest
     public void setUserAgreementVersion(String userAgreementVersion) { this.userAgreementVersion = userAgreementVersion; }
     public String getPrivacyPolicyVersion() { return privacyPolicyVersion; }
     public void setPrivacyPolicyVersion(String privacyPolicyVersion) { this.privacyPolicyVersion = privacyPolicyVersion; }
+    public String getDeviceId() { return deviceId; }
+    public void setDeviceId(String deviceId) { this.deviceId = deviceId; }
 }

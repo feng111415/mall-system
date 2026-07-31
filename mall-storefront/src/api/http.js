@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { getDeviceId } from '../utils/device'
 
 /**
  * 用户端 HTTP 客户端。
@@ -12,6 +13,7 @@ const http = axios.create({
 
 http.interceptors.request.use(config => {
   const token = sessionStorage.getItem('mall-user-token')
+  config.headers['X-Mall-Device-Id'] = getDeviceId()
   if (token) config.headers['X-Mall-Authorization'] = `Bearer ${token}`
   return config
 })

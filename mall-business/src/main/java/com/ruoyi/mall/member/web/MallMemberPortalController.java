@@ -21,10 +21,13 @@ import com.ruoyi.mall.member.domain.MallMemberAddress;
 import com.ruoyi.mall.member.domain.dto.MallMemberLoginRequest;
 import com.ruoyi.mall.member.domain.dto.MallNicknameUpdateRequest;
 import com.ruoyi.mall.member.domain.dto.MallAvatarPresetRequest;
+import com.ruoyi.mall.member.domain.dto.MallPrimaryDeviceReplaceRequest;
 import com.ruoyi.mall.member.domain.dto.MallSendCodeRequest;
 import com.ruoyi.mall.member.service.MallMemberAuthService;
 import com.ruoyi.mall.member.service.MallMemberProfileService;
+import com.ruoyi.mall.member.service.MallMemberSessionService;
 import com.ruoyi.mall.member.service.MallMemberTokenService;
+import com.ruoyi.mall.member.service.MallMemberTokenService.MemberSession;
 
 /** 商城用户端会员接口，使用独立商城 Token。 */
 @Anonymous
@@ -34,13 +37,16 @@ public class MallMemberPortalController
 {
     private final MallMemberAuthService authService;
     private final MallMemberProfileService profileService;
+    private final MallMemberSessionService sessionService;
     private final MallMemberTokenService tokenService;
 
     public MallMemberPortalController(MallMemberAuthService authService,
-            MallMemberProfileService profileService, MallMemberTokenService tokenService)
+            MallMemberProfileService profileService, MallMemberSessionService sessionService,
+            MallMemberTokenService tokenService)
     {
         this.authService = authService;
         this.profileService = profileService;
+        this.sessionService = sessionService;
         this.tokenService = tokenService;
     }
 
@@ -53,14 +59,51 @@ public class MallMemberPortalController
     @PostMapping("/login")
     public AjaxResult login(@Valid @RequestBody MallMemberLoginRequest request, HttpServletRequest servletRequest)
     {
-        return AjaxResult.success("登录成功", authService.login(request, IpUtils.getIpAddr(servletRequest)));
+        return AjaxResult.success("登录成功", authService.login(request, IpUtils.getIpAddr(servletRequest),
+                servletRequest.getHeader("User-Agent")));
     }
 
     @PostMapping("/logout")
     public AjaxResult logout(@RequestHeader(value = MallMemberTokenService.MALL_AUTHORIZATION_HEADER, required = false) String authorization)
     {
-        tokenService.logout(authorization);
+        sessionService.logout(tokenService.requireSession(authorization));
         return AjaxResult.success("已退出登录");
+    }
+
+    @GetMapping("/profile/sessions")
+    public AjaxResult sessions(
+            @RequestHeader(value = MallMemberTokenService.MALL_AUTHORIZATION_HEADER, required = false) String authorization)
+    {
+        return AjaxResult.success(sessionService.overview(tokenService.requireSession(authorization)));
+    }
+
+    @DeleteMapping("/profile/sessions/{sessionId}")
+    public AjaxResult revokeSession(
+            @RequestHeader(value = MallMemberTokenService.MALL_AUTHORIZATION_HEADER, required = false) String authorization,
+            @PathVariable Long sessionId)
+    {
+        MemberSession current = tokenService.requireSession(authorization);
+        return AjaxResult.success("设备已下线", sessionService.revoke(current, sessionId));
+    }
+
+    @PostMapping("/profile/sessions/primary-mobile/code")
+    public AjaxResult sendPrimaryDeviceCode(
+            @RequestHeader(value = MallMemberTokenService.MALL_AUTHORIZATION_HEADER, required = false) String authorization,
+            HttpServletRequest servletRequest)
+    {
+        MemberSession current = tokenService.requireSession(authorization);
+        return AjaxResult.success("验证码已发送",
+                authService.sendPrimaryDeviceCode(current, IpUtils.getIpAddr(servletRequest)));
+    }
+
+    @PutMapping("/profile/sessions/primary-mobile")
+    public AjaxResult replacePrimaryDevice(
+            @RequestHeader(value = MallMemberTokenService.MALL_AUTHORIZATION_HEADER, required = false) String authorization,
+            @Valid @RequestBody MallPrimaryDeviceReplaceRequest request, HttpServletRequest servletRequest)
+    {
+        MemberSession current = tokenService.requireSession(authorization);
+        return AjaxResult.success("主设备已更换", authService.replacePrimaryDevice(current, request.getCode(),
+                IpUtils.getIpAddr(servletRequest)));
     }
 
     @GetMapping("/profile")
