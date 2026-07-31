@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.mall.member.mapper.MallMemberProfileAuditMapper">
+    <select id="countNicknameChangesSince" resultType="int">
+        select count(1)
+        from mall_member_profile_audit
+        where member_id=#{memberId}
+          and change_type='NICKNAME'
+          and create_time &gt;= #{sinceTime}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="auditId">
+        insert into mall_member_profile_audit(
+            member_id,change_type,old_value,new_value,change_source,request_ip,create_time
+        ) values(
+            #{memberId},#{changeType},#{oldValue},#{newValue},#{changeSource},#{requestIp},now()
+        )
+    </insert>
+</mapper>

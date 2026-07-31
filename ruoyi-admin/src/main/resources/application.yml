@@ -155,3 +155,5 @@ xss:
 mall:
   sms:
     mock-code: ${MALL_SMS_MOCK_CODE:}
+  member:
+    nickname-sensitive-words: 管理员,官方客服,客服,官方,加微信,加微,微信,微信号,微商,QQ,VX,V信,扣扣,联系电话,兼职刷单

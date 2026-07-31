@@ -11,14 +11,19 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 import com.ruoyi.common.annotation.Anonymous;
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.utils.ip.IpUtils;
 import com.ruoyi.mall.member.domain.MallMemberAddress;
 import com.ruoyi.mall.member.domain.dto.MallMemberLoginRequest;
+import com.ruoyi.mall.member.domain.dto.MallNicknameUpdateRequest;
+import com.ruoyi.mall.member.domain.dto.MallAvatarPresetRequest;
 import com.ruoyi.mall.member.domain.dto.MallSendCodeRequest;
 import com.ruoyi.mall.member.service.MallMemberAuthService;
+import com.ruoyi.mall.member.service.MallMemberProfileService;
 import com.ruoyi.mall.member.service.MallMemberTokenService;
 
 /** 商城用户端会员接口，使用独立商城 Token。 */
@@ -28,11 +33,14 @@ import com.ruoyi.mall.member.service.MallMemberTokenService;
 public class MallMemberPortalController
 {
     private final MallMemberAuthService authService;
+    private final MallMemberProfileService profileService;
     private final MallMemberTokenService tokenService;
 
-    public MallMemberPortalController(MallMemberAuthService authService, MallMemberTokenService tokenService)
+    public MallMemberPortalController(MallMemberAuthService authService,
+            MallMemberProfileService profileService, MallMemberTokenService tokenService)
     {
         this.authService = authService;
+        this.profileService = profileService;
         this.tokenService = tokenService;
     }
 
@@ -58,7 +66,43 @@ public class MallMemberPortalController
     @GetMapping("/profile")
     public AjaxResult profile(@RequestHeader(value = MallMemberTokenService.MALL_AUTHORIZATION_HEADER, required = false) String authorization)
     {
-        return AjaxResult.success(authService.profile(tokenService.requireMemberId(authorization)));
+        return AjaxResult.success(profileService.profile(tokenService.requireMemberId(authorization)));
+    }
+
+    @GetMapping("/profile/avatar-presets")
+    public AjaxResult avatarPresets()
+    {
+        return AjaxResult.success(profileService.avatarPresets());
+    }
+
+    @PutMapping("/profile/nickname")
+    public AjaxResult updateNickname(
+            @RequestHeader(value = MallMemberTokenService.MALL_AUTHORIZATION_HEADER, required = false) String authorization,
+            @Valid @RequestBody MallNicknameUpdateRequest request, HttpServletRequest servletRequest)
+    {
+        Long memberId = tokenService.requireMemberId(authorization);
+        profileService.updateNickname(memberId, request.getNickname(), IpUtils.getIpAddr(servletRequest));
+        return AjaxResult.success("昵称已更新", profileService.profile(memberId));
+    }
+
+    @PutMapping("/profile/avatar/preset")
+    public AjaxResult selectPresetAvatar(
+            @RequestHeader(value = MallMemberTokenService.MALL_AUTHORIZATION_HEADER, required = false) String authorization,
+            @Valid @RequestBody MallAvatarPresetRequest request, HttpServletRequest servletRequest)
+    {
+        Long memberId = tokenService.requireMemberId(authorization);
+        profileService.selectPresetAvatar(memberId, request.getPresetCode(), IpUtils.getIpAddr(servletRequest));
+        return AjaxResult.success("头像已更新", profileService.profile(memberId));
+    }
+
+    @PostMapping("/profile/avatar/upload")
+    public AjaxResult uploadAvatar(
+            @RequestHeader(value = MallMemberTokenService.MALL_AUTHORIZATION_HEADER, required = false) String authorization,
+            @RequestParam("file") MultipartFile file, HttpServletRequest servletRequest)
+    {
+        Long memberId = tokenService.requireMemberId(authorization);
+        profileService.uploadAvatar(memberId, file, IpUtils.getIpAddr(servletRequest));
+        return AjaxResult.success("头像已更新", profileService.profile(memberId));
     }
 
     @GetMapping("/addresses")

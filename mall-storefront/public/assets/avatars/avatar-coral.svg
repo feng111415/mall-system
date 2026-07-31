@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="Coral preset avatar">
+  <rect width="256" height="256" fill="#f36f56"/>
+  <circle cx="128" cy="122" r="74" fill="#fff4de"/>
+  <circle cx="101" cy="112" r="7" fill="#333936"/>
+  <circle cx="155" cy="112" r="7" fill="#333936"/>
+  <path d="M92 143c20 25 52 25 72 0" fill="none" stroke="#333936" stroke-width="8" stroke-linecap="round"/>
+  <path d="M64 75c34-41 94-43 128 0-28-9-49-22-64-39-15 17-36 30-64 39z" fill="#333936"/>
+</svg>

@@ -1,15 +1,19 @@
 <script setup>
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
 import { useCascaderAreaData } from '@vant/area-data'
 import { Icon as VanIcon } from 'vant'
 import {
   addAddress,
   deleteAddress,
   getAddresses,
+  getAvatarPresets,
   getProfile,
   loginBySms,
   logoutMember,
+  selectPresetAvatar,
   sendSmsCode,
+  updateNickname,
+  uploadAvatar,
   updateAddress
 } from '../api/member'
 import { getOrders } from '../api/order'
@@ -31,6 +35,18 @@ const addresses = ref([])
 const orderCount = ref(0)
 const cartCount = ref(0)
 const profileLoading = ref(false)
+const profileEditing = ref(false)
+const nicknameDraft = ref('')
+const nicknameSaving = ref(false)
+const avatarPresets = ref([])
+const avatarEditorOpen = ref(false)
+const avatarSaving = ref(false)
+const avatarInput = ref(null)
+const cropOpen = ref(false)
+const cropImageUrl = ref('')
+const cropZoom = ref(1)
+const cropX = ref(50)
+const cropY = ref(50)
 const addressFormOpen = ref(false)
 const addressSaving = ref(false)
 const addressEditingId = ref(null)
@@ -46,23 +62,30 @@ const districtOptions = computed(() => cityOptions.value.find(item => item.value
 const emptyAddress = () => ({ receiverName: '', receiverPhone: '', province: '', city: '', district: '', detailAddress: '', postalCode: '', isDefault: '0' })
 const addressForm = ref(emptyAddress())
 let timer
+let cropSourceImage = null
 
 onMounted(async () => {
   if (!sessionStorage.getItem('mall-user-token')) return
   await loadProfile()
 })
-onUnmounted(() => clearInterval(timer))
+onUnmounted(() => {
+  clearInterval(timer)
+  releaseCropImage()
+})
 
 async function loadProfile() {
   profileLoading.value = true
   try {
-    const [profileResponse, addressResponse, orderResponse, cartResponse] = await Promise.all([
-      getProfile(), getAddresses(), getOrders({ limit: 50 }), getCart()
+    const [profileResponse, addressResponse, orderResponse, cartResponse, presetResponse] = await Promise.all([
+      getProfile(), getAddresses(), getOrders({ limit: 50 }), getCart(),
+      getAvatarPresets().catch(() => ({ data: { data: [] } }))
     ])
     member.value = profileResponse.data.data
+    nicknameDraft.value = member.value.nickname
     addresses.value = addressResponse.data.data || []
     orderCount.value = (orderResponse.data.data || []).length
     cartCount.value = (cartResponse.data.data?.items || []).length
+    avatarPresets.value = presetResponse.data.data || []
   } catch {
     sessionStorage.removeItem('mall-user-token')
   } finally {
@@ -120,6 +143,9 @@ async function logout() {
     cart.reset()
     member.value = null
     addresses.value = []
+    avatarEditorOpen.value = false
+    profileEditing.value = false
+    releaseCropImage()
     closeAddressForm()
     message.value = '已退出登录'
     notice.show(message.value)
@@ -251,6 +277,139 @@ function handleDistrictChange() {
   addressForm.value.district = district?.text || ''
   delete addressErrors.value.region
 }
+
+function openNicknameEditor() {
+  nicknameDraft.value = member.value?.nickname || ''
+  profileEditing.value = true
+  nextTick(() => document.querySelector('.nickname-form')?.scrollIntoView({ block: 'center' }))
+}
+
+function closeNicknameEditor() {
+  nicknameDraft.value = member.value?.nickname || ''
+  profileEditing.value = false
+}
+
+function toggleAvatarEditor() {
+  avatarEditorOpen.value = !avatarEditorOpen.value
+  if (avatarEditorOpen.value) {
+    nextTick(() => document.querySelector('.avatar-editor')?.scrollIntoView({ block: 'center' }))
+  }
+}
+
+async function saveNickname() {
+  const nickname = nicknameDraft.value.trim().replace(/\s+/g, ' ')
+  const length = Array.from(nickname).length
+  if (length < 2 || length > 20) {
+    notice.show('昵称长度需为 2 至 20 个字符', 'error')
+    return
+  }
+  nicknameSaving.value = true
+  try {
+    const response = await updateNickname(nickname)
+    member.value = response.data.data
+    nicknameDraft.value = member.value.nickname
+    profileEditing.value = false
+    notice.show('昵称已更新')
+  } catch (error) {
+    notice.show(error.response?.data?.msg || '昵称修改失败，请稍后重试', 'error')
+  } finally {
+    nicknameSaving.value = false
+  }
+}
+
+async function choosePreset(preset) {
+  if (avatarSaving.value) return
+  avatarSaving.value = true
+  try {
+    const response = await selectPresetAvatar(preset.code)
+    member.value = response.data.data
+    avatarEditorOpen.value = false
+    notice.show('头像已更新')
+  } catch (error) {
+    notice.show(error.response?.data?.msg || '头像修改失败，请稍后重试', 'error')
+  } finally {
+    avatarSaving.value = false
+  }
+}
+
+function releaseCropImage() {
+  if (cropImageUrl.value) URL.revokeObjectURL(cropImageUrl.value)
+  cropImageUrl.value = ''
+  cropOpen.value = false
+  cropSourceImage = null
+}
+
+function selectAvatarFile() {
+  if (!avatarSaving.value) avatarInput.value?.click()
+}
+
+function handleAvatarFile(event) {
+  const file = event.target.files?.[0]
+  event.target.value = ''
+  if (!file) return
+  if (!['image/jpeg', 'image/png'].includes(file.type)) {
+    notice.show('头像仅支持 JPG、JPEG、PNG 格式', 'error')
+    return
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    notice.show('头像图片不能超过 5MB', 'error')
+    return
+  }
+  releaseCropImage()
+  const imageUrl = URL.createObjectURL(file)
+  const image = new Image()
+  image.onload = () => {
+    if (image.naturalWidth < 64 || image.naturalHeight < 64) {
+      URL.revokeObjectURL(imageUrl)
+      notice.show('头像尺寸不能小于 64×64 像素', 'error')
+      return
+    }
+    cropSourceImage = image
+    cropImageUrl.value = imageUrl
+    cropZoom.value = 1
+    cropX.value = 50
+    cropY.value = 50
+    cropOpen.value = true
+  }
+  image.onerror = () => {
+    URL.revokeObjectURL(imageUrl)
+    notice.show('头像文件不是有效图片', 'error')
+  }
+  image.src = imageUrl
+}
+
+async function confirmAvatarCrop() {
+  if (!cropSourceImage || avatarSaving.value) return
+  const width = cropSourceImage.naturalWidth
+  const height = cropSourceImage.naturalHeight
+  const cropSize = Math.min(width, height) / cropZoom.value
+  const sourceX = (width - cropSize) * (cropX.value / 100)
+  const sourceY = (height - cropSize) * (cropY.value / 100)
+  const canvas = document.createElement('canvas')
+  canvas.width = 512
+  canvas.height = 512
+  const context = canvas.getContext('2d')
+  context.imageSmoothingEnabled = true
+  context.imageSmoothingQuality = 'high'
+  context.drawImage(cropSourceImage, sourceX, sourceY, cropSize, cropSize, 0, 0, 512, 512)
+  const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png', 0.92))
+  if (!blob) {
+    notice.show('头像裁剪失败，请重新选择', 'error')
+    return
+  }
+  avatarSaving.value = true
+  try {
+    const response = await uploadAvatar(new File([blob], 'avatar.png', { type: 'image/png' }))
+    member.value = response.data.data
+    avatarEditorOpen.value = false
+    releaseCropImage()
+    notice.show('头像已更新')
+  } catch (error) {
+    notice.show(error.response?.data?.msg || '头像上传失败，请稍后重试', 'error')
+  } finally {
+    avatarSaving.value = false
+  }
+}
 </script>
 
 <template>
@@ -265,9 +424,15 @@ function handleDistrictChange() {
 
     <template v-else-if="member">
       <div class="profile-panel">
-        <div class="profile-avatar">{{ member.nickname?.slice(0, 1) }}</div>
+        <div class="profile-avatar">
+          <img v-if="member.avatar" :src="member.avatar" alt="" />
+          <span v-else>{{ member.nickname?.slice(0, 1) }}</span>
+        </div>
         <div><strong>{{ member.nickname }}</strong><p>会员编号 M{{ member.memberId }}</p></div>
-        <button class="add-button" type="button" @click="logout">退出登录</button>
+        <div class="profile-panel-actions">
+          <button class="text-button" type="button" @click="toggleAvatarEditor"><VanIcon name="photograph" />更换头像</button>
+          <button class="add-button" type="button" @click="logout">退出登录</button>
+        </div>
       </div>
 
       <div class="account-overview">
@@ -278,12 +443,40 @@ function handleDistrictChange() {
 
       <div class="account-sections">
         <section class="account-section">
-          <div class="section-heading"><div><span class="section-kicker">账户资料</span><h2>登录信息</h2></div></div>
+          <div class="section-heading profile-heading">
+            <div><span class="section-kicker">账户资料</span><h2>个人资料</h2></div>
+            <button v-if="!profileEditing" class="text-button" type="button" @click="openNicknameEditor"><VanIcon name="edit" />修改昵称</button>
+          </div>
+          <form v-if="profileEditing" class="nickname-form" @submit.prevent="saveNickname">
+            <label>
+              <span>昵称</span>
+              <input v-model="nicknameDraft" maxlength="40" autocomplete="nickname" />
+            </label>
+            <small>30 天内还可修改 {{ member.nicknameChangesRemaining ?? 0 }} 次</small>
+            <div>
+              <button class="primary-button" type="submit" :disabled="nicknameSaving">{{ nicknameSaving ? '保存中...' : '保存昵称' }}</button>
+              <button class="text-button" type="button" :disabled="nicknameSaving" @click="closeNicknameEditor">取消</button>
+            </div>
+          </form>
           <dl class="profile-details">
+            <div><dt>昵称</dt><dd>{{ member.nickname }}</dd></div>
             <div><dt>手机号</dt><dd>{{ member.maskedPhone }}</dd></div>
             <div><dt>会员编号</dt><dd>M{{ member.memberId }}</dd></div>
             <div><dt>最近登录</dt><dd>{{ member.lastLoginTime || '本次登录' }}</dd></div>
           </dl>
+          <div v-if="avatarEditorOpen" class="avatar-editor">
+            <div class="avatar-editor-heading">
+              <strong>选择头像</strong>
+              <button class="icon-button" type="button" aria-label="关闭头像选择" title="关闭" @click="avatarEditorOpen = false"><VanIcon name="cross" /></button>
+            </div>
+            <div class="avatar-preset-grid">
+              <button v-for="preset in avatarPresets" :key="preset.code" type="button" :class="{ active: member.avatar === preset.url }" :disabled="avatarSaving" :aria-label="`选择${preset.name}头像`" @click="choosePreset(preset)">
+                <img :src="preset.url" alt="" /><span>{{ preset.name }}</span>
+              </button>
+            </div>
+            <input ref="avatarInput" class="visually-hidden" type="file" accept="image/jpeg,image/png" @change="handleAvatarFile" />
+            <button class="avatar-upload-button" type="button" :disabled="avatarSaving" @click="selectAvatarFile"><VanIcon name="upgrade" />{{ avatarSaving ? '处理中...' : '上传头像' }}</button>
+          </div>
         </section>
 
         <section class="account-section address-book-section">
@@ -385,6 +578,26 @@ function handleDistrictChange() {
       <label>短信验证码<div class="code-field"><input v-model.trim="code" inputmode="numeric" maxlength="6" placeholder="6 位验证码" /><button type="button" :disabled="loading || seconds > 0" @click="sendCode">{{ seconds ? `${seconds}s 后重发` : '获取验证码' }}</button></div></label>
       <label class="agreement"><input v-model="agreed" type="checkbox" /> 我已阅读并同意《用户协议》和《隐私政策》</label>
       <button class="primary-button login-button" :disabled="loading" @click="login">{{ loading ? '处理中...' : '登录 / 注册' }}</button>
+    </div>
+    <div v-if="cropOpen" class="avatar-crop-dialog" role="dialog" aria-modal="true" aria-label="裁剪头像" @click.self="releaseCropImage">
+      <div class="avatar-crop-panel">
+        <div class="avatar-editor-heading">
+          <h2>裁剪头像</h2>
+          <button class="icon-button" type="button" aria-label="关闭裁剪" title="关闭" :disabled="avatarSaving" @click="releaseCropImage"><VanIcon name="cross" /></button>
+        </div>
+        <div class="avatar-crop-preview">
+          <img :src="cropImageUrl" alt="" :style="{ transform: `scale(${cropZoom})`, objectPosition: `${cropX}% ${cropY}%` }" />
+        </div>
+        <div class="avatar-crop-controls">
+          <label><span>缩放</span><input v-model.number="cropZoom" type="range" min="1" max="3" step="0.05" /></label>
+          <label><span>水平</span><input v-model.number="cropX" type="range" min="0" max="100" step="1" /></label>
+          <label><span>垂直</span><input v-model.number="cropY" type="range" min="0" max="100" step="1" /></label>
+        </div>
+        <div class="avatar-crop-actions">
+          <button class="text-button" type="button" :disabled="avatarSaving" @click="releaseCropImage">取消</button>
+          <button class="primary-button" type="button" :disabled="avatarSaving" @click="confirmAvatarCrop">{{ avatarSaving ? '上传中...' : '确认头像' }}</button>
+        </div>
+      </div>
     </div>
     <p v-if="message" class="form-message">{{ message }}</p>
   </section>
