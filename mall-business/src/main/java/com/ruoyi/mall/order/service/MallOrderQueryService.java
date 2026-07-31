@@ -27,6 +27,10 @@ public class MallOrderQueryService
         String normalizedStatus = normalizeStatus(status);
         int safeLimit = limit == null ? DEFAULT_LIMIT : Math.min(Math.max(limit, 1), MAX_LIMIT);
         int safeOffset = offset == null ? 0 : Math.max(offset, 0);
+        if (MallOrderStatus.AFTER_SALE.name().equals(normalizedStatus))
+        {
+            return mapper.selectMemberAfterSaleOrders(memberId, safeLimit, safeOffset);
+        }
         return mapper.selectMemberOrders(memberId, normalizedStatus, safeLimit, safeOffset);
     }
 

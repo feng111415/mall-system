@@ -20,6 +20,13 @@ const statusOptions = [
   { label: '已关闭', value: 'CLOSED' }
 ]
 const statusLabels = Object.fromEntries(statusOptions.map(item => [item.value, item.label]))
+const afterSaleStatusLabels = {
+  PENDING_REVIEW: '售后待审核',
+  APPROVED: '审核通过',
+  RETURN_SHIPPED: '退货运输中',
+  REFUNDING: '退款处理中',
+  FAILED: '退款异常待处理'
+}
 
 onMounted(loadOrders)
 watch(selectedStatus, loadOrders)
@@ -38,8 +45,17 @@ async function loadOrders() {
 }
 
 function statusLabel(order) {
+  if (order.displayStatus === 'AFTER_SALE') {
+    let progress = afterSaleStatusLabels[order.latestAfterSaleStatus] || '售后处理中'
+    if (order.latestAfterSaleStatus === 'APPROVED' && order.latestAfterSaleType === 'RETURN_REFUND') {
+      progress = '等待寄回商品'
+    }
+    return Number(order.activeAfterSaleCount || 0) > 1
+      ? `${order.activeAfterSaleCount} 项售后 · ${progress}`
+      : progress
+  }
   if (order.status === 'CLOSED' && (order.cancelReason || '').includes('超时')) return '支付超时已关闭'
-  return statusLabels[order.status] || order.status
+  return statusLabels[order.displayStatus || order.status] || order.displayStatus || order.status
 }
 function formatPrice(value) { return Number(value || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2 }) }
 function formatTime(value) { return value ? new Date(value).toLocaleString('zh-CN', { hour12: false }) : '-' }

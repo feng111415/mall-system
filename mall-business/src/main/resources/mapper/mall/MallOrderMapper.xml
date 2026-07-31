@@ -26,6 +26,12 @@
         <result property="payTime" column="pay_time"/>
         <result property="closeTime" column="close_time"/>
         <result property="updateTime" column="update_time"/>
+        <result property="displayStatus" column="display_status"/>
+        <result property="activeAfterSaleCount" column="active_after_sale_count"/>
+        <result property="latestAfterSaleId" column="latest_after_sale_id"/>
+        <result property="latestAfterSaleType" column="latest_after_sale_type"/>
+        <result property="latestAfterSaleStatus" column="latest_after_sale_status"/>
+        <result property="latestAfterSaleUpdateTime" column="latest_after_sale_update_time"/>
     </resultMap>
     <resultMap id="OrderOperation" type="com.ruoyi.mall.order.domain.MallOrderOperationLog">
         <id property="operationId" column="operation_id"/><result property="orderId" column="order_id"/>
@@ -51,11 +57,56 @@
         create_time,pay_time,close_time,update_time
     </sql>
 
+    <sql id="activeAfterSaleStatuses">
+        'PENDING_REVIEW','APPROVED','RETURN_SHIPPED','REFUNDING'
+    </sql>
+
+    <sql id="memberOrderListQuery">
+        select o.order_id,o.order_no,o.member_id,o.status,o.payment_status,o.risk_status,o.idempotency_key,
+            o.product_amount,o.shipping_fee,o.discount_amount,o.payable_amount,
+            o.receiver_name,o.receiver_phone,o.receiver_province,o.receiver_city,
+            o.receiver_district,o.receiver_detail_address,o.remark,o.cancel_reason,o.version,
+            o.create_time,o.pay_time,o.close_time,o.update_time,
+            case when o.status='AFTER_SALE' or latest_after_sale.after_sale_id is not null
+                then 'AFTER_SALE' else o.status end as display_status,
+            coalesce((
+                select count(1) from mall_item_after_sale active_after_sale
+                where active_after_sale.order_id=o.order_id
+                  and active_after_sale.member_id=o.member_id
+                  and active_after_sale.status in (<include refid="activeAfterSaleStatuses"/>)
+            ),0) as active_after_sale_count,
+            latest_after_sale.after_sale_id as latest_after_sale_id,
+            latest_after_sale.type as latest_after_sale_type,
+            latest_after_sale.status as latest_after_sale_status,
+            latest_after_sale.update_time as latest_after_sale_update_time
+        from mall_order o
+        left join mall_item_after_sale latest_after_sale
+          on latest_after_sale.after_sale_id=(
+            select max(candidate.after_sale_id) from mall_item_after_sale candidate
+            where candidate.order_id=o.order_id
+              and candidate.member_id=o.member_id
+              and candidate.status in (<include refid="activeAfterSaleStatuses"/>)
+          )
+    </sql>
+
     <select id="selectMemberOrders" resultMap="Order">
-        select <include refid="orderColumns"/> from mall_order
-        where member_id=#{memberId}
-        <if test="status != null and status != ''">and status=#{status}</if>
-        order by create_time desc,order_id desc
+        <include refid="memberOrderListQuery"/>
+        where o.member_id=#{memberId}
+        <if test="status != null and status != ''">
+            and o.status=#{status}
+            <if test="status == 'SHIPPED' or status == 'COMPLETED'">
+                and latest_after_sale.after_sale_id is null
+            </if>
+        </if>
+        order by o.create_time desc,o.order_id desc
+        limit #{limit} offset #{offset}
+    </select>
+
+    <select id="selectMemberAfterSaleOrders" resultMap="Order">
+        <include refid="memberOrderListQuery"/>
+        where o.member_id=#{memberId}
+          and (o.status='AFTER_SALE' or latest_after_sale.after_sale_id is not null)
+        order by o.create_time desc,o.order_id desc
         limit #{limit} offset #{offset}
     </select>
 

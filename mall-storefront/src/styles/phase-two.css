@@ -164,7 +164,7 @@
 .order-card:hover { border-color: var(--ink); }
 .order-card-head,.order-card-body,.order-detail-head,.order-detail-total { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
 .order-card-head { font-size: 12px; color: var(--muted); }
-.order-card-head strong { color: var(--red); font-weight: 500; }
+.order-card-head strong { max-width: 60%; color: var(--red); font-weight: 500; text-align: right; }
 .order-card-body { margin-top: 16px; font-size: 12px; color: var(--muted); }
 .order-card-body b { color: var(--ink); font-size: 18px; }
 .order-detail-panel { margin-top: 26px; border-top: 2px solid var(--ink); padding: 24px 0; max-width: 720px; }

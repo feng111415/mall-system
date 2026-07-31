@@ -39,6 +39,12 @@ public class MallOrder implements Serializable
     private Boolean canCreatePayment;
     private Boolean canConfirmPayment;
     private Boolean canCancel;
+    private String displayStatus;
+    private Integer activeAfterSaleCount;
+    private Long latestAfterSaleId;
+    private String latestAfterSaleType;
+    private String latestAfterSaleStatus;
+    private LocalDateTime latestAfterSaleUpdateTime;
 
     public Long getOrderId() { return orderId; }
     public void setOrderId(Long orderId) { this.orderId = orderId; }
@@ -102,4 +108,16 @@ public class MallOrder implements Serializable
     public void setCanConfirmPayment(Boolean canConfirmPayment) { this.canConfirmPayment = canConfirmPayment; }
     public Boolean getCanCancel() { return canCancel; }
     public void setCanCancel(Boolean canCancel) { this.canCancel = canCancel; }
+    public String getDisplayStatus() { return displayStatus; }
+    public void setDisplayStatus(String displayStatus) { this.displayStatus = displayStatus; }
+    public Integer getActiveAfterSaleCount() { return activeAfterSaleCount; }
+    public void setActiveAfterSaleCount(Integer activeAfterSaleCount) { this.activeAfterSaleCount = activeAfterSaleCount; }
+    public Long getLatestAfterSaleId() { return latestAfterSaleId; }
+    public void setLatestAfterSaleId(Long latestAfterSaleId) { this.latestAfterSaleId = latestAfterSaleId; }
+    public String getLatestAfterSaleType() { return latestAfterSaleType; }
+    public void setLatestAfterSaleType(String latestAfterSaleType) { this.latestAfterSaleType = latestAfterSaleType; }
+    public String getLatestAfterSaleStatus() { return latestAfterSaleStatus; }
+    public void setLatestAfterSaleStatus(String latestAfterSaleStatus) { this.latestAfterSaleStatus = latestAfterSaleStatus; }
+    public LocalDateTime getLatestAfterSaleUpdateTime() { return latestAfterSaleUpdateTime; }
+    public void setLatestAfterSaleUpdateTime(LocalDateTime latestAfterSaleUpdateTime) { this.latestAfterSaleUpdateTime = latestAfterSaleUpdateTime; }
 }

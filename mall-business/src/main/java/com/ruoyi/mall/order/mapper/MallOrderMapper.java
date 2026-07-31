@@ -12,6 +12,9 @@ public interface MallOrderMapper
     List<MallOrder> selectMemberOrders(@Param("memberId") Long memberId,
             @Param("status") String status, @Param("limit") int limit, @Param("offset") int offset);
 
+    List<MallOrder> selectMemberAfterSaleOrders(@Param("memberId") Long memberId,
+            @Param("limit") int limit, @Param("offset") int offset);
+
     MallOrder selectMemberOrder(@Param("orderId") Long orderId, @Param("memberId") Long memberId);
 
     List<MallOrderItem> selectMemberOrderItems(@Param("orderId") Long orderId,

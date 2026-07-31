@@ -43,6 +43,26 @@ class MallOrderQueryServiceTest
     }
 
     @Test
+    void listAfterSaleUsesActiveAfterSaleQueryInsteadOfPhysicalOrderStatus()
+    {
+        MallOrder order = new MallOrder();
+        order.setOrderId(40L);
+        order.setStatus("SHIPPED");
+        order.setDisplayStatus("AFTER_SALE");
+        order.setLatestAfterSaleStatus("APPROVED");
+        when(mapper.selectMemberAfterSaleOrders(7L, 20, 0)).thenReturn(List.of(order));
+
+        List<MallOrder> result = service.list(7L, "AFTER_SALE", 20, 0);
+
+        assertEquals(1, result.size());
+        assertEquals("SHIPPED", result.get(0).getStatus());
+        assertEquals("AFTER_SALE", result.get(0).getDisplayStatus());
+        assertEquals("APPROVED", result.get(0).getLatestAfterSaleStatus());
+        verify(mapper).selectMemberAfterSaleOrders(7L, 20, 0);
+        verify(mapper, never()).selectMemberOrders(7L, "AFTER_SALE", 20, 0);
+    }
+
+    @Test
     void detailLoadsItemsForCurrentMemberOnly()
     {
         MallOrder order = new MallOrder(); order.setOrderId(1L);
