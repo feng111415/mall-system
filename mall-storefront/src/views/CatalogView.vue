@@ -3,6 +3,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getCategories, getProducts } from '../api/catalog'
 import StoreProductCard from '../components/StoreProductCard.vue'
+import StoreSortSelect from '../components/StoreSortSelect.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -40,7 +41,7 @@ watch(() => [route.query.q, route.query.categoryId, route.query.sort], loadProdu
     <div class="page-intro"><span class="section-kicker">全部商品</span><h1>为日常挑选好物</h1><p>{{ loading ? '正在读取商品...' : `${resultLabel} · ${products.length} 件商品` }} <small v-if="notice">· {{ notice }}</small></p></div>
     <div class="catalog-toolbar">
       <div class="filter-tabs" aria-label="商品分类"><button :class="{ active: selectedCategory === null }" @click="updateQuery({ categoryId: undefined })">全部</button><button v-for="item in categories" :key="item.categoryId" :class="{ active: selectedCategory === item.categoryId }" @click="updateQuery({ categoryId: item.categoryId })">{{ item.categoryName }}</button></div>
-      <label class="sort-control">排序<select :value="selectedSort" @change="updateQuery({ sort: $event.target.value })"><option value="default">综合推荐</option><option value="sales">销量优先</option><option value="priceAsc">价格从低到高</option><option value="priceDesc">价格从高到低</option></select></label>
+      <StoreSortSelect :model-value="selectedSort" @update:model-value="updateQuery({ sort: $event })" />
     </div>
     <div v-if="loading" class="product-grid catalog-grid"><div v-for="item in 6" :key="item" class="product-skeleton"><span></span><i></i><b></b></div></div>
     <div v-else-if="products.length" class="product-grid catalog-grid"><StoreProductCard v-for="product in products" :key="product.spuId" :product="product" /></div>
