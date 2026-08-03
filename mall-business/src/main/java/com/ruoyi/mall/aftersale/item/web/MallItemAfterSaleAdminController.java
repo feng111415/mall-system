@@ -29,7 +29,7 @@ public class MallItemAfterSaleAdminController extends BaseController
     @PostMapping("/{afterSaleId}/approve")
     public AjaxResult approve(@PathVariable Long afterSaleId) { return success(service.approveReview(afterSaleId)); }
 
-    @PreAuthorize("@ss.hasPermi('mall:after-sale:audit')")
+    @PreAuthorize("@ss.hasPermi('mall:after-sale:refund')")
     @Log(title = "商城订单项售后退款", businessType = BusinessType.UPDATE)
     @PostMapping("/{afterSaleId}/refund")
     public AjaxResult refund(@PathVariable Long afterSaleId) { return success(service.approve(afterSaleId, getUsername())); }

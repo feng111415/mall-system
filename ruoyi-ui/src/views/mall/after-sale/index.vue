@@ -31,7 +31,7 @@
           <el-button type="text" size="mini" icon="el-icon-view" v-hasPermi="['mall:after-sale:query']" @click="showDetail(scope.row)">详情</el-button>
           <el-button v-if="scope.row.status === 'PENDING_REVIEW'" type="text" size="mini" icon="el-icon-check" v-hasPermi="['mall:after-sale:audit']" @click="approve(scope.row)">审核通过</el-button>
           <el-button v-if="scope.row.status === 'PENDING_REVIEW'" type="text" size="mini" icon="el-icon-close" v-hasPermi="['mall:after-sale:audit']" @click="reject(scope.row)">驳回</el-button>
-          <el-button v-if="canRefund(scope.row)" type="text" size="mini" icon="el-icon-money" v-hasPermi="['mall:after-sale:audit']" @click="refund(scope.row)">{{ refundActionLabel(scope.row) }}</el-button>
+          <el-button v-if="canRefund(scope.row)" type="text" size="mini" icon="el-icon-money" v-hasPermi="['mall:after-sale:refund']" @click="refund(scope.row)">{{ refundActionLabel(scope.row) }}</el-button>
         </template>
       </el-table-column>
     </el-table>
