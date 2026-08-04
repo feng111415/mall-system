@@ -2,7 +2,9 @@ package com.ruoyi.mall.service.impl;
 
 import java.math.BigDecimal;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.ruoyi.common.exception.ServiceException;
@@ -116,15 +118,16 @@ public class MallProductServiceImpl implements IMallProductService
         else
         {
             rows = productMapper.updateSpu(spu);
-            productMapper.deleteSkuBySpuId(spu.getSpuId());
             productMapper.deleteMediaBySpuId(spu.getSpuId());
         }
         for (MallSku sku : spu.getSkuList())
         {
             sku.setSpuId(spu.getSpuId());
             sku.setCreateBy(StringUtils.isNotBlank(spu.getCreateBy()) ? spu.getCreateBy() : spu.getUpdateBy());
-            productMapper.insertSku(sku);
+            if (sku.getSkuId() == null) productMapper.insertSku(sku);
+            else updateExistingSku(spu.getSpuId(), sku);
         }
+        if (spu.getSpuId() != null) removeMissingSkus(spu);
         for (MallProductMedia media : safeList(spu.getMediaList()))
         {
             media.setSpuId(spu.getSpuId());
@@ -144,9 +147,36 @@ public class MallProductServiceImpl implements IMallProductService
     @Transactional(rollbackFor = Exception.class)
     public int deleteProduct(Long spuId)
     {
-        productMapper.deleteSkuBySpuId(spuId);
+        for (MallSku sku : safeList(productMapper.selectSkuListBySpuId(spuId)))
+        {
+            if (productMapper.countSkuOperationalData(sku.getSkuId()) > 0)
+                throw new ServiceException("商品存在库存或履约记录，不能删除");
+            productMapper.deleteSku(sku.getSkuId());
+        }
         productMapper.deleteMediaBySpuId(spuId);
         return productMapper.deleteSpu(spuId);
+    }
+
+    private void updateExistingSku(Long spuId, MallSku sku)
+    {
+        Map<Long, MallSku> existing = new HashMap<>();
+        for (MallSku value : safeList(productMapper.selectSkuListBySpuId(spuId)))
+            if (value.getSkuId() != null) existing.put(value.getSkuId(), value);
+        if (!existing.containsKey(sku.getSkuId())) throw new ServiceException("SKU 不属于当前商品");
+        if (productMapper.updateSku(sku) != 1) throw new ServiceException("SKU 更新失败，请重试");
+    }
+
+    private void removeMissingSkus(MallSpu spu)
+    {
+        Map<Long, MallSku> incoming = new HashMap<>();
+        for (MallSku sku : spu.getSkuList()) if (sku.getSkuId() != null) incoming.put(sku.getSkuId(), sku);
+        for (MallSku existing : safeList(productMapper.selectSkuListBySpuId(spu.getSpuId())))
+        {
+            if (existing.getSkuId() == null || incoming.containsKey(existing.getSkuId())) continue;
+            if (productMapper.countSkuOperationalData(existing.getSkuId()) > 0)
+                throw new ServiceException("SKU 存在库存或履约记录，不能移除");
+            productMapper.deleteSku(existing.getSkuId());
+        }
     }
 
     @Override

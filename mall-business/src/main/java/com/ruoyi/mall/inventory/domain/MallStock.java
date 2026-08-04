@@ -12,6 +12,9 @@ public class MallStock implements Serializable
     private Long skuId;
     private String skuCode;
     private String skuName;
+    private String productName;
+    private String publishStatus;
+    private String stockStatus;
     private Integer availableQuantity;
     private Integer lockedQuantity;
     private Integer soldQuantity;
@@ -26,6 +29,12 @@ public class MallStock implements Serializable
     public void setSkuCode(String skuCode) { this.skuCode = skuCode; }
     public String getSkuName() { return skuName; }
     public void setSkuName(String skuName) { this.skuName = skuName; }
+    public String getProductName() { return productName; }
+    public void setProductName(String productName) { this.productName = productName; }
+    public String getPublishStatus() { return publishStatus; }
+    public void setPublishStatus(String publishStatus) { this.publishStatus = publishStatus; }
+    public String getStockStatus() { return stockStatus; }
+    public void setStockStatus(String stockStatus) { this.stockStatus = stockStatus; }
     public Integer getAvailableQuantity() { return availableQuantity; }
     public void setAvailableQuantity(Integer availableQuantity) { this.availableQuantity = availableQuantity; }
     public Integer getLockedQuantity() { return lockedQuantity; }

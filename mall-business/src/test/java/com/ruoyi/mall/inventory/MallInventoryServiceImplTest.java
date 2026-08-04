@@ -87,6 +87,30 @@ class MallInventoryServiceImplTest
         verify(mapper, never()).selectBySkuIdForUpdate(10L);
     }
 
+    @Test
+    void lowStockFilterIsPassedToSqlBeforePaging()
+    {
+        when(mapper.selectStockList(any())).thenReturn(List.of());
+
+        service.selectStocks(new MallStock(), true);
+
+        verify(mapper).selectStockList(org.mockito.ArgumentMatchers.argThat(value -> "LOW_STOCK".equals(value.getStockStatus())));
+    }
+
+    @Test
+    void warningThresholdCanBeUpdatedWithoutChangingQuantity()
+    {
+        MallStockAdjustRequest request = new MallStockAdjustRequest();
+        request.setWarningThreshold(3); request.setReason("调整预警阈值");
+        when(mapper.selectBySkuIdForUpdate(10L)).thenReturn(stock(8, 0, 0));
+        when(mapper.adjustStock(10L, 0, 3)).thenReturn(1);
+
+        service.adjust(10L, request, "admin");
+
+        verify(mapper).adjustStock(10L, 0, 3);
+        verify(mapper).insertLog(any());
+    }
+
     private MallStock stock(int available, int locked, int sold)
     {
         MallStock stock = new MallStock();

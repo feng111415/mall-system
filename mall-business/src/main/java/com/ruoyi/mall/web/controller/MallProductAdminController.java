@@ -1,5 +1,6 @@
 package com.ruoyi.mall.web.controller;
 
+import java.util.List;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.ruoyi.common.annotation.Log;
 import com.ruoyi.common.core.controller.BaseController;
 import com.ruoyi.common.core.domain.AjaxResult;
+import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.common.enums.BusinessType;
 import com.ruoyi.mall.domain.product.MallBrand;
 import com.ruoyi.mall.domain.product.MallCategory;
@@ -82,7 +84,12 @@ public class MallProductAdminController extends BaseController
 
     @PreAuthorize("@ss.hasPermi('mall:product:list')")
     @GetMapping("/products")
-    public AjaxResult products(MallSpu query) { return success(service.selectProducts(query, false)); }
+    public TableDataInfo products(MallSpu query)
+    {
+        startPage();
+        List<MallSpu> rows = service.selectProducts(query, false);
+        return getDataTable(rows);
+    }
 
     @PreAuthorize("@ss.hasPermi('mall:product:query')")
     @GetMapping("/products/{id}")

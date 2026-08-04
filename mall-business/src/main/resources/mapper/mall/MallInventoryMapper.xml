@@ -4,7 +4,9 @@
     <resultMap id="Stock" type="com.ruoyi.mall.inventory.domain.MallStock">
         <id property="stockId" column="stock_id"/>
         <result property="skuId" column="sku_id"/><result property="skuCode" column="sku_code"/>
-        <result property="skuName" column="sku_name"/><result property="availableQuantity" column="available_quantity"/>
+        <result property="skuName" column="sku_name"/><result property="productName" column="product_name"/>
+        <result property="publishStatus" column="publish_status"/><result property="stockStatus" column="stock_status"/>
+        <result property="availableQuantity" column="available_quantity"/>
         <result property="lockedQuantity" column="locked_quantity"/><result property="soldQuantity" column="sold_quantity"/>
         <result property="warningThreshold" column="warning_threshold"/><result property="updateTime" column="update_time"/>
     </resultMap>
@@ -30,9 +32,17 @@
         select sku_id,available_stock,0,0,0,now(),now() from mall_sku where sku_id=#{skuId} and del_flag='0'</insert>
     <select id="selectBySkuId" resultMap="Stock">select st.*,s.sku_code,s.sku_name from mall_stock st join mall_sku s on s.sku_id=st.sku_id where st.sku_id=#{skuId} and s.del_flag='0'</select>
     <select id="selectBySkuIdForUpdate" resultMap="Stock">select st.*,s.sku_code,s.sku_name from mall_stock st join mall_sku s on s.sku_id=st.sku_id where st.sku_id=#{skuId} and s.del_flag='0' for update</select>
-    <select id="selectStockList" resultMap="Stock">select st.*,s.sku_code,s.sku_name from mall_stock st join mall_sku s on s.sku_id=st.sku_id where s.del_flag='0'
+    <select id="selectStockList" resultMap="Stock">select st.*,s.sku_code,s.sku_name,p.product_name,p.publish_status,
+        case when st.available_quantity&lt;=0 then 'OUT_OF_STOCK' when st.available_quantity&lt;=st.warning_threshold then 'LOW_STOCK' else 'HEALTHY' end stock_status
+        from mall_stock st join mall_sku s on s.sku_id=st.sku_id join mall_spu p on p.spu_id=s.spu_id where s.del_flag='0' and p.del_flag='0'
         <if test="skuCode!=null and skuCode!=''">and s.sku_code like concat('%',#{skuCode},'%')</if>
-        <if test="skuId!=null">and st.sku_id=#{skuId}</if> order by st.update_time desc,st.sku_id</select>
+        <if test="skuId!=null">and st.sku_id=#{skuId}</if>
+        <if test="productName!=null and productName!=''">and p.product_name like concat('%',#{productName},'%')</if>
+        <if test="publishStatus!=null and publishStatus!=''">and p.publish_status=#{publishStatus}</if>
+        <if test="stockStatus=='OUT_OF_STOCK'">and st.available_quantity&lt;=0</if>
+        <if test="stockStatus=='LOW_STOCK'">and st.available_quantity&gt;0 and st.available_quantity&lt;=st.warning_threshold</if>
+        <if test="stockStatus=='HEALTHY'">and st.available_quantity&gt;st.warning_threshold</if>
+        order by st.update_time desc,st.sku_id</select>
     <select id="selectLogList" resultMap="Log">select l.*,s.sku_code from mall_stock_log l join mall_sku s on s.sku_id=l.sku_id where l.sku_id=#{skuId}
         <if test="operationType!=null and operationType!=''">and l.operation_type=#{operationType}</if> order by l.log_id desc</select>
 

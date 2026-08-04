@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.mall.productinventory.mapper.MallProductInventoryMapper">
+    <resultMap id="Summary" type="com.ruoyi.mall.productinventory.domain.MallProductInventorySummary">
+        <id property="spuId" column="spu_id"/>
+        <result property="spuCode" column="spu_code"/><result property="productName" column="product_name"/>
+        <result property="subtitle" column="subtitle"/><result property="mainImage" column="main_image"/>
+        <result property="categoryName" column="category_name"/><result property="brandName" column="brand_name"/>
+        <result property="publishStatus" column="publish_status"/><result property="stockStatus" column="stock_status"/>
+        <result property="skuCount" column="sku_count"/><result property="availableQuantity" column="available_quantity"/>
+        <result property="lockedQuantity" column="locked_quantity"/><result property="soldQuantity" column="sold_quantity"/>
+        <result property="lowStockSkuCount" column="low_stock_sku_count"/><result property="outOfStockSkuCount" column="out_of_stock_sku_count"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+    <resultMap id="Detail" type="com.ruoyi.mall.productinventory.domain.MallProductInventoryDetail" extends="Summary"/>
+    <resultMap id="Sku" type="com.ruoyi.mall.productinventory.domain.MallProductInventorySku">
+        <id property="skuId" column="sku_id"/><result property="spuId" column="spu_id"/>
+        <result property="skuCode" column="sku_code"/><result property="skuName" column="sku_name"/>
+        <result property="specJson" column="spec_json"/><result property="price" column="price"/>
+        <result property="status" column="status"/><result property="availableQuantity" column="available_quantity"/>
+        <result property="lockedQuantity" column="locked_quantity"/><result property="soldQuantity" column="sold_quantity"/>
+        <result property="warningThreshold" column="warning_threshold"/><result property="stockStatus" column="stock_status"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+
+    <sql id="stockStatusExpression">
+        case when coalesce(st.available_quantity, k.available_stock, 0) &lt;= 0 then 'OUT_OF_STOCK'
+             when coalesce(st.available_quantity, k.available_stock, 0) &lt;= coalesce(st.warning_threshold, 0) then 'LOW_STOCK'
+             else 'HEALTHY' end
+    </sql>
+
+    <select id="selectSummaryList" resultMap="Summary">
+        select s.spu_id,s.spu_code,s.product_name,s.subtitle,s.main_image,c.category_name,b.brand_name,s.publish_status,
+            count(k.sku_id) sku_count,
+            coalesce(sum(coalesce(st.available_quantity,k.available_stock,0)),0) available_quantity,
+            coalesce(sum(coalesce(st.locked_quantity,0)),0) locked_quantity,
+            coalesce(sum(coalesce(st.sold_quantity,0)),0) sold_quantity,
+            coalesce(sum(case when coalesce(st.available_quantity,k.available_stock,0) &gt; 0
+                and coalesce(st.available_quantity,k.available_stock,0) &lt;= coalesce(st.warning_threshold,0) then 1 else 0 end),0) low_stock_sku_count,
+            coalesce(sum(case when coalesce(st.available_quantity,k.available_stock,0) &lt;= 0 then 1 else 0 end),0) out_of_stock_sku_count,
+            case when count(k.sku_id)=0 then 'OUT_OF_STOCK'
+                 when sum(case when coalesce(st.available_quantity,k.available_stock,0) &lt;= 0 then 1 else 0 end) &gt; 0 then 'OUT_OF_STOCK'
+                 when sum(case when coalesce(st.available_quantity,k.available_stock,0) &gt; 0
+                    and coalesce(st.available_quantity,k.available_stock,0) &lt;= coalesce(st.warning_threshold,0) then 1 else 0 end) &gt; 0 then 'LOW_STOCK'
+                 else 'HEALTHY' end stock_status,
+            max(coalesce(st.update_time,s.update_time)) update_time
+        from mall_spu s
+        join mall_category c on c.category_id=s.category_id and c.del_flag='0'
+        left join mall_brand b on b.brand_id=s.brand_id and b.del_flag='0'
+        left join mall_sku k on k.spu_id=s.spu_id and k.del_flag='0'
+        left join mall_stock st on st.sku_id=k.sku_id
+        <where>
+            s.del_flag='0'
+            <if test="productKeyword != null and productKeyword != ''">and (s.product_name like concat('%',#{productKeyword},'%') or s.subtitle like concat('%',#{productKeyword},'%'))</if>
+            <if test="spuCode != null and spuCode != ''">and s.spu_code like concat('%',#{spuCode},'%')</if>
+            <if test="skuCode != null and skuCode != ''">and k.sku_code like concat('%',#{skuCode},'%')</if>
+            <if test="publishStatus != null and publishStatus != ''">and s.publish_status=#{publishStatus}</if>
+        </where>
+        group by s.spu_id,s.spu_code,s.product_name,s.subtitle,s.main_image,c.category_name,b.brand_name,s.publish_status
+        <if test="stockStatus == 'OUT_OF_STOCK'">having count(k.sku_id)=0 or sum(case when coalesce(st.available_quantity,k.available_stock,0) &lt;= 0 then 1 else 0 end) &gt; 0</if>
+        <if test="stockStatus == 'LOW_STOCK'">having sum(case when coalesce(st.available_quantity,k.available_stock,0) &gt; 0 and coalesce(st.available_quantity,k.available_stock,0) &lt;= coalesce(st.warning_threshold,0) then 1 else 0 end) &gt; 0 and sum(case when coalesce(st.available_quantity,k.available_stock,0) &lt;= 0 then 1 else 0 end)=0</if>
+        <if test="stockStatus == 'HEALTHY'">having count(k.sku_id) &gt; 0 and sum(case when coalesce(st.available_quantity,k.available_stock,0) &lt;= coalesce(st.warning_threshold,0) then 1 else 0 end)=0</if>
+        order by update_time desc,s.spu_id desc
+    </select>
+
+    <select id="selectDetail" resultMap="Detail">
+        select s.spu_id,s.spu_code,s.product_name,s.subtitle,s.main_image,c.category_name,b.brand_name,s.publish_status
+        from mall_spu s join mall_category c on c.category_id=s.category_id and c.del_flag='0'
+        left join mall_brand b on b.brand_id=s.brand_id and b.del_flag='0'
+        where s.spu_id=#{spuId} and s.del_flag='0'
+    </select>
+
+    <select id="selectSkuInventoryList" resultMap="Sku">
+        select k.sku_id,k.spu_id,k.sku_code,k.sku_name,k.spec_json,k.price,k.status,
+            coalesce(st.available_quantity,k.available_stock,0) available_quantity,
+            coalesce(st.locked_quantity,0) locked_quantity,coalesce(st.sold_quantity,0) sold_quantity,
+            coalesce(st.warning_threshold,0) warning_threshold,
+            <include refid="stockStatusExpression"/> stock_status,
+            coalesce(st.update_time,k.update_time) update_time
+        from mall_sku k left join mall_stock st on st.sku_id=k.sku_id
+        where k.spu_id=#{spuId} and k.del_flag='0'
+        order by k.sku_id
+    </select>
+</mapper>

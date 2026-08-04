@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.math.BigDecimal;
 import java.util.List;
@@ -70,6 +71,40 @@ class MallProductServiceImplTest
         verify(mapper).selectPublishedSpuList(captor.capture());
         assertEquals("耳机", captor.getValue().getKeyword());
         assertEquals("default", captor.getValue().getSort());
+    }
+
+    @Test
+    void updatesExistingSkuWithoutRebuildingItsIdentity()
+    {
+        MallSpu spu = productWith(new BigDecimal("9.90"), 3);
+        spu.setSpuId(20L);
+        MallSku existing = spu.getSkuList().get(0);
+        existing.setSkuId(10L);
+        when(mapper.selectSkuListBySpuId(20L)).thenReturn(List.of(existing));
+        when(mapper.updateSku(existing)).thenReturn(1);
+
+        service.saveProduct(spu);
+
+        verify(mapper).updateSku(existing);
+        verify(mapper, never()).deleteSku(10L);
+    }
+
+    @Test
+    void refusesRemovingSkuWithOperationalData()
+    {
+        MallSpu spu = productWith(new BigDecimal("9.90"), 3);
+        spu.setSpuId(20L);
+        MallSku existing = spu.getSkuList().get(0);
+        existing.setSkuId(10L);
+        MallSku retained = new MallSku();
+        retained.setSkuId(11L); retained.setSkuCode("SKU-TEST-2"); retained.setPrice(new BigDecimal("10.90")); retained.setAvailableStock(1); retained.setStatus("1"); retained.setSpuId(20L);
+        spu.setSkuList(List.of(retained));
+        when(mapper.selectSkuListBySpuId(20L)).thenReturn(List.of(existing, retained));
+        when(mapper.countSkuOperationalData(10L)).thenReturn(1);
+        when(mapper.updateSku(retained)).thenReturn(1);
+
+        assertThrows(ServiceException.class, () -> service.saveProduct(spu));
+        verify(mapper, never()).deleteSku(10L);
     }
 
     private MallSpu productWith(BigDecimal price, int stock)

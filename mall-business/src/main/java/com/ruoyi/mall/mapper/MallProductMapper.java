@@ -36,6 +36,9 @@ public interface MallProductMapper
 
     List<MallSku> selectSkuListBySpuId(Long spuId);
     int insertSku(MallSku sku);
+    int updateSku(MallSku sku);
+    int countSkuOperationalData(Long skuId);
+    int deleteSku(Long skuId);
     int deleteSkuBySpuId(Long spuId);
     List<MallProductMedia> selectMediaListBySpuId(Long spuId);
     int insertMedia(MallProductMedia media);

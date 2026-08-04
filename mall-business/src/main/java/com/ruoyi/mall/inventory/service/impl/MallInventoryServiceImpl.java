@@ -24,11 +24,9 @@ public class MallInventoryServiceImpl implements IMallInventoryService, Inventor
     public List<MallStock> selectStocks(MallStock query, boolean lowStockOnly)
     {
         mapper.insertAllStocksIfAbsent();
-        List<MallStock> stocks = mapper.selectStockList(query);
-        if (!lowStockOnly) return stocks;
-        return stocks.stream().filter(x -> x.getAvailableQuantity() != null
-                && x.getWarningThreshold() != null
-                && x.getAvailableQuantity() <= x.getWarningThreshold()).toList();
+        if (query == null) query = new MallStock();
+        if (lowStockOnly && StringUtils.isBlank(query.getStockStatus())) query.setStockStatus("LOW_STOCK");
+        return mapper.selectStockList(query);
     }
 
     @Override
@@ -51,18 +49,20 @@ public class MallInventoryServiceImpl implements IMallInventoryService, Inventor
     public void adjust(Long skuId, MallStockAdjustRequest request, String operator)
     {
         requireSkuId(skuId);
-        if (request == null || request.getDelta() == null || request.getDelta() == 0)
-            throw new ServiceException("库存调整数量不能为 0");
+        if (request == null) throw new ServiceException("库存调整参数不能为空");
+        int delta = request.getDelta() == null ? 0 : request.getDelta();
+        if (delta == 0 && request.getWarningThreshold() == null)
+            throw new ServiceException("库存调整数量和预警阈值不能同时为空");
         if (StringUtils.isBlank(request.getReason())) throw new ServiceException("库存调整必须填写原因");
         if (request.getWarningThreshold() != null && request.getWarningThreshold() < 0)
             throw new ServiceException("低库存阈值不能为负数");
         MallStock before = lockStock(skuId);
-        int afterAvailable = before.getAvailableQuantity() + request.getDelta();
+        int afterAvailable = before.getAvailableQuantity() + delta;
         if (afterAvailable < 0) throw new ServiceException("可用库存不足，不能减少库存");
-        if (mapper.adjustStock(skuId, request.getDelta(), request.getWarningThreshold()) != 1)
+        if (mapper.adjustStock(skuId, delta, request.getWarningThreshold()) != 1)
             throw new ServiceException("库存调整失败，请重试");
         mapper.syncLegacySkuStock(skuId);
-        insertLog(skuId, "ADJUST", "ADMIN", null, request.getDelta(), 0, 0,
+        insertLog(skuId, "ADJUST", "ADMIN", null, delta, 0, 0,
                 afterAvailable, before.getLockedQuantity(), before.getSoldQuantity(), request.getReason(), operator);
     }
 

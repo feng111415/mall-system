@@ -43,6 +43,11 @@
  <update id="deleteSpu">update mall_spu set del_flag='2',publish_status='0',update_time=now() where spu_id=#{spuId}</update>
  <select id="selectSkuListBySpuId" resultMap="Sku">select s.sku_id,s.spu_id,s.sku_code,s.sku_name,s.spec_json,s.image_url,s.price,s.market_price,coalesce(st.available_quantity,s.available_stock) available_stock,s.status from mall_sku s left join mall_stock st on st.sku_id=s.sku_id where s.spu_id=#{spuId} and s.del_flag='0' order by s.sku_id</select>
  <insert id="insertSku" useGeneratedKeys="true" keyProperty="skuId">insert into mall_sku(spu_id,sku_code,sku_name,spec_json,image_url,price,market_price,available_stock,status,del_flag,create_by,create_time) values(#{spuId},#{skuCode},#{skuName},#{specJson},#{imageUrl},#{price},#{marketPrice},#{availableStock},#{status},'0',#{createBy},now())</insert>
+ <update id="updateSku">update mall_sku set sku_code=#{skuCode},sku_name=#{skuName},spec_json=#{specJson},image_url=#{imageUrl},price=#{price},market_price=#{marketPrice},status=#{status},update_by=#{updateBy},update_time=now() where sku_id=#{skuId} and spu_id=#{spuId} and del_flag='0'</update>
+ <select id="countSkuOperationalData" resultType="int">select
+     (select count(1) from mall_stock where sku_id=#{skuId} and (locked_quantity&gt;0 or sold_quantity&gt;0))
+     + (select count(1) from mall_stock_reservation where sku_id=#{skuId} and status in ('LOCKED','CONFIRMED'))</select>
+ <update id="deleteSku">update mall_sku set del_flag='2',update_time=now() where sku_id=#{skuId} and del_flag='0'</update>
  <update id="deleteSkuBySpuId">update mall_sku set del_flag='2',update_time=now() where spu_id=#{spuId} and del_flag='0'</update>
  <select id="selectMediaListBySpuId" resultMap="Media">select * from mall_product_media where spu_id=#{spuId} order by sort_no,media_id</select>
  <insert id="insertMedia" useGeneratedKeys="true" keyProperty="mediaId">insert into mall_product_media(spu_id,sku_id,media_type,media_url,sort_no) values(#{spuId},#{skuId},#{mediaType},#{mediaUrl},#{sortNo})</insert>
