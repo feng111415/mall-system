@@ -27,6 +27,8 @@ import { useNoticeStore } from '../stores/notice'
 
 const cart = useCartStore()
 const notice = useNoticeStore()
+const SMS_COOLDOWN_KEY = 'mall-sms-code-cooldown'
+const SMS_COOLDOWN_MS = 60 * 1000
 
 const phone = ref('')
 const code = ref('')
@@ -78,6 +80,7 @@ let primaryTimer
 let cropSourceImage = null
 
 onMounted(async () => {
+  restoreSmsCooldown()
   if (!sessionStorage.getItem('mall-user-token')) return
   await loadProfile()
 })
@@ -113,6 +116,38 @@ async function refreshAddresses() {
   addresses.value = response.data.data || []
 }
 
+function startSmsCooldown(value, expiresAt = Date.now() + SMS_COOLDOWN_MS) {
+  sessionStorage.setItem(SMS_COOLDOWN_KEY, JSON.stringify({ phone: value, expiresAt }))
+  clearInterval(timer)
+
+  const updateSeconds = () => {
+    seconds.value = Math.max(0, Math.ceil((expiresAt - Date.now()) / 1000))
+    if (seconds.value > 0) return
+    clearInterval(timer)
+    sessionStorage.removeItem(SMS_COOLDOWN_KEY)
+  }
+
+  updateSeconds()
+  if (seconds.value > 0) timer = setInterval(updateSeconds, 1000)
+}
+
+function restoreSmsCooldown() {
+  const stored = sessionStorage.getItem(SMS_COOLDOWN_KEY)
+  if (!stored) return
+
+  try {
+    const cooldown = JSON.parse(stored)
+    if (!/^1[3-9]\d{9}$/.test(cooldown.phone) || !Number.isFinite(cooldown.expiresAt) || cooldown.expiresAt <= Date.now()) {
+      sessionStorage.removeItem(SMS_COOLDOWN_KEY)
+      return
+    }
+    phone.value = cooldown.phone
+    startSmsCooldown(cooldown.phone, cooldown.expiresAt)
+  } catch {
+    sessionStorage.removeItem(SMS_COOLDOWN_KEY)
+  }
+}
+
 async function sendCode() {
   if (!/^1[3-9]\d{9}$/.test(phone.value)) return message.value = '请输入正确的中国大陆手机号'
   if (seconds.value) return
@@ -120,8 +155,7 @@ async function sendCode() {
   try {
     await sendSmsCode(phone.value)
     message.value = '验证码已发送，开发环境 Mock 验证码由服务配置提供'
-    seconds.value = 60
-    timer = setInterval(() => { if (--seconds.value <= 0) clearInterval(timer) }, 1000)
+    startSmsCooldown(phone.value)
   } catch (error) {
     message.value = error.response?.data?.msg || '验证码发送失败，请稍后重试'
   } finally {
