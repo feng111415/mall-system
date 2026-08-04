@@ -18,6 +18,9 @@ import org.mockito.MockitoAnnotations;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.mall.application.port.LogisticsPort;
 import com.ruoyi.mall.logistics.domain.MallLogisticsShipment;
+import com.ruoyi.mall.logistics.domain.MallFulfillmentOrder;
+import com.ruoyi.mall.logistics.domain.MallLogisticsNodeStatus;
+import com.ruoyi.mall.logistics.domain.MallFulfillmentQuery;
 import com.ruoyi.mall.logistics.mapper.MallLogisticsMapper;
 import com.ruoyi.mall.logistics.service.MallLogisticsService;
 import com.ruoyi.mall.order.domain.MallOrder;
@@ -113,7 +116,7 @@ class MallLogisticsServiceTest
     {
         MallLogisticsShipment shipment = new MallLogisticsShipment(); shipment.setShipmentId(11L); shipment.setTrackingNo("TRACK-1");
         MallLogisticsNode latest = new MallLogisticsNode(); latest.setEventTime(LocalDateTime.of(2026, 7, 30, 10, 0));
-        when(logisticsMapper.selectById(11L)).thenReturn(shipment);
+        when(logisticsMapper.selectByIdForUpdate(11L)).thenReturn(shipment);
         when(logisticsMapper.selectLatestNode(11L)).thenReturn(latest);
         when(logisticsMapper.insertNode(any())).thenReturn(1);
         when(logisticsMapper.selectNodes(11L)).thenReturn(java.util.List.of());
@@ -134,10 +137,10 @@ class MallLogisticsServiceTest
         shipment.setTrackingNo("TRACK-1"); shipment.setStatus("DELIVERED");
         MallLogisticsNode latest = new MallLogisticsNode();
         latest.setNodeStatus("DELIVERED"); latest.setEventTime(LocalDateTime.of(2026, 7, 30, 10, 0));
-        when(logisticsMapper.selectById(11L)).thenReturn(shipment);
+        when(logisticsMapper.selectByIdForUpdate(11L)).thenReturn(shipment);
         when(logisticsMapper.selectLatestNode(11L)).thenReturn(latest);
         MallLogisticsNodeRequest request = new MallLogisticsNodeRequest();
-        request.setNodeStatus("CORRECTION"); request.setTitle("更正"); request.setDescription("更正说明");
+        request.setNodeStatus("IN_TRANSIT"); request.setTitle("运输中"); request.setDescription("包裹仍在运输");
         request.setEventTime("2026-07-30T11:00:00");
 
         assertThrows(ServiceException.class, () -> service.appendNode(11L, request, "admin"));
@@ -146,10 +149,31 @@ class MallLogisticsServiceTest
     }
 
     @Test
+    void allowsCorrectionAfterDeliveredWithoutChangingReceiptState()
+    {
+        MallLogisticsShipment shipment = new MallLogisticsShipment();
+        shipment.setShipmentId(11L); shipment.setOrderId(9L); shipment.setOrderNo("ORDER-9");
+        shipment.setTrackingNo("TRACK-1"); shipment.setStatus("DELIVERED");
+        MallLogisticsNode latest = new MallLogisticsNode();
+        latest.setNodeStatus("DELIVERED"); latest.setEventTime(LocalDateTime.of(2026, 7, 30, 10, 0));
+        when(logisticsMapper.selectByIdForUpdate(11L)).thenReturn(shipment);
+        when(logisticsMapper.selectLatestNode(11L)).thenReturn(latest);
+        when(logisticsMapper.insertNode(any())).thenReturn(1);
+        when(logisticsMapper.selectNodes(11L)).thenReturn(java.util.List.of(latest));
+        MallLogisticsNodeRequest request = new MallLogisticsNodeRequest();
+        request.setNodeStatus("CORRECTION"); request.setTitle("鏇存"); request.setDescription("鏇存璇存槑");
+        request.setEventTime("2026-07-30T11:00:00");
+
+        assertEquals(shipment, service.appendNode(11L, request, "admin"));
+        verify(logisticsMapper).insertNode(any());
+    }
+
+    @Test
     void memberCanConfirmOnlySignedShipment()
     {
         MallLogisticsShipment shipment = new MallLogisticsShipment(); shipment.setShipmentId(11L); shipment.setOrderId(9L); shipment.setOrderNo("ORDER-9");
         MallLogisticsNode delivered = new MallLogisticsNode(); delivered.setNodeStatus("DELIVERED"); delivered.setEventTime(LocalDateTime.now());
+        shipment.setStatus("DELIVERED");
         when(logisticsMapper.selectMemberShipment(9L, 7L)).thenReturn(shipment);
         when(logisticsMapper.selectLatestNode(11L)).thenReturn(delivered);
         when(orderMapper.markCompleted(9L)).thenReturn(1);
@@ -157,6 +181,31 @@ class MallLogisticsServiceTest
         assertEquals(shipment, service.confirmReceipt(7L, 9L));
         verify(orderMapper).markCompleted(9L);
         verify(orderMapper).insertOperationLog(any());
+        verify(logisticsMapper, never()).selectLatestNode(11L);
+    }
+
+    @Test
+    void normalizesWorkbenchFiltersAndReadsPageFromMapper()
+    {
+        MallFulfillmentQuery query = new MallFulfillmentQuery();
+        query.setOrderNo("  ORDER-9  "); query.setReceiverKeyword("  张三 ");
+        query.setWorkflowStatus("invalid"); query.setAttentionType("DATA_INCONSISTENT");
+        when(logisticsMapper.selectFulfillmentOrders(any())).thenReturn(java.util.List.of(new MallFulfillmentOrder()));
+
+        assertEquals(1, service.listForAdmin(query).size());
+        verify(logisticsMapper).selectFulfillmentOrders(query);
+        assertEquals("ORDER-9", query.getOrderNo());
+        assertEquals("张三", query.getReceiverKeyword());
+        assertEquals(null, query.getWorkflowStatus());
+        assertEquals("DATA_INCONSISTENT", query.getAttentionType());
+    }
+
+    @Test
+    void exposesServerCompanyWhitelistWithoutMockProvider()
+    {
+        assertEquals(false, service.listCompanies().stream().anyMatch(item -> "MOCK".equals(item.getCode())));
+        assertEquals(true, service.listCompanies().stream().anyMatch(item -> "SF".equals(item.getCode())));
+        assertEquals(MallLogisticsNodeStatus.DELIVERED.getLabel(), MallLogisticsNodeStatus.parse(" delivered ").getLabel());
     }
 
     @Test

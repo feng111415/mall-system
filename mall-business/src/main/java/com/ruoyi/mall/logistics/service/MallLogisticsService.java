@@ -2,6 +2,9 @@ package com.ruoyi.mall.logistics.service;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
+import java.util.Arrays;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.ruoyi.common.exception.ServiceException;
@@ -12,6 +15,9 @@ import com.ruoyi.mall.logistics.domain.MallLogisticsShipment;
 import com.ruoyi.mall.logistics.domain.MallLogisticsNodeStatus;
 import com.ruoyi.mall.logistics.domain.MallFulfillmentOrder;
 import com.ruoyi.mall.logistics.domain.MallLogisticsCompany;
+import com.ruoyi.mall.logistics.domain.MallLogisticsCompanyOption;
+import com.ruoyi.mall.logistics.domain.MallFulfillmentQuery;
+import com.ruoyi.mall.logistics.domain.MallFulfillmentSummary;
 import com.ruoyi.mall.logistics.domain.dto.MallLogisticsNodeRequest;
 import com.ruoyi.mall.logistics.mapper.MallLogisticsMapper;
 import com.ruoyi.mall.order.domain.MallOrder;
@@ -22,6 +28,10 @@ import java.util.List;
 @Service
 public class MallLogisticsService
 {
+    private static final Set<String> WORKFLOW_STATUSES = Set.of("WAITING_SHIPMENT", "IN_TRANSIT",
+            "OUT_FOR_DELIVERY", "EXCEPTION", "DELIVERED_WAIT_RECEIPT", "COMPLETED", "DATA_INCONSISTENT");
+    private static final Set<String> ATTENTION_TYPES = Set.of("OVERDUE_UNSHIPPED", "TRANSPORT_EXCEPTION",
+            "DATA_INCONSISTENT");
     private final MallLogisticsMapper logisticsMapper;
     private final MallOrderMapper orderMapper;
     private final LogisticsPort logisticsPort;
@@ -86,14 +96,15 @@ public class MallLogisticsService
     public MallLogisticsShipment appendNode(Long shipmentId, MallLogisticsNodeRequest request, String operatorId)
     {
         if (shipmentId == null || shipmentId <= 0 || request == null) throw new ServiceException("物流参数无效");
-        MallLogisticsShipment shipment = logisticsMapper.selectById(shipmentId);
+        MallLogisticsShipment shipment = logisticsMapper.selectByIdForUpdate(shipmentId);
         if (shipment == null) throw new ServiceException("物流单不存在");
         MallLogisticsNodeStatus status = MallLogisticsNodeStatus.parse(request.getNodeStatus());
         LocalDateTime eventTime = parseEventTime(request.getEventTime());
         MallLogisticsNode latest = logisticsMapper.selectLatestNode(shipmentId);
-        if ("DELIVERED".equals(shipment.getStatus())
-                || (latest != null && MallLogisticsNodeStatus.DELIVERED.name().equals(latest.getNodeStatus())))
-            throw new ServiceException("物流已签收，不允许继续追加轨迹");
+        boolean delivered = "DELIVERED".equals(shipment.getStatus())
+                || (latest != null && MallLogisticsNodeStatus.DELIVERED.name().equals(latest.getNodeStatus()));
+        if (delivered && status != MallLogisticsNodeStatus.CORRECTION)
+            throw new ServiceException("物流已签收，仅允许追加更正说明");
         if (latest != null && eventTime.isBefore(latest.getEventTime())) throw new ServiceException("物流节点时间不能早于上一节点");
         if (status == MallLogisticsNodeStatus.SHIPPED && latest != null) throw new ServiceException("已发货节点只能由发货操作创建");
         MallLogisticsNode node = new MallLogisticsNode();
@@ -101,8 +112,13 @@ public class MallLogisticsService
         node.setTitle(request.getTitle().trim()); node.setDescription(request.getDescription().trim());
         node.setLocation(StringUtils.isBlank(request.getLocation()) ? null : request.getLocation().trim()); node.setEventTime(eventTime);
         if (logisticsMapper.insertNode(node) != 1) throw new ServiceException("物流轨迹保存失败");
-        if (status == MallLogisticsNodeStatus.DELIVERED && logisticsMapper.updateShipmentDelivered(shipmentId) != 1)
-            throw new ServiceException("物流单状态已变化，请刷新后重试");
+        if (status == MallLogisticsNodeStatus.DELIVERED)
+        {
+            if (logisticsMapper.updateShipmentDelivered(shipmentId, eventTime) != 1)
+                throw new ServiceException("物流单状态已变化，请刷新后重试");
+            shipment.setStatus("DELIVERED");
+            shipment.setDeliveredTime(eventTime);
+        }
         MallOrderOperationLog log = new MallOrderOperationLog();
         log.setOrderId(shipment.getOrderId()); log.setOrderNo(shipment.getOrderNo());
         log.setFromStatus(latest == null ? "SHIPPED" : latest.getNodeStatus());
@@ -119,8 +135,7 @@ public class MallLogisticsService
         if (memberId == null || memberId <= 0 || orderId == null || orderId <= 0) throw new ServiceException("收货参数无效");
         MallLogisticsShipment shipment = logisticsMapper.selectMemberShipment(orderId, memberId);
         if (shipment == null) throw new ServiceException("物流单不存在");
-        MallLogisticsNode latest = logisticsMapper.selectLatestNode(shipment.getShipmentId());
-        if (latest == null || !MallLogisticsNodeStatus.DELIVERED.name().equals(latest.getNodeStatus()))
+        if (!"DELIVERED".equals(shipment.getStatus()))
             throw new ServiceException("物流尚未签收，暂不能确认收货");
         int updated = orderMapper.markCompleted(orderId);
         if (updated != 1 && !"COMPLETED".equals(orderStatus(orderId, memberId)))
@@ -162,11 +177,24 @@ public class MallLogisticsService
         return withNodes(shipment);
     }
 
-    public List<MallFulfillmentOrder> listForAdmin(String orderNo, String status, Integer limit, Integer offset)
+    public List<MallFulfillmentOrder> listForAdmin(MallFulfillmentQuery query)
     {
-        int safeLimit = limit == null ? 20 : Math.min(Math.max(limit, 1), 100);
-        int safeOffset = offset == null ? 0 : Math.max(offset, 0);
-        return logisticsMapper.selectFulfillmentOrders(orderNo, status, safeLimit, safeOffset);
+        normalizeQuery(query);
+        return logisticsMapper.selectFulfillmentOrders(query);
+    }
+
+    public MallFulfillmentSummary summaryForAdmin(MallFulfillmentQuery query)
+    {
+        normalizeQuery(query);
+        return logisticsMapper.selectFulfillmentSummary(query);
+    }
+
+    public List<MallLogisticsCompanyOption> listCompanies()
+    {
+        return Arrays.stream(MallLogisticsCompany.values())
+                .filter(company -> company != MallLogisticsCompany.MOCK)
+                .map(company -> new MallLogisticsCompanyOption(company.getCode(), company.getName()))
+                .collect(Collectors.toList());
     }
 
     private MallLogisticsShipment withNodes(MallLogisticsShipment shipment)
@@ -206,6 +234,36 @@ public class MallLogisticsService
     {
         return StringUtils.isBlank(operatorId) ? "system" : operatorId.length() > 64
                 ? operatorId.substring(0, 64) : operatorId;
+    }
+
+    private void normalizeQuery(MallFulfillmentQuery query)
+    {
+        if (query == null) throw new ServiceException("履约查询参数不能为空");
+        query.setOrderNo(trimToNull(query.getOrderNo()));
+        query.setReceiverKeyword(trimToNull(query.getReceiverKeyword()));
+        query.setCompanyCode(trimToUpper(query.getCompanyCode()));
+        query.setWorkflowStatus(whitelist(trimToUpper(query.getWorkflowStatus()), WORKFLOW_STATUSES));
+        query.setAttentionType(whitelist(trimToUpper(query.getAttentionType()), ATTENTION_TYPES));
+        if (query.getCreateStart() != null && query.getCreateEnd() != null
+                && query.getCreateStart().isAfter(query.getCreateEnd()))
+            throw new ServiceException("下单开始时间不能晚于结束时间");
+    }
+
+    private String whitelist(String value, Set<String> allowed)
+    {
+        return value != null && allowed.contains(value) ? value : null;
+    }
+
+    private String trimToUpper(String value)
+    {
+        String normalized = trimToNull(value);
+        return normalized == null ? null : normalized.toUpperCase();
+    }
+
+    private String trimToNull(String value)
+    {
+        if (StringUtils.isBlank(value)) return null;
+        return value.trim();
     }
 
     private String safe(String value) { return value == null ? "" : value; }

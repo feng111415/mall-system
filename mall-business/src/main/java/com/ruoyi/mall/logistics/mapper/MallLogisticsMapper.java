@@ -5,6 +5,8 @@ import org.apache.ibatis.annotations.Param;
 import com.ruoyi.mall.logistics.domain.MallLogisticsNode;
 import com.ruoyi.mall.logistics.domain.MallLogisticsShipment;
 import com.ruoyi.mall.logistics.domain.MallFulfillmentOrder;
+import com.ruoyi.mall.logistics.domain.MallFulfillmentQuery;
+import com.ruoyi.mall.logistics.domain.MallFulfillmentSummary;
 
 public interface MallLogisticsMapper
 {
@@ -15,6 +17,8 @@ public interface MallLogisticsMapper
 
     MallLogisticsShipment selectById(@Param("shipmentId") Long shipmentId);
 
+    MallLogisticsShipment selectByIdForUpdate(@Param("shipmentId") Long shipmentId);
+
     List<MallLogisticsNode> selectNodes(@Param("shipmentId") Long shipmentId);
 
     int insertShipment(MallLogisticsShipment shipment);
@@ -23,10 +27,12 @@ public interface MallLogisticsMapper
 
     MallLogisticsNode selectLatestNode(@Param("shipmentId") Long shipmentId);
 
-    int updateShipmentDelivered(@Param("shipmentId") Long shipmentId);
+    int updateShipmentDelivered(@Param("shipmentId") Long shipmentId,
+            @Param("deliveredTime") java.time.LocalDateTime deliveredTime);
 
     List<MallLogisticsShipment> selectDeliveredBefore(@Param("cutoffTime") java.time.LocalDateTime cutoffTime);
 
-    List<MallFulfillmentOrder> selectFulfillmentOrders(@Param("orderNo") String orderNo,
-            @Param("status") String status, @Param("limit") int limit, @Param("offset") int offset);
+    List<MallFulfillmentOrder> selectFulfillmentOrders(MallFulfillmentQuery query);
+
+    MallFulfillmentSummary selectFulfillmentSummary(MallFulfillmentQuery query);
 }

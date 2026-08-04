@@ -28,6 +28,9 @@
     <select id="selectById" resultMap="Shipment">
         select <include refid="shipmentColumns"/> from mall_logistics_shipment where shipment_id=#{shipmentId}
     </select>
+    <select id="selectByIdForUpdate" resultMap="Shipment">
+        select <include refid="shipmentColumns"/> from mall_logistics_shipment where shipment_id=#{shipmentId} for update
+    </select>
     <select id="selectNodes" resultMap="Node">
         select node_id,shipment_id,tracking_no,node_status,title,description,location,event_time,create_time
         from mall_logistics_node where shipment_id=#{shipmentId} order by event_time desc,node_id desc
@@ -45,7 +48,7 @@
         from mall_logistics_node where shipment_id=#{shipmentId} order by event_time desc,node_id desc limit 1
     </select>
     <update id="updateShipmentDelivered">
-        update mall_logistics_shipment set status='DELIVERED',delivered_time=now(),update_time=now()
+        update mall_logistics_shipment set status='DELIVERED',delivered_time=#{deliveredTime},update_time=now()
         where shipment_id=#{shipmentId} and status='IN_TRANSIT'
     </update>
     <select id="selectDeliveredBefore" resultMap="Shipment">
@@ -56,16 +59,93 @@
     <resultMap id="FulfillmentOrder" type="com.ruoyi.mall.logistics.domain.MallFulfillmentOrder">
         <id property="orderId" column="order_id"/><result property="orderNo" column="order_no"/>
         <result property="status" column="order_status"/><result property="receiverName" column="receiver_name"/>
-        <result property="shipmentId" column="shipment_id"/><result property="companyName" column="company_name"/>
-        <result property="trackingNo" column="tracking_no"/>
+        <result property="receiverPhone" column="receiver_phone"/><result property="orderCreateTime" column="order_create_time"/>
+        <result property="shipmentId" column="shipment_id"/><result property="companyCode" column="company_code"/>
+        <result property="companyName" column="company_name"/><result property="trackingNo" column="tracking_no"/>
+        <result property="shipmentStatus" column="shipment_status"/><result property="shippedTime" column="shipped_time"/>
+        <result property="deliveredTime" column="delivered_time"/><result property="latestNodeStatus" column="latest_node_status"/>
+        <result property="latestNodeTitle" column="latest_node_title"/><result property="latestNodeDescription" column="latest_node_description"/>
+        <result property="latestNodeLocation" column="latest_node_location"/><result property="latestNodeTime" column="latest_node_time"/>
+        <result property="workflowStatus" column="workflow_status"/><result property="attentionType" column="attention_type"/>
+        <result property="overdueUnshipped" column="overdue_unshipped"/>
     </resultMap>
+    <resultMap id="FulfillmentSummary" type="com.ruoyi.mall.logistics.domain.MallFulfillmentSummary">
+        <result property="totalCount" column="total_count"/><result property="waitingShipmentCount" column="waiting_shipment_count"/>
+        <result property="inTransitCount" column="in_transit_count"/><result property="outForDeliveryCount" column="out_for_delivery_count"/>
+        <result property="exceptionCount" column="exception_count"/><result property="deliveredWaitReceiptCount" column="delivered_wait_receipt_count"/>
+        <result property="completedCount" column="completed_count"/><result property="overdueUnshippedCount" column="overdue_unshipped_count"/>
+        <result property="dataInconsistentCount" column="data_inconsistent_count"/>
+    </resultMap>
+
+    <sql id="fulfillmentRows">
+        select workflow_rows.*,
+            case when workflow_status='DATA_INCONSISTENT' then 'DATA_INCONSISTENT'
+                 when workflow_status='EXCEPTION' then 'TRANSPORT_EXCEPTION'
+                 when workflow_status='WAITING_SHIPMENT' and order_create_time &lt; date_sub(now(),interval 24 hour) then 'OVERDUE_UNSHIPPED'
+                 else null end attention_type,
+            case when workflow_status='WAITING_SHIPMENT' and order_create_time &lt; date_sub(now(),interval 24 hour) then 1 else 0 end overdue_unshipped
+        from (
+            select base_rows.*,
+                case when (shipment_id is null and order_status in ('SHIPPED','COMPLETED'))
+                          or (shipment_id is not null and order_status='PENDING_SHIPMENT')
+                          or (order_status='SHIPPED' and shipment_status='CANCELLED')
+                          or (order_status='COMPLETED' and shipment_status&lt;&gt;'DELIVERED') then 'DATA_INCONSISTENT'
+                     when order_status='COMPLETED' then 'COMPLETED'
+                     when order_status='PENDING_SHIPMENT' then 'WAITING_SHIPMENT'
+                     when shipment_status='DELIVERED' then 'DELIVERED_WAIT_RECEIPT'
+                     when operational_node_status='EXCEPTION' then 'EXCEPTION'
+                     when operational_node_status='OUT_FOR_DELIVERY' then 'OUT_FOR_DELIVERY'
+                     else 'IN_TRANSIT' end workflow_status
+            from (
+                select o.order_id,o.order_no,o.status order_status,o.receiver_name,o.receiver_phone,o.create_time order_create_time,
+                    s.shipment_id,s.company_code,s.company_name,s.tracking_no,s.status shipment_status,s.shipped_time,s.delivered_time,
+                    latest.node_status latest_node_status,latest.title latest_node_title,
+                    latest.description latest_node_description,latest.location latest_node_location,latest.event_time latest_node_time,
+                    operational.node_status operational_node_status
+                from mall_order o
+                left join mall_logistics_shipment s on s.order_id=o.order_id
+                left join mall_logistics_node latest on latest.node_id=(
+                    select n1.node_id from mall_logistics_node n1 where n1.shipment_id=s.shipment_id
+                    order by n1.event_time desc,n1.node_id desc limit 1)
+                left join mall_logistics_node operational on operational.node_id=(
+                    select n2.node_id from mall_logistics_node n2 where n2.shipment_id=s.shipment_id
+                      and n2.node_status&lt;&gt;'CORRECTION'
+                    order by n2.event_time desc,n2.node_id desc limit 1)
+                where o.status in ('PENDING_SHIPMENT','SHIPPED','COMPLETED')
+                <if test="orderNo != null and orderNo != ''">and o.order_no like concat('%',#{orderNo},'%')</if>
+                <if test="receiverKeyword != null and receiverKeyword != ''">
+                    and (o.receiver_name like concat('%',#{receiverKeyword},'%') or o.receiver_phone like concat('%',#{receiverKeyword},'%'))
+                </if>
+                <if test="companyCode != null and companyCode != ''">and s.company_code=#{companyCode}</if>
+                <if test="createStart != null">and o.create_time&gt;=#{createStart}</if>
+                <if test="createEnd != null">and o.create_time&lt;=#{createEnd}</if>
+            ) base_rows
+        ) workflow_rows
+    </sql>
+
+    <sql id="fulfillmentDerivedFilters">
+        <where>
+            <if test="workflowStatus != null and workflowStatus != ''">workflow_status=#{workflowStatus}</if>
+            <if test="attentionType != null and attentionType != ''">and attention_type=#{attentionType}</if>
+        </where>
+    </sql>
+
     <select id="selectFulfillmentOrders" resultMap="FulfillmentOrder">
-        select o.order_id,o.order_no,o.status order_status,o.receiver_name,
-            s.shipment_id,s.company_name,s.tracking_no
-        from mall_order o left join mall_logistics_shipment s on s.order_id=o.order_id
-        where o.status in ('PENDING_SHIPMENT','SHIPPED','COMPLETED')
-        <if test="orderNo != null and orderNo != ''">and o.order_no like concat('%',#{orderNo},'%')</if>
-        <if test="status != null and status != ''">and o.status=#{status}</if>
-        order by o.create_time desc,o.order_id desc limit #{limit} offset #{offset}
+        select fulfillment.* from (<include refid="fulfillmentRows"/>) fulfillment
+        <include refid="fulfillmentDerivedFilters"/>
+        order by case when attention_type is null then 1 else 0 end,order_create_time desc,order_id desc
+    </select>
+    <select id="selectFulfillmentSummary" resultMap="FulfillmentSummary">
+        select count(*) total_count,
+            coalesce(sum(workflow_status='WAITING_SHIPMENT'),0) waiting_shipment_count,
+            coalesce(sum(workflow_status='IN_TRANSIT'),0) in_transit_count,
+            coalesce(sum(workflow_status='OUT_FOR_DELIVERY'),0) out_for_delivery_count,
+            coalesce(sum(workflow_status='EXCEPTION'),0) exception_count,
+            coalesce(sum(workflow_status='DELIVERED_WAIT_RECEIPT'),0) delivered_wait_receipt_count,
+            coalesce(sum(workflow_status='COMPLETED'),0) completed_count,
+            coalesce(sum(attention_type='OVERDUE_UNSHIPPED'),0) overdue_unshipped_count,
+            coalesce(sum(workflow_status='DATA_INCONSISTENT'),0) data_inconsistent_count
+        from (<include refid="fulfillmentRows"/>) fulfillment
+        <include refid="fulfillmentDerivedFilters"/>
     </select>
 </mapper>
