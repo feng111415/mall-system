@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.mall.order.operations.mapper.MallOrderOperationsMapper">
+    <resultMap id="Summary" type="com.ruoyi.mall.order.operations.domain.MallOrderOperationsSummary">
+        <id property="orderId" column="order_id"/>
+        <result property="orderNo" column="order_no"/><result property="memberId" column="member_id"/>
+        <result property="memberNickname" column="member_nickname"/><result property="status" column="status"/>
+        <result property="paymentStatus" column="payment_status"/><result property="riskStatus" column="risk_status"/>
+        <result property="productAmount" column="product_amount"/><result property="shippingFee" column="shipping_fee"/>
+        <result property="discountAmount" column="discount_amount"/><result property="payableAmount" column="payable_amount"/>
+        <result property="createTime" column="create_time"/><result property="payTime" column="pay_time"/>
+        <result property="closeTime" column="close_time"/><result property="updateTime" column="update_time"/>
+        <result property="itemCount" column="item_count"/><result property="totalQuantity" column="total_quantity"/>
+        <result property="paymentNo" column="payment_no"/><result property="paymentMethod" column="payment_method"/>
+        <result property="paymentDetailStatus" column="payment_detail_status"/>
+        <result property="reservedQuantity" column="reserved_quantity"/><result property="inventoryStatus" column="inventory_status"/>
+        <result property="shipmentId" column="shipment_id"/><result property="logisticsStatus" column="logistics_status"/>
+        <result property="logisticsCompanyName" column="logistics_company_name"/><result property="trackingNo" column="tracking_no"/>
+        <result property="afterSaleCount" column="after_sale_count"/><result property="latestAfterSaleId" column="latest_after_sale_id"/>
+        <result property="latestAfterSaleNo" column="latest_after_sale_no"/><result property="latestAfterSaleType" column="latest_after_sale_type"/>
+        <result property="latestAfterSaleStatus" column="latest_after_sale_status"/><result property="latestAfterSaleAmount" column="latest_after_sale_amount"/>
+    </resultMap>
+    <resultMap id="Detail" type="com.ruoyi.mall.order.operations.domain.MallOrderOperationsDetail" extends="Summary">
+        <result property="receiverName" column="receiver_name"/><result property="receiverPhone" column="receiver_phone"/>
+        <result property="receiverProvince" column="receiver_province"/><result property="receiverCity" column="receiver_city"/>
+        <result property="receiverDistrict" column="receiver_district"/><result property="receiverDetailAddress" column="receiver_detail_address"/>
+        <result property="remark" column="remark"/><result property="cancelReason" column="cancel_reason"/>
+    </resultMap>
+    <resultMap id="Item" type="com.ruoyi.mall.order.domain.MallOrderItem">
+        <id property="orderItemId" column="order_item_id"/><result property="orderId" column="order_id"/>
+        <result property="skuId" column="sku_id"/><result property="skuCode" column="sku_code"/>
+        <result property="productName" column="product_name"/><result property="skuName" column="sku_name"/>
+        <result property="productImage" column="product_image"/><result property="unitPrice" column="unit_price"/>
+        <result property="quantity" column="quantity"/><result property="lineAmount" column="line_amount"/>
+        <result property="createTime" column="create_time"/>
+    </resultMap>
+    <resultMap id="Payment" type="com.ruoyi.mall.payment.domain.MallPayment">
+        <id property="paymentId" column="payment_id"/><result property="paymentNo" column="payment_no"/>
+        <result property="orderId" column="order_id"/><result property="orderNo" column="order_no"/>
+        <result property="memberId" column="member_id"/><result property="paymentMethod" column="payment_method"/>
+        <result property="amount" column="amount"/><result property="status" column="status"/>
+        <result property="providerPaymentNo" column="provider_payment_no"/><result property="failureReason" column="failure_reason"/>
+        <result property="providerRefundNo" column="provider_refund_no"/><result property="paidTime" column="paid_time"/>
+        <result property="refundTime" column="refund_time"/><result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+    <resultMap id="Reservation" type="com.ruoyi.mall.inventory.domain.MallStockReservation">
+        <id property="reservationId" column="reservation_id"/><result property="orderNo" column="order_no"/>
+        <result property="skuId" column="sku_id"/><result property="quantity" column="quantity"/><result property="status" column="status"/>
+    </resultMap>
+    <resultMap id="Shipment" type="com.ruoyi.mall.logistics.domain.MallLogisticsShipment">
+        <id property="shipmentId" column="shipment_id"/><result property="orderId" column="order_id"/>
+        <result property="orderNo" column="order_no"/><result property="memberId" column="member_id"/>
+        <result property="companyCode" column="company_code"/><result property="companyName" column="company_name"/>
+        <result property="trackingNo" column="tracking_no"/><result property="status" column="status"/>
+        <result property="shippedTime" column="shipped_time"/><result property="deliveredTime" column="delivered_time"/>
+        <result property="createTime" column="create_time"/><result property="updateTime" column="update_time"/>
+    </resultMap>
+    <resultMap id="Node" type="com.ruoyi.mall.logistics.domain.MallLogisticsNode">
+        <id property="nodeId" column="node_id"/><result property="shipmentId" column="shipment_id"/>
+        <result property="trackingNo" column="tracking_no"/><result property="nodeStatus" column="node_status"/>
+        <result property="title" column="title"/><result property="description" column="description"/>
+        <result property="location" column="location"/><result property="eventTime" column="event_time"/>
+        <result property="createTime" column="create_time"/>
+    </resultMap>
+    <resultMap id="AfterSale" type="com.ruoyi.mall.aftersale.item.domain.MallItemAfterSale">
+        <id property="afterSaleId" column="after_sale_id"/><result property="afterSaleNo" column="after_sale_no"/>
+        <result property="orderId" column="order_id"/><result property="orderNo" column="order_no"/>
+        <result property="memberId" column="member_id"/><result property="type" column="type"/>
+        <result property="reasonCode" column="reason_code"/><result property="reason" column="reason"/>
+        <result property="evidenceUrl" column="evidence_url"/><result property="status" column="status"/>
+        <result property="refundAmount" column="refund_amount"/><result property="shippingRefundAmount" column="shipping_refund_amount"/>
+        <result property="returnCompanyCode" column="return_company_code"/><result property="returnTrackingNo" column="return_tracking_no"/>
+        <result property="riskSignal" column="risk_signal"/><result property="failureReason" column="failure_reason"/>
+        <result property="providerRefundNo" column="provider_refund_no"/><result property="deadlineTime" column="deadline_time"/>
+        <result property="refundTime" column="refund_time"/><result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+    <resultMap id="AfterSaleItem" type="com.ruoyi.mall.aftersale.item.domain.MallItemAfterSaleItem">
+        <id property="afterSaleItemId" column="after_sale_item_id"/><result property="afterSaleId" column="after_sale_id"/>
+        <result property="orderItemId" column="order_item_id"/><result property="skuId" column="sku_id"/>
+        <result property="productName" column="product_name"/><result property="skuName" column="sku_name"/>
+        <result property="orderQuantity" column="order_quantity"/><result property="requestedQuantity" column="requested_quantity"/>
+        <result property="unitPrice" column="unit_price"/><result property="refundAmount" column="refund_amount"/>
+    </resultMap>
+    <resultMap id="Risk" type="com.ruoyi.mall.risk.domain.MallRiskRecord">
+        <id property="riskId" column="risk_id"/><result property="orderId" column="order_id"/>
+        <result property="orderNo" column="order_no"/><result property="memberId" column="member_id"/>
+        <result property="ruleCode" column="rule_code"/><result property="riskScore" column="risk_score"/>
+        <result property="riskStatus" column="risk_status"/><result property="decision" column="decision"/>
+        <result property="reason" column="reason"/><result property="orderAmount" column="order_amount"/>
+        <result property="operatorType" column="operator_type"/><result property="operatorId" column="operator_id"/>
+        <result property="createTime" column="create_time"/>
+    </resultMap>
+    <resultMap id="Operation" type="com.ruoyi.mall.order.domain.MallOrderOperationLog">
+        <id property="operationId" column="operation_id"/><result property="orderId" column="order_id"/>
+        <result property="orderNo" column="order_no"/><result property="fromStatus" column="from_status"/>
+        <result property="toStatus" column="to_status"/><result property="operatorType" column="operator_type"/>
+        <result property="operatorId" column="operator_id"/><result property="remark" column="remark"/>
+        <result property="requestId" column="request_id"/><result property="createTime" column="create_time"/>
+    </resultMap>
+
+    <sql id="summaryColumns">
+        o.order_id,o.order_no,o.member_id,m.nickname member_nickname,o.status,o.payment_status,o.risk_status,
+        o.product_amount,o.shipping_fee,o.discount_amount,o.payable_amount,o.create_time,o.pay_time,o.close_time,o.update_time,
+        (select count(1) from mall_order_item oi where oi.order_id=o.order_id) item_count,
+        coalesce((select sum(oi.quantity) from mall_order_item oi where oi.order_id=o.order_id),0) total_quantity,
+        (select p.payment_no from mall_payment p where p.order_id=o.order_id order by p.payment_id desc limit 1) payment_no,
+        (select p.payment_method from mall_payment p where p.order_id=o.order_id order by p.payment_id desc limit 1) payment_method,
+        (select p.status from mall_payment p where p.order_id=o.order_id order by p.payment_id desc limit 1) payment_detail_status,
+        coalesce((select sum(sr.quantity) from mall_stock_reservation sr where sr.order_no=o.order_no and sr.status in ('LOCKED','CONFIRMED')),0) reserved_quantity,
+        case when exists(select 1 from mall_stock_reservation sr where sr.order_no=o.order_no and sr.status='LOCKED') then 'LOCKED'
+             when exists(select 1 from mall_stock_reservation sr where sr.order_no=o.order_no and sr.status='CONFIRMED') then 'CONFIRMED'
+             when exists(select 1 from mall_stock_reservation sr where sr.order_no=o.order_no) then 'RELEASED'
+             else 'NOT_RESERVED' end inventory_status,
+        s.shipment_id,s.status logistics_status,s.company_name logistics_company_name,s.tracking_no,
+        (select count(1) from mall_item_after_sale a where a.order_id=o.order_id) after_sale_count,
+        latest_after_sale.after_sale_id latest_after_sale_id,latest_after_sale.after_sale_no latest_after_sale_no,
+        latest_after_sale.type latest_after_sale_type,latest_after_sale.status latest_after_sale_status,
+        coalesce(latest_after_sale.refund_amount,0)+coalesce(latest_after_sale.shipping_refund_amount,0) latest_after_sale_amount
+    </sql>
+    <sql id="orderJoins">from mall_order o left join mall_member m on m.member_id=o.member_id
+        left join mall_logistics_shipment s on s.order_id=o.order_id
+        left join mall_item_after_sale latest_after_sale on latest_after_sale.after_sale_id=(
+            select max(a2.after_sale_id) from mall_item_after_sale a2 where a2.order_id=o.order_id)</sql>
+
+    <select id="selectOrders" resultMap="Summary">
+        select <include refid="summaryColumns"/> <include refid="orderJoins"/>
+        <where>
+            <if test="orderNo != null and orderNo != ''">and o.order_no like concat('%',#{orderNo},'%')</if>
+            <if test="memberId != null">and o.member_id=#{memberId}</if>
+            <if test="status != null and status != ''">and o.status=#{status}</if>
+            <if test="paymentStatus != null and paymentStatus != ''">and o.payment_status=#{paymentStatus}</if>
+            <if test="riskStatus != null and riskStatus != ''">and o.risk_status=#{riskStatus}</if>
+            <if test="logisticsStatus != null and logisticsStatus != ''">and s.status=#{logisticsStatus}</if>
+            <if test="afterSaleStatus == 'NONE'">and not exists(select 1 from mall_item_after_sale a3 where a3.order_id=o.order_id)</if>
+            <if test="afterSaleStatus != null and afterSaleStatus != '' and afterSaleStatus != 'NONE'">and exists(select 1 from mall_item_after_sale a4 where a4.order_id=o.order_id and a4.status=#{afterSaleStatus})</if>
+            <if test="createStart != null">and o.create_time &gt;= #{createStart}</if>
+            <if test="createEnd != null">and o.create_time &lt;= #{createEnd}</if>
+        </where>
+        order by o.create_time desc,o.order_id desc
+    </select>
+
+    <select id="selectOrderDetail" resultMap="Detail">
+        select <include refid="summaryColumns"/>,o.receiver_name,o.receiver_phone,o.receiver_province,o.receiver_city,
+            o.receiver_district,o.receiver_detail_address,o.remark,o.cancel_reason
+        <include refid="orderJoins"/> where o.order_id=#{orderId}
+    </select>
+    <select id="selectItems" resultMap="Item">select * from mall_order_item where order_id=#{orderId} order by order_item_id</select>
+    <select id="selectPayments" resultMap="Payment">select * from mall_payment where order_id=#{orderId} order by payment_id desc</select>
+    <select id="selectReservations" resultMap="Reservation">select * from mall_stock_reservation where order_no=#{orderNo} order by reservation_id</select>
+    <select id="selectShipment" resultMap="Shipment"><include refid="selectShipmentColumns"/> where order_id=#{orderId}</select>
+    <sql id="selectShipmentColumns">select shipment_id,order_id,order_no,member_id,company_code,company_name,tracking_no,status,shipped_time,delivered_time,create_time,update_time from mall_logistics_shipment</sql>
+    <select id="selectShipmentNodes" resultMap="Node">select node_id,shipment_id,tracking_no,node_status,title,description,location,event_time,create_time from mall_logistics_node where shipment_id=#{shipmentId} order by event_time desc,node_id desc</select>
+    <select id="selectAfterSales" resultMap="AfterSale">select * from mall_item_after_sale where order_id=#{orderId} order by after_sale_id desc</select>
+    <select id="selectAfterSaleItems" resultMap="AfterSaleItem">select * from mall_item_after_sale_item where after_sale_id=#{afterSaleId} order by after_sale_item_id</select>
+    <select id="selectRiskRecords" resultMap="Risk">select * from mall_risk_record where order_id=#{orderId} order by risk_id desc</select>
+    <select id="selectOperations" resultMap="Operation">select * from mall_order_operation_log where order_id=#{orderId} order by operation_id desc</select>
+</mapper>

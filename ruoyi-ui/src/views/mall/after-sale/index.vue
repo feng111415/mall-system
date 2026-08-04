@@ -86,7 +86,11 @@ export default {
       ]
     }
   },
-  created () { this.load() },
+  created () {
+    this.load()
+    const afterSaleId = Number(this.$route.query.afterSaleId)
+    if (afterSaleId > 0) getAfterSale(afterSaleId).then(response => { this.current = response.data; this.dialog = true })
+  },
   methods: {
     load () {
       this.loading = true
