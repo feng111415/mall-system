@@ -1,5 +1,7 @@
 <template>
   <div class="app-container home">
+    <mall-operations-home v-if="hasOperationsHomepage" />
+    <template v-else>
     <el-row :gutter="20">
       <el-col :sm="24" :lg="12" style="padding-left: 20px">
         <h2>若依后台管理框架</h2>
@@ -1122,17 +1124,26 @@
         </el-card>
       </el-col>
     </el-row>
+    </template>
   </div>
 </template>
 
 <script>
+import MallOperationsHome from '@/views/mall/operations/home'
+import { operationsRoleKeys } from '@/views/mall/operations/roles'
+
 export default {
   name: "Index",
+  components: { MallOperationsHome },
   data() {
     return {
       // 版本号
       version: "3.9.2"
     }
+  },
+  computed: {
+    currentRoles() { return this.$store.getters.roles || [] },
+    hasOperationsHomepage() { return this.currentRoles.includes('admin') || this.currentRoles.some(role => operationsRoleKeys.includes(role)) }
   },
   methods: {
     goTarget(href) {

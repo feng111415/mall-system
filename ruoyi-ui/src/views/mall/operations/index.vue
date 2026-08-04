@@ -27,6 +27,7 @@
           <dl>
             <div><dt>负责</dt><dd>{{ role.writes }}</dd></div>
             <div><dt>边界</dt><dd>{{ role.forbidden }}</dd></div>
+            <div><dt>本次同步</dt><dd>{{ role.latestChange }}</dd></div>
           </dl>
         </el-card>
       </el-col>
@@ -56,30 +57,14 @@
 </template>
 
 <script>
-const full = { type: 'full', label: '可操作' }
-const read = { type: 'read', label: '只读' }
-const none = { type: 'none', label: '—' }
+import { permissionRows, roleDefinitions } from './roles'
 
 export default {
   name: 'MallOperationsRoles',
   data () {
     return {
-      roleDefinitions: [
-        { key: 'mall_ops_lead', code: 'ROLE 01', name: '运营主管', objective: '协调商城全链路，处理跨岗位异常并监督关键写操作。', writes: '商品、库存、履约、售后、资金', forbidden: '不配置若依系统级权限' },
-        { key: 'mall_product_ops', code: 'ROLE 02', name: '商品运营', objective: '维护可售商品信息与上架质量，关注库存但不直接履约。', writes: '分类、品牌、商品、上下架', forbidden: '不发货、不退款；库存只读' },
-        { key: 'mall_customer_service', code: 'ROLE 03', name: '客服售后', objective: '解决会员订单问题并完成售后审核，不接触资金执行。', writes: '会员资料、售后审核', forbidden: '不退款、不调库存、不发货' },
-        { key: 'mall_fulfillment', code: 'ROLE 04', name: '仓储履约', objective: '保证库存准确，并按订单完成发货和物流轨迹维护。', writes: '库存调整、发货、物流节点', forbidden: '不改会员、不审售后' },
-        { key: 'mall_finance_risk', code: 'ROLE 05', name: '财务风控', objective: '执行已审核退款并处理资金差异和告警。', writes: '售后退款、对账处理、告警确认', forbidden: '不审售后、不改商品、不发货' }
-      ],
-      permissionRows: [
-        { capability: '会员查询与资料维护', mall_ops_lead: full, mall_product_ops: none, mall_customer_service: full, mall_fulfillment: none, mall_finance_risk: none },
-        { capability: '分类、品牌与商品维护', mall_ops_lead: full, mall_product_ops: full, mall_customer_service: none, mall_fulfillment: none, mall_finance_risk: none },
-        { capability: '库存查询与调整', mall_ops_lead: full, mall_product_ops: read, mall_customer_service: none, mall_fulfillment: full, mall_finance_risk: none },
-        { capability: '发货与物流轨迹', mall_ops_lead: full, mall_product_ops: none, mall_customer_service: read, mall_fulfillment: full, mall_finance_risk: none },
-        { capability: '售后查询与审核', mall_ops_lead: full, mall_product_ops: none, mall_customer_service: full, mall_fulfillment: none, mall_finance_risk: read },
-        { capability: '售后退款执行', mall_ops_lead: full, mall_product_ops: none, mall_customer_service: none, mall_fulfillment: none, mall_finance_risk: full },
-        { capability: '对账、差异与告警处理', mall_ops_lead: full, mall_product_ops: none, mall_customer_service: none, mall_fulfillment: none, mall_finance_risk: full }
-      ]
+      roleDefinitions,
+      permissionRows
     }
   },
   computed: {
@@ -108,7 +93,7 @@ export default {
 .identity-card strong { margin: 6px 0; font-size: 16px; }
 .identity-card small { color: #b8c4d5; font-size: 10px; }
 .role-column { margin-bottom: 16px; }
-.role-card { min-height: 220px; border-color: #e1e6ed; }
+.role-card { min-height: 285px; border-color: #e1e6ed; }
 .role-card.current { border-color: #67c23a; box-shadow: inset 0 3px #67c23a; }
 .role-card__header { display: flex; align-items: center; justify-content: space-between; }
 .role-card__header span, .role-card__header strong { display: block; }
