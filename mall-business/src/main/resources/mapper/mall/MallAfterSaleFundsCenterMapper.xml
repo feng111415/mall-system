@@ -82,6 +82,5 @@
         select w.kind,w.record_id,w.business_no,w.order_no,w.amount,w.status,w.priority,w.risk_signal,w.updated_at
         from (<include refid="workUnion"/>) w <include refid="workWhere"/>
         order by w.priority desc,w.updated_at desc,w.record_id desc
-        limit #{pageSize} offset #{offset}
     </select>
 </mapper>
