@@ -44,6 +44,7 @@ public class MallMemberAuthService
     private final MallMemberAuthMapper authMapper;
     private final MallMemberSessionService sessionService;
     private final MallSmsVerificationAttemptService verificationAttemptService;
+    private final MallMemberCaptchaService captchaService;
     private final SmsPort smsPort;
     private final RedisTemplate<Object, Object> redisTemplate;
     private final String mockCode;
@@ -52,7 +53,8 @@ public class MallMemberAuthService
             MallMemberSessionService sessionService, SmsPort smsPort,
             RedisTemplate<Object, Object> redisTemplate,
             @Value("${mall.sms.mock-code:}") String mockCode,
-            MallSmsVerificationAttemptService verificationAttemptService)
+            MallSmsVerificationAttemptService verificationAttemptService,
+            MallMemberCaptchaService captchaService)
     {
         this.memberMapper = memberMapper;
         this.authMapper = authMapper;
@@ -61,10 +63,31 @@ public class MallMemberAuthService
         this.smsPort = smsPort;
         this.redisTemplate = redisTemplate;
         this.mockCode = mockCode;
+        this.captchaService = captchaService;
     }
 
     public Map<String, Object> sendCode(String phone, String requestIp)
     {
+        return sendCode(phone, requestIp, null, null);
+    }
+
+    public Map<String, Object> sendCode(String phone, String requestIp, String deviceIdentifier,
+            String challengeTicket)
+    {
+        if (challengeTicket == null || challengeTicket.isBlank())
+        {
+            if (captchaService.requiresChallenge(phone, requestIp, deviceIdentifier))
+            {
+                Map<String, Object> response = new LinkedHashMap<>();
+                response.put("challengeRequired", true);
+                response.put("resendAfter", SEND_INTERVAL_MILLIS / 1000);
+                return response;
+            }
+        }
+        else
+        {
+            captchaService.consumeTicket(challengeTicket, phone, requestIp, deviceIdentifier);
+        }
         return sendVerificationCode(phone, requestIp, LOGIN_PURPOSE, "MALL_LOGIN_CODE");
     }
 
@@ -75,6 +98,17 @@ public class MallMemberAuthService
         MallMember member = requireActiveMember(current.getMemberId());
         return sendVerificationCode(member.getPhone(), requestIp, PRIMARY_DEVICE_CHANGE_PURPOSE,
                 "MALL_PRIMARY_DEVICE_CHANGE_CODE");
+    }
+
+    public Map<String, Object> createCaptchaChallenge(String phone, String requestIp, String deviceIdentifier)
+    {
+        return captchaService.createChallenge(phone, requestIp, deviceIdentifier);
+    }
+
+    public Map<String, Object> verifyCaptchaChallenge(String challengeKey, int position,
+            String requestIp, String deviceIdentifier)
+    {
+        return captchaService.verifyChallenge(challengeKey, position, requestIp, deviceIdentifier);
     }
 
     private Map<String, Object> sendVerificationCode(String phone, String requestIp, String purpose,

@@ -30,6 +30,7 @@ import com.ruoyi.mall.member.domain.vo.MallMemberSessionOverviewVo;
 import com.ruoyi.mall.member.mapper.MallMemberAuthMapper;
 import com.ruoyi.mall.member.mapper.MallMemberMapper;
 import com.ruoyi.mall.member.service.MallMemberAuthService;
+import com.ruoyi.mall.member.service.MallMemberCaptchaService;
 import com.ruoyi.mall.member.service.MallMemberSessionService;
 import com.ruoyi.mall.member.service.MallMemberTokenService.MemberSession;
 import com.ruoyi.mall.member.service.MallSmsVerificationAttemptService;
@@ -42,6 +43,7 @@ class MallMemberAuthServiceTest
     @Mock private SmsPort smsPort;
     @Mock private RedisTemplate<Object, Object> redisTemplate;
     @Mock private ValueOperations<Object, Object> valueOperations;
+    @Mock private MallMemberCaptchaService captchaService;
     private MallMemberAuthService service;
 
     @BeforeEach
@@ -50,7 +52,7 @@ class MallMemberAuthServiceTest
         MockitoAnnotations.openMocks(this);
         when(redisTemplate.opsForValue()).thenReturn(valueOperations);
         service = new MallMemberAuthService(memberMapper, authMapper, sessionService, smsPort,
-                redisTemplate, "123456", new MallSmsVerificationAttemptService(authMapper));
+                redisTemplate, "123456", new MallSmsVerificationAttemptService(authMapper), captchaService);
     }
 
     @Test
@@ -60,6 +62,15 @@ class MallMemberAuthServiceTest
                 .thenReturn(false);
         assertThrows(ServiceException.class, () -> service.sendCode("13800138000", "127.0.0.1"));
         verify(authMapper, never()).insertSmsCode(any());
+        verify(smsPort, never()).sendVerificationCode(anyString(), anyString(), anyString());
+    }
+
+    @Test
+    void returnsChallengeRequiredWithoutSendingSmsWhenRiskIsHigh()
+    {
+        when(captchaService.requiresChallenge("13800138000", "127.0.0.1", "device-a")).thenReturn(true);
+        Map<String, Object> response = service.sendCode("13800138000", "127.0.0.1", "device-a", null);
+        assertEquals(true, response.get("challengeRequired"));
         verify(smsPort, never()).sendVerificationCode(anyString(), anyString(), anyString());
     }
 

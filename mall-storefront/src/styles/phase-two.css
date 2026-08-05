@@ -750,6 +750,24 @@ h1, h2, h3, .primary-button, .add-button, .order-secondary-action, .avatar-uploa
 .login-panel .agreement { align-items: flex-start; gap: 9px; margin: 0; }
 .login-panel .agreement input { width: 15px; height: 15px; flex: 0 0 15px; margin-top: 2px; }
 .login-panel .login-button { margin-top: 0; }
+.sms-challenge-backdrop { position: fixed; inset: 0; z-index: 40; display: grid; place-items: center; padding: 20px; background: rgb(32 32 42 / 48%); }
+.sms-challenge-modal { width: min(410px, 100%); padding: 24px; border: 2px solid var(--ink); border-radius: 8px; background: var(--paper); box-shadow: 8px 8px 0 var(--ink); }
+.sms-challenge-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.sms-challenge-heading h2 { margin: 8px 0 0; font-family: var(--font-display); font-size: 24px; font-weight: 900; }
+.sms-challenge-heading .icon-button { border: 0; background: transparent; color: var(--ink); }
+.sms-challenge-note { margin: 14px 0 16px; color: var(--muted); font-size: 12px; line-height: 1.7; }
+.sms-challenge-scene { position: relative; height: 188px; overflow: hidden; border: 2px solid var(--ink); border-radius: 8px; background: var(--peach); }
+.sms-challenge-grid { position: absolute; inset: 0; background: linear-gradient(90deg, transparent 49%, rgb(255 255 255 / 36%) 50%, transparent 51%), linear-gradient(transparent 49%, rgb(255 255 255 / 36%) 50%, transparent 51%); background-size: 42px 42px; }
+.sms-challenge-sun { position: absolute; top: 22px; right: 28px; width: 44px; height: 44px; border-radius: 50%; background: var(--yellow); }
+.sms-challenge-mountain { position: absolute; left: 26px; bottom: -12px; width: 250px; height: 122px; background: var(--coral); clip-path: polygon(0 100%, 45% 14%, 64% 48%, 78% 30%, 100% 100%); }
+.sms-challenge-gap { position: absolute; bottom: 0; width: 50px; height: 50px; transform: translateX(-50%); border: 2px dashed var(--ink); background: var(--paper); clip-path: polygon(0 0, 65% 0, 65% 25%, 100% 25%, 100% 100%, 0 100%); }
+.sms-challenge-track { position: relative; display: grid; align-items: center; margin-top: 12px; min-height: 46px; padding: 0 12px; border: 2px solid var(--ink); border-radius: 8px; background: var(--mint); }
+.sms-challenge-track input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: .001; cursor: grab; }
+.sms-challenge-track::before { content: '◆'; position: absolute; left: calc(var(--challenge-position, 12) * 1%); display: grid; place-items: center; width: 38px; height: 38px; border-radius: 6px; background: var(--coral); color: var(--ink); font-size: 17px; pointer-events: none; transform: translateX(-50%); }
+.sms-challenge-track span { color: var(--muted); font-size: 11px; text-align: center; pointer-events: none; }
+.sms-challenge-error { margin: 10px 0 0; color: var(--red); font-size: 12px; }
+.sms-challenge-actions { display: flex; justify-content: flex-end; align-items: center; gap: 16px; margin-top: 18px; }
+@media (max-width: 600px) { .sms-challenge-backdrop { align-items: end; padding: 12px; } .sms-challenge-modal { width: 100%; padding: 20px; box-shadow: 5px 5px 0 var(--ink); } .sms-challenge-scene { height: 160px; } }
 .account-hero-c { display: flex; min-height: 220px; align-items: center; justify-content: space-between; gap: 30px; border: 2px solid var(--ink); border-radius: 8px; padding: 24px 38px; background: var(--mint); box-shadow: 7px 7px 0 rgb(32 32 42 / 14%); }
 .profile-panel { min-height: 0; max-width: none; flex: 1; border: 0; padding: 0; background: transparent; box-shadow: none; }
 .profile-avatar { width: 100px; height: 100px; flex-basis: 100px; border: 2px solid var(--ink); border-radius: 50%; background: #f05d45; color: #fff; font-size: 34px; }

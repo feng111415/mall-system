@@ -1,7 +1,9 @@
 import http from './http'
 import { getDeviceId } from '../utils/device'
 
-export const sendSmsCode = phone => http.post('/mall/member/sms-code', { phone })
+export const sendSmsCode = (phone, challengeTicket = '') => http.post('/mall/member/sms-code', { phone, challengeTicket })
+export const createSmsChallenge = phone => http.post('/mall/member/sms-challenge', { phone })
+export const verifySmsChallenge = payload => http.post('/mall/member/sms-challenge/verify', payload)
 export const loginBySms = payload => http.post('/mall/member/login', { ...payload, deviceId: getDeviceId() })
 export const getProfile = () => http.get('/mall/member/profile')
 export const getAvatarPresets = () => http.get('/mall/member/profile/avatar-presets')

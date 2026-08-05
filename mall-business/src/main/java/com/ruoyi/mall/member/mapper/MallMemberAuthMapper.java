@@ -5,6 +5,7 @@ import java.util.Date;
 import org.apache.ibatis.annotations.Param;
 import com.ruoyi.mall.member.domain.MallMemberAddress;
 import com.ruoyi.mall.member.domain.MallMemberConsent;
+import com.ruoyi.mall.member.domain.MallCaptchaChallenge;
 import com.ruoyi.mall.member.domain.MallSmsCode;
 
 public interface MallMemberAuthMapper
@@ -23,4 +24,12 @@ public interface MallMemberAuthMapper
     int insertAddress(MallMemberAddress address);
     int updateAddress(MallMemberAddress address);
     int deleteAddress(@Param("addressId") Long addressId, @Param("memberId") Long memberId);
+    int insertCaptchaChallenge(MallCaptchaChallenge challenge);
+    MallCaptchaChallenge selectCaptchaChallenge(@Param("challengeKey") String challengeKey);
+    int incrementCaptchaAttempts(@Param("challengeId") Long challengeId);
+    int failCaptchaChallenge(@Param("challengeId") Long challengeId);
+    int verifyCaptchaChallenge(@Param("challengeId") Long challengeId, @Param("ticketHash") String ticketHash,
+            @Param("ticketExpireTime") Date ticketExpireTime);
+    int consumeCaptchaTicket(@Param("ticketHash") String ticketHash, @Param("phone") String phone,
+            @Param("deviceIdentifier") String deviceIdentifier, @Param("requestIp") String requestIp);
 }

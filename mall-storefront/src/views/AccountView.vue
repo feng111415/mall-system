@@ -4,6 +4,7 @@ import { useCascaderAreaData } from '@vant/area-data'
 import { Icon as VanIcon } from 'vant'
 import {
   addAddress,
+  createSmsChallenge,
   deleteAddress,
   getAddresses,
   getAvatarPresets,
@@ -15,6 +16,7 @@ import {
   revokeMemberSession,
   selectPresetAvatar,
   sendSmsCode,
+  verifySmsChallenge,
   sendPrimaryDeviceCode,
   updateNickname,
   uploadAvatar,
@@ -56,6 +58,12 @@ const primaryCode = ref('')
 const primarySeconds = ref(0)
 const primaryCodeSending = ref(false)
 const primaryReplacing = ref(false)
+const smsChallengeOpen = ref(false)
+const smsChallengeLoading = ref(false)
+const smsChallengeVerifying = ref(false)
+const smsChallengeError = ref('')
+const smsChallenge = ref(null)
+const smsChallengePosition = ref(12)
 const cropOpen = ref(false)
 const cropImageUrl = ref('')
 const cropZoom = ref(1)
@@ -148,12 +156,56 @@ function restoreSmsCooldown() {
   }
 }
 
-async function sendCode() {
+async function openSmsChallenge() {
+  smsChallengeLoading.value = true
+  smsChallengeError.value = ''
+  try {
+    const response = await createSmsChallenge(phone.value)
+    smsChallenge.value = response.data.data
+    smsChallengePosition.value = smsChallenge.value?.pieceX ?? 12
+    smsChallengeOpen.value = true
+  } catch (error) {
+    smsChallengeError.value = error.response?.data?.msg || '安全验证加载失败，请稍后重试'
+    message.value = smsChallengeError.value
+  } finally {
+    smsChallengeLoading.value = false
+  }
+}
+
+function closeSmsChallenge() {
+  smsChallengeOpen.value = false
+  smsChallenge.value = null
+  smsChallengeError.value = ''
+}
+
+async function verifySmsChallengeAndSend() {
+  if (!smsChallenge.value || smsChallengeVerifying.value) return
+  smsChallengeVerifying.value = true
+  smsChallengeError.value = ''
+  try {
+    const response = await verifySmsChallenge({
+      challengeId: smsChallenge.value.challengeId,
+      position: Number(smsChallengePosition.value)
+    })
+    closeSmsChallenge()
+    await sendCode(response.data.data.ticket)
+  } catch (error) {
+    smsChallengeError.value = error.response?.data?.msg || '拼图位置不正确，请重试'
+  } finally {
+    smsChallengeVerifying.value = false
+  }
+}
+
+async function sendCode(challengeTicket = '') {
   if (!/^1[3-9]\d{9}$/.test(phone.value)) return message.value = '请输入正确的中国大陆手机号'
   if (seconds.value) return
   loading.value = true
   try {
-    await sendSmsCode(phone.value)
+    const response = await sendSmsCode(phone.value, challengeTicket)
+    if (response.data.data?.challengeRequired) {
+      await openSmsChallenge()
+      return
+    }
     message.value = '验证码已发送，开发环境 Mock 验证码由服务配置提供'
     startSmsCooldown(phone.value)
   } catch (error) {
@@ -782,6 +834,28 @@ async function confirmAvatarCrop() {
           <button class="primary-button" type="button" :disabled="avatarSaving" @click="confirmAvatarCrop">{{ avatarSaving ? '上传中...' : '确认头像' }}</button>
         </div>
       </div>
+    </div>
+    <div v-if="smsChallengeOpen" class="sms-challenge-backdrop" role="presentation" @click.self="closeSmsChallenge">
+      <section class="sms-challenge-modal" role="dialog" aria-modal="true" aria-labelledby="sms-challenge-title">
+        <div class="sms-challenge-heading">
+          <div><span class="section-kicker">安全验证</span><h2 id="sms-challenge-title">请完成拼图</h2></div>
+          <button class="icon-button" type="button" aria-label="关闭安全验证" title="关闭" @click="closeSmsChallenge"><VanIcon name="cross" /></button>
+        </div>
+        <p class="sms-challenge-note">拖动下方拼图块到缺口位置，验证通过后继续发送短信。</p>
+        <div class="sms-challenge-scene">
+          <span class="sms-challenge-grid"></span><span class="sms-challenge-sun"></span><span class="sms-challenge-mountain"></span>
+          <span class="sms-challenge-gap" :style="{ left: `${smsChallenge?.targetX || 70}%` }"></span>
+        </div>
+        <div class="sms-challenge-track" :style="{ '--challenge-position': smsChallengePosition }">
+          <input v-model.number="smsChallengePosition" type="range" min="0" max="100" step="1" aria-label="拼图位置" />
+          <span>向右拖动完成拼图</span>
+        </div>
+        <p v-if="smsChallengeError" class="sms-challenge-error" role="alert">{{ smsChallengeError }}</p>
+        <div class="sms-challenge-actions">
+          <button class="text-button" type="button" :disabled="smsChallengeVerifying" @click="openSmsChallenge">换一张</button>
+          <button class="primary-button" type="button" :disabled="smsChallengeLoading || smsChallengeVerifying" @click="verifySmsChallengeAndSend">{{ smsChallengeVerifying ? '验证中...' : '验证并发送' }}</button>
+        </div>
+      </section>
     </div>
     <p v-if="message" class="form-message">{{ message }}</p>
   </section>

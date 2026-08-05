@@ -23,6 +23,8 @@ import com.ruoyi.mall.member.domain.dto.MallNicknameUpdateRequest;
 import com.ruoyi.mall.member.domain.dto.MallAvatarPresetRequest;
 import com.ruoyi.mall.member.domain.dto.MallPrimaryDeviceReplaceRequest;
 import com.ruoyi.mall.member.domain.dto.MallSendCodeRequest;
+import com.ruoyi.mall.member.domain.dto.MallCaptchaChallengeRequest;
+import com.ruoyi.mall.member.domain.dto.MallCaptchaVerifyRequest;
 import com.ruoyi.mall.member.service.MallMemberAuthService;
 import com.ruoyi.mall.member.service.MallMemberProfileService;
 import com.ruoyi.mall.member.service.MallMemberSessionService;
@@ -53,7 +55,25 @@ public class MallMemberPortalController
     @PostMapping("/sms-code")
     public AjaxResult sendCode(@Valid @RequestBody MallSendCodeRequest request, HttpServletRequest servletRequest)
     {
-        return AjaxResult.success("验证码已发送", authService.sendCode(request.getPhone(), IpUtils.getIpAddr(servletRequest)));
+        String deviceIdentifier = servletRequest.getHeader("X-Mall-Device-Id");
+        return AjaxResult.success("验证码已发送", authService.sendCode(request.getPhone(), IpUtils.getIpAddr(servletRequest),
+                deviceIdentifier, request.getChallengeTicket()));
+    }
+
+    @PostMapping("/sms-challenge")
+    public AjaxResult createSmsChallenge(@Valid @RequestBody MallCaptchaChallengeRequest request,
+            HttpServletRequest servletRequest)
+    {
+        return AjaxResult.success("需要安全验证", authService.createCaptchaChallenge(request.getPhone(),
+                IpUtils.getIpAddr(servletRequest), servletRequest.getHeader("X-Mall-Device-Id")));
+    }
+
+    @PostMapping("/sms-challenge/verify")
+    public AjaxResult verifySmsChallenge(@Valid @RequestBody MallCaptchaVerifyRequest request,
+            HttpServletRequest servletRequest)
+    {
+        return AjaxResult.success("验证通过", authService.verifyCaptchaChallenge(request.getChallengeId(),
+                request.getPosition(), IpUtils.getIpAddr(servletRequest), servletRequest.getHeader("X-Mall-Device-Id")));
     }
 
     @PostMapping("/login")
