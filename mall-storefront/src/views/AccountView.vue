@@ -844,7 +844,8 @@ async function confirmAvatarCrop() {
         <p class="sms-challenge-note">拖动下方拼图块到缺口位置，验证通过后继续发送短信。</p>
         <div class="sms-challenge-scene">
           <span class="sms-challenge-grid"></span><span class="sms-challenge-sun"></span><span class="sms-challenge-mountain"></span>
-          <span class="sms-challenge-gap" :style="{ left: `${smsChallenge?.targetX || 70}%` }"></span>
+          <span class="sms-challenge-gap" :style="{ left: `${smsChallenge?.targetX || 70}%` }" aria-hidden="true"></span>
+          <span class="sms-challenge-piece" :style="{ left: `${smsChallengePosition}%` }" aria-hidden="true"></span>
         </div>
         <div class="sms-challenge-track" :style="{ '--challenge-position': smsChallengePosition }">
           <input v-model.number="smsChallengePosition" type="range" min="0" max="100" step="1" aria-label="拼图位置" />
