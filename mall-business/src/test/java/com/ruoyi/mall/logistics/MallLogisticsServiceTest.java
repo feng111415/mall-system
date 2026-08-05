@@ -1,6 +1,7 @@
 package com.ruoyi.mall.logistics;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -15,6 +16,7 @@ import com.ruoyi.mall.logistics.domain.MallLogisticsNode;
 import com.ruoyi.mall.logistics.domain.dto.MallLogisticsNodeRequest;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.mockito.ArgumentCaptor;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.mall.application.port.LogisticsPort;
 import com.ruoyi.mall.logistics.domain.MallLogisticsShipment;
@@ -127,6 +129,28 @@ class MallLogisticsServiceTest
         verify(logisticsMapper).insertNode(any());
         request.setEventTime("2026-07-30T09:00:00");
         assertThrows(ServiceException.class, () -> service.appendNode(11L, request, "admin"));
+    }
+
+    @Test
+    void clampsDefaultNodeTimeWhenServerClockMovesBackward()
+    {
+        MallLogisticsShipment shipment = new MallLogisticsShipment();
+        shipment.setShipmentId(11L); shipment.setOrderId(9L); shipment.setOrderNo("ORDER-9");
+        shipment.setTrackingNo("TRACK-1"); shipment.setStatus("IN_TRANSIT");
+        MallLogisticsNode latest = new MallLogisticsNode();
+        latest.setNodeStatus("IN_TRANSIT"); latest.setEventTime(LocalDateTime.now().plusMinutes(1));
+        when(logisticsMapper.selectByIdForUpdate(11L)).thenReturn(shipment);
+        when(logisticsMapper.selectLatestNode(11L)).thenReturn(latest);
+        when(logisticsMapper.selectNodes(11L)).thenReturn(java.util.List.of(latest));
+        MallLogisticsNodeRequest request = new MallLogisticsNodeRequest();
+        request.setNodeStatus("OUT_FOR_DELIVERY"); request.setTitle("派送中");
+        request.setDescription("服务器时钟发生回拨");
+
+        assertEquals(shipment, service.appendNode(11L, request, "admin"));
+
+        ArgumentCaptor<MallLogisticsNode> captor = ArgumentCaptor.forClass(MallLogisticsNode.class);
+        verify(logisticsMapper).insertNode(captor.capture());
+        assertFalse(captor.getValue().getEventTime().isBefore(latest.getEventTime()));
     }
 
     @Test

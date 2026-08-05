@@ -99,13 +99,18 @@ public class MallLogisticsService
         MallLogisticsShipment shipment = logisticsMapper.selectByIdForUpdate(shipmentId);
         if (shipment == null) throw new ServiceException("物流单不存在");
         MallLogisticsNodeStatus status = MallLogisticsNodeStatus.parse(request.getNodeStatus());
+        boolean usesServerTime = StringUtils.isBlank(request.getEventTime());
         LocalDateTime eventTime = parseEventTime(request.getEventTime());
         MallLogisticsNode latest = logisticsMapper.selectLatestNode(shipmentId);
         boolean delivered = "DELIVERED".equals(shipment.getStatus())
                 || (latest != null && MallLogisticsNodeStatus.DELIVERED.name().equals(latest.getNodeStatus()));
         if (delivered && status != MallLogisticsNodeStatus.CORRECTION)
             throw new ServiceException("物流已签收，仅允许追加更正说明");
-        if (latest != null && eventTime.isBefore(latest.getEventTime())) throw new ServiceException("物流节点时间不能早于上一节点");
+        if (latest != null && eventTime.isBefore(latest.getEventTime()))
+        {
+            if (!usesServerTime) throw new ServiceException("物流节点时间不能早于上一节点");
+            eventTime = latest.getEventTime();
+        }
         if (status == MallLogisticsNodeStatus.SHIPPED && latest != null) throw new ServiceException("已发货节点只能由发货操作创建");
         MallLogisticsNode node = new MallLogisticsNode();
         node.setShipmentId(shipmentId); node.setTrackingNo(shipment.getTrackingNo()); node.setNodeStatus(status.name());
