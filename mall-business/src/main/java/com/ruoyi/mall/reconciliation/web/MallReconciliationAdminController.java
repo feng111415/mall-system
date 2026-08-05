@@ -64,9 +64,9 @@ public class MallReconciliationAdminController extends BaseController
 
     @PreAuthorize("@ss.hasPermi('mall:reconciliation:alert:list')")
     @GetMapping("/alerts")
-    public AjaxResult alerts(@RequestParam(required = false) String status,
+    public AjaxResult alerts(@RequestParam(required = false) String status, @RequestParam(required = false) String businessNo,
             @RequestParam(required = false) Integer limit, @RequestParam(required = false) Integer offset)
-    { return success(service.alerts(status, limit, offset)); }
+    { return success(service.alerts(status, businessNo, limit, offset)); }
 
     @PreAuthorize("@ss.hasPermi('mall:reconciliation:alert:ack')")
     @Log(title = "确认商城对账告警", businessType = BusinessType.UPDATE)

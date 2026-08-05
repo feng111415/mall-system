@@ -58,7 +58,7 @@ public class MallReconciliationService {
             if(alertMapper.insertIgnore(alert)==1) created++;
         } return created;
     }
-    public List<MallReconciliationAlert> alerts(String status,Integer limit,Integer offset){int l=limit==null?20:Math.min(Math.max(limit,1),100);int o=offset==null?0:Math.max(offset,0);return alertMapper.selectList(status,l,o);}
+    public List<MallReconciliationAlert> alerts(String status,String businessNo,Integer limit,Integer offset){int l=limit==null?20:Math.min(Math.max(limit,1),100);int o=offset==null?0:Math.max(offset,0);return alertMapper.selectList(status,StringUtils.isBlank(businessNo)?null:businessNo.trim(),l,o);}
     @Transactional(rollbackFor=Exception.class)
     public MallReconciliationAlert acknowledgeAlert(Long alertId,String operator){if(alertId==null||alertId<=0)throw new ServiceException("告警参数无效");if(alertMapper.acknowledge(alertId,operator)==0)throw new ServiceException("告警不存在或已确认");return alertMapper.selectById(alertId);}
 }

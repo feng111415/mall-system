@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.mall.aftersalefunds.mapper.MallAfterSaleFundsCenterMapper">
+    <resultMap id="Summary" type="com.ruoyi.mall.aftersalefunds.domain.MallAfterSaleFundsSummary">
+        <result property="pendingReview" column="pending_review"/>
+        <result property="refundPending" column="refund_pending"/>
+        <result property="refundFailed" column="refund_failed"/>
+        <result property="openDiffs" column="open_diffs"/>
+        <result property="openAlerts" column="open_alerts"/>
+        <result property="manualCompensations" column="manual_compensations"/>
+    </resultMap>
+    <resultMap id="WorkItem" type="com.ruoyi.mall.aftersalefunds.domain.MallAfterSaleFundsWorkItem">
+        <id property="recordId" column="record_id"/>
+        <result property="kind" column="kind"/>
+        <result property="businessNo" column="business_no"/>
+        <result property="orderNo" column="order_no"/>
+        <result property="amount" column="amount"/>
+        <result property="status" column="status"/>
+        <result property="priority" column="priority"/>
+        <result property="riskSignal" column="risk_signal"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <select id="selectSummary" resultMap="Summary">
+        select
+            case when #{afterSaleVisible} then (select count(1) from mall_item_after_sale where status='PENDING_REVIEW') else 0 end pending_review,
+            case when #{afterSaleVisible} then (select count(1) from mall_item_after_sale where status in ('APPROVED','RETURN_SHIPPED','REFUNDING')) else 0 end refund_pending,
+            case when #{afterSaleVisible} then (select count(1) from mall_item_after_sale where status='FAILED') else 0 end refund_failed,
+            case when #{financeVisible} then (select count(1) from mall_reconciliation_diff where status in ('OPEN','MANUAL')) else 0 end open_diffs,
+            case when #{financeVisible} then (select count(1) from mall_reconciliation_alert where status='OPEN') else 0 end open_alerts,
+            case when #{financeVisible} then (select count(1) from mall_compensation_task where status='MANUAL') else 0 end manual_compensations
+    </select>
+
+    <sql id="workUnion">
+        select 'AFTER_SALE' kind, after_sale_id record_id, after_sale_no business_no, order_no,
+            coalesce(refund_amount,0) + coalesce(shipping_refund_amount,0) amount, status,
+            case when status='FAILED' then 95 when risk_signal='MANUAL_REVIEW' then 85
+                 when status='PENDING_REVIEW' then 80 when status in ('APPROVED','RETURN_SHIPPED','REFUNDING') then 70 else 30 end priority,
+            risk_signal, update_time updated_at
+        from mall_item_after_sale
+        union all
+        select 'DIFF' kind, diff_id record_id, diff_no business_no, order_no,
+            coalesce(external_amount,local_amount) amount, status,
+            case when diff_code='STATUS_AMOUNT_MISMATCH' then 92 else 75 end priority,
+            diff_code risk_signal, update_time updated_at
+        from mall_reconciliation_diff
+        union all
+        select 'ALERT' kind, a.alert_id record_id, a.alert_no business_no, d.order_no,
+            coalesce(d.external_amount,d.local_amount) amount, a.status,
+            case when a.alert_level='CRITICAL' then 100 when a.alert_level='HIGH' then 90 else 75 end priority,
+            a.alert_level risk_signal, a.update_time updated_at
+        from mall_reconciliation_alert a left join mall_reconciliation_diff d on d.diff_id=a.diff_id
+        union all
+        select 'COMPENSATION' kind, task_id record_id, task_no business_no, order_no,
+            null amount, status,
+            case when status='MANUAL' then 98 when status='FAILED' then 88 else 55 end priority,
+            task_type risk_signal, update_time updated_at
+        from mall_compensation_task
+    </sql>
+
+    <sql id="workWhere">
+        <where>
+            and ((w.kind='AFTER_SALE' and #{afterSaleVisible}) or (w.kind in ('DIFF','ALERT','COMPENSATION') and #{financeVisible}))
+            <if test="tab == 'AFTER_SALE'">and w.kind='AFTER_SALE' and w.status='PENDING_REVIEW'</if>
+            <if test="tab == 'REFUND'">and w.kind='AFTER_SALE' and w.status in ('APPROVED','RETURN_SHIPPED','REFUNDING','FAILED')</if>
+            <if test="tab == 'DIFF'">and w.kind='DIFF'</if>
+            <if test="tab == 'ALERT'">and w.kind='ALERT'</if>
+            <if test="tab == 'COMPENSATION'">and w.kind='COMPENSATION'</if>
+            <if test="status != null and status != ''">and w.status=#{status}</if>
+            <if test="businessNo != null and businessNo != ''">and w.business_no like concat('%',#{businessNo},'%')</if>
+            <if test="orderNo != null and orderNo != ''">and w.order_no like concat('%',#{orderNo},'%')</if>
+            <if test="from != null">and w.updated_at &gt;= #{from}</if>
+            <if test="to != null">and w.updated_at &lt;= #{to}</if>
+        </where>
+    </sql>
+
+    <select id="countWorkItems" resultType="long">
+        select count(1) from (<include refid="workUnion"/>) w <include refid="workWhere"/>
+    </select>
+
+    <select id="selectWorkItems" resultMap="WorkItem">
+        select w.kind,w.record_id,w.business_no,w.order_no,w.amount,w.status,w.priority,w.risk_signal,w.updated_at
+        from (<include refid="workUnion"/>) w <include refid="workWhere"/>
+        order by w.priority desc,w.updated_at desc,w.record_id desc
+        limit #{pageSize} offset #{offset}
+    </select>
+</mapper>

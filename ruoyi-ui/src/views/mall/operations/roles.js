@@ -11,14 +11,15 @@ export const roleDefinitions = [
     writes: '商品、库存、履约、售后、资金',
     forbidden: '不配置用户、角色、菜单等若依系统级权限',
     responsibilities: ['监督商品、订单、履约、售后与资金链路', '处理跨岗位异常并确认责任归属', '复核库存、物流、退款和对账关键操作'],
-    latestChange: '物流履约工作台已开放全部能力：全局汇总、异常筛选、手工发货、轨迹追加和签收后更正。',
+    latestChange: '新增统一售后资金与异常工作台，拥有售后审核、退款、对账告警和补偿任务的完整处理能力。',
     features: [
       { name: '商品库存中心', access: '可操作', description: '查看商品与 SKU 库存风险，并进入商品、库存模块处理。', path: '/mall/product-inventory/product-inventory-center' },
       { name: '订单运营中心', access: '只读', description: '查询订单全链路、支付、库存、物流与售后状态。', path: '/mall/order-fulfillment/order-center' },
       { name: '物流履约工作台', access: '可操作', description: '筛选履约异常，执行发货并追加物流轨迹。', path: '/mall/order-fulfillment/logistics' },
       { name: '售后处理', access: '可操作', description: '审核订单项售后并执行符合条件的退款。', path: '/mall/after-sale-funds/after-sale' },
       { name: '会员列表', access: '可操作', description: '查询会员并维护允许修改的会员资料。', path: '/mall/member-operations/member' },
-      { name: '对账与告警', access: '可操作', description: '处理资金差异、异常支付和对账告警。', path: '/mall/after-sale-funds/reconciliation' }
+      { name: '对账与告警', access: '可操作', description: '处理资金差异、异常支付和对账告警。', path: '/mall/after-sale-funds/reconciliation' },
+      { name: '售后资金处理中心', access: '可操作', description: '统一查看售后审核、退款、对账、告警和补偿工作项。', path: '/mall/after-sale-funds/center' }
     ]
   },
   {
@@ -46,11 +47,12 @@ export const roleDefinitions = [
     writes: '会员资料、售后审核',
     forbidden: '不退款、不调库存、不发货、不追加物流轨迹',
     responsibilities: ['查询会员、订单和物流信息并回应咨询', '审核仅退款、退货退款及凭证材料', '跟踪售后进度并向会员解释审核结果'],
-    latestChange: '新增物流履约工作台只读视图：可使用筛选、汇总和轨迹详情，但不能发货或追加节点。',
+    latestChange: '新增售后资金处理中心只读聚合和售后审核入口，不能退款、处理对账或执行补偿。',
     features: [
       { name: '订单运营中心', access: '只读', description: '查询订单、支付、库存、履约和售后全链路。', path: '/mall/order-fulfillment/order-center' },
       { name: '物流履约工作台', access: '只读', description: '筛选物流状态、关注信号并查看完整轨迹。', path: '/mall/order-fulfillment/logistics' },
       { name: '售后处理', access: '可操作', description: '查询售后单、核对凭证并完成审核。', path: '/mall/after-sale-funds/after-sale' },
+      { name: '售后资金处理中心', access: '只读', description: '聚合查看售后工作项并进入售后审核，资金异常工作项对本岗位隐藏。', path: '/mall/after-sale-funds/center' },
       { name: '会员列表', access: '可操作', description: '查询会员并维护允许修改的资料。', path: '/mall/member-operations/member' }
     ]
   },
@@ -78,11 +80,12 @@ export const roleDefinitions = [
     writes: '售后退款、对账处理、告警确认',
     forbidden: '不审售后、不改商品和库存、不查询会员、不发货',
     responsibilities: ['复核已通过售后的退款执行条件', '执行退款并跟踪渠道处理结果', '处理支付差异、补偿任务、对账和资金告警'],
-    latestChange: '物流履约权限保持关闭；涉及物流的信息通过订单与已审核售后结果衔接，不直接操作物流单。',
+    latestChange: '新增售后资金处理中心，可执行退款、对账和补偿处理，但不能审核售后。',
     features: [
       { name: '订单运营中心', access: '只读', description: '查询订单支付、退款和关联售后状态。', path: '/mall/order-fulfillment/order-center' },
       { name: '售后处理', access: '可操作', description: '查询已审核售后并执行退款，不修改审核结论。', path: '/mall/after-sale-funds/after-sale' },
-      { name: '对账与告警', access: '可操作', description: '处理对账差异、异常支付和资金告警。', path: '/mall/after-sale-funds/reconciliation' }
+      { name: '对账与告警', access: '可操作', description: '处理对账差异、异常支付和资金告警。', path: '/mall/after-sale-funds/reconciliation' },
+      { name: '售后资金处理中心', access: '可操作', description: '集中处理退款、对账差异、异常告警和补偿任务。', path: '/mall/after-sale-funds/center' }
     ]
   }
 ]
@@ -97,7 +100,8 @@ export const permissionRows = [
   { capability: '追加物流轨迹与更正', mall_ops_lead: full, mall_product_ops: none, mall_customer_service: none, mall_fulfillment: full, mall_finance_risk: none },
   { capability: '售后查询与审核', mall_ops_lead: full, mall_product_ops: none, mall_customer_service: full, mall_fulfillment: none, mall_finance_risk: read },
   { capability: '售后退款执行', mall_ops_lead: full, mall_product_ops: none, mall_customer_service: none, mall_fulfillment: none, mall_finance_risk: full },
-  { capability: '对账、差异与告警处理', mall_ops_lead: full, mall_product_ops: none, mall_customer_service: none, mall_fulfillment: none, mall_finance_risk: full }
+  { capability: '对账、差异与告警处理', mall_ops_lead: full, mall_product_ops: none, mall_customer_service: none, mall_fulfillment: none, mall_finance_risk: full },
+  { capability: '售后资金与异常处理中心', mall_ops_lead: full, mall_product_ops: none, mall_customer_service: read, mall_fulfillment: none, mall_finance_risk: full }
 ]
 
 export const operationsRoleKeys = roleDefinitions.map(role => role.key)

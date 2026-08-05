@@ -10,6 +10,6 @@
  <sql id="columns">alert_id,alert_no,diff_id,alert_level,status,alert_message,acknowledged_by,acknowledged_time,create_time,update_time</sql>
  <insert id="insertIgnore" useGeneratedKeys="true" keyProperty="alertId">insert ignore into mall_reconciliation_alert(alert_no,diff_id,alert_level,status,alert_message,create_time,update_time) values(#{alertNo},#{diffId},#{alertLevel},'OPEN',#{alertMessage},now(),now())</insert>
  <select id="selectById" resultMap="Alert">select <include refid="columns"/> from mall_reconciliation_alert where alert_id=#{alertId}</select>
- <select id="selectList" resultMap="Alert">select <include refid="columns"/> from mall_reconciliation_alert <where><if test="status != null and status != ''">and status=#{status}</if></where> order by alert_id desc limit #{limit} offset #{offset}</select>
+ <select id="selectList" resultMap="Alert">select <include refid="columns"/> from mall_reconciliation_alert <where><if test="status != null and status != ''">and status=#{status}</if><if test="businessNo != null and businessNo != ''">and exists (select 1 from mall_reconciliation_diff d where d.diff_id=mall_reconciliation_alert.diff_id and d.business_no like concat('%',#{businessNo},'%'))</if></where> order by alert_id desc limit #{limit} offset #{offset}</select>
  <update id="acknowledge">update mall_reconciliation_alert set status='ACKED',acknowledged_by=#{operator},acknowledged_time=now(),update_time=now() where alert_id=#{alertId} and status='OPEN'</update>
 </mapper>
