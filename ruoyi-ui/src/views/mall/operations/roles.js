@@ -30,7 +30,7 @@ export const roleDefinitions = [
     writes: '分类、品牌、商品、上下架',
     forbidden: '不调整库存、不查询会员、不发货、不处理售后和退款',
     responsibilities: ['维护分类、品牌、SPU 与 SKU 信息', '控制商品上下架和前台展示质量', '通过商品库存中心关注缺货与低库存商品'],
-    latestChange: '物流履约权限保持关闭；本岗位只负责商品与可售状态，不承担发货和轨迹维护。',
+    latestChange: '售后资金处理中心权限保持关闭；本岗位只负责商品与可售状态，不承担售后、退款和资金异常处理。',
     features: [
       { name: '商品库存中心', access: '只读', description: '查看商品状态、SKU 库存和库存风险。', path: '/mall/product-inventory/product-inventory-center' },
       { name: '分类管理', access: '可操作', description: '维护商城分类结构、排序和启停状态。', path: '/mall/product-inventory/category' },
@@ -64,7 +64,7 @@ export const roleDefinitions = [
     writes: '库存调整、发货、物流节点',
     forbidden: '不改会员、不改商品、不审售后、不执行退款',
     responsibilities: ['核对库存并处理入库、出库和预警阈值', '为已支付待发货订单创建唯一物流单', '只追加物流轨迹并处理运输异常和更正说明'],
-    latestChange: '新增完整物流履约工作台：可筛选关注订单、手工发货、追加轨迹；签收后只能追加更正说明。',
+    latestChange: '售后资金处理中心权限保持关闭；本岗位只负责库存、发货和物流轨迹，不审核售后、不执行退款。',
     features: [
       { name: '商品库存中心', access: '只读', description: '查看商品与 SKU 库存风险。', path: '/mall/product-inventory/product-inventory-center' },
       { name: '库存管理', access: '可操作', description: '调整库存、预警阈值并查看库存流水。', path: '/mall/product-inventory/inventory' },
