@@ -124,6 +124,17 @@
         left join mall_item_after_sale latest_after_sale on latest_after_sale.after_sale_id=(
             select max(a2.after_sale_id) from mall_item_after_sale a2 where a2.order_id=o.order_id)</sql>
 
+    <select id="countOrdersSince" resultType="long">
+        select count(1) from mall_order where create_time &gt;= #{from}
+    </select>
+    <select id="sumPaidAmountSince" resultType="java.math.BigDecimal">
+        select coalesce(sum(payable_amount), 0) from mall_order
+        where payment_status='PAID' and pay_time &gt;= #{from}
+    </select>
+    <select id="countOrdersByStatus" resultType="long">
+        select count(1) from mall_order where status=#{status}
+    </select>
+
     <select id="selectOrders" resultMap="Summary">
         select <include refid="summaryColumns"/> <include refid="orderJoins"/>
         <where>

@@ -63,6 +63,13 @@
         order by update_time desc,s.spu_id desc
     </select>
 
+    <select id="countLowStockSkus" resultType="long">
+        select count(1)
+        from mall_sku k left join mall_stock st on st.sku_id=k.sku_id
+        where k.del_flag='0' and k.status='1'
+          and coalesce(st.available_quantity,k.available_stock,0) &lt;= coalesce(st.warning_threshold,0)
+    </select>
+
     <select id="selectDetail" resultMap="Detail">
         select s.spu_id,s.spu_code,s.product_name,s.subtitle,s.main_image,c.category_name,b.brand_name,s.publish_status
         from mall_spu s join mall_category c on c.category_id=s.category_id and c.del_flag='0'

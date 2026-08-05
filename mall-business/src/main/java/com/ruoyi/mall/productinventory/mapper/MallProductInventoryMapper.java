@@ -8,6 +8,7 @@ import com.ruoyi.mall.productinventory.domain.MallProductInventorySummary;
 
 public interface MallProductInventoryMapper
 {
+    long countLowStockSkus();
     List<MallProductInventorySummary> selectSummaryList(MallProductInventoryQuery query);
     MallProductInventoryDetail selectDetail(Long spuId);
     List<MallProductInventorySku> selectSkuInventoryList(Long spuId);

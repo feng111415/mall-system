@@ -120,7 +120,7 @@ export default {
       getCodeImg().then(res => {
         this.captchaEnabled = res.captchaEnabled === undefined ? true : res.captchaEnabled
         if (this.captchaEnabled) {
-          this.codeUrl = "data:image/gif;base64," + res.img
+          this.codeUrl = "data:image/jpeg;base64," + res.img
           this.registerForm.uuid = res.uuid
         }
       })

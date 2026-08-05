@@ -17,6 +17,9 @@ import com.ruoyi.mall.risk.domain.MallRiskRecord;
 
 public interface MallOrderOperationsMapper
 {
+    long countOrdersSince(@Param("from") java.time.LocalDateTime from);
+    java.math.BigDecimal sumPaidAmountSince(@Param("from") java.time.LocalDateTime from);
+    long countOrdersByStatus(@Param("status") String status);
     List<MallOrderOperationsSummary> selectOrders(MallOrderOperationsQuery query);
     MallOrderOperationsDetail selectOrderDetail(@Param("orderId") Long orderId);
     List<MallOrderItem> selectItems(@Param("orderId") Long orderId);

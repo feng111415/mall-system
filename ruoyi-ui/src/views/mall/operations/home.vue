@@ -34,6 +34,23 @@
       </div>
     </section>
 
+    <section class="dashboard-section" v-loading="dashboardLoading" aria-label="今日运营概览">
+      <div class="section-heading dashboard-heading">
+        <div><h2>今日运营概览</h2><span>{{ dashboard.asOfDate ? `数据日期：${dashboard.asOfDate}` : '正在读取真实业务数据' }}</span></div>
+        <el-button type="text" icon="el-icon-refresh" :loading="dashboardLoading" @click="loadDashboard">刷新数据</el-button>
+      </div>
+      <div v-if="dashboard.metrics && dashboard.metrics.length" class="metric-grid">
+        <button v-for="metric in dashboard.metrics" :key="metric.key" type="button" class="metric-card" :class="'metric-' + metric.severity" @click="goFeature(metric.path)">
+          <span class="metric-label">{{ metric.label }}</span>
+          <strong>{{ formatMetric(metric) }}</strong>
+          <small>{{ metric.hint }}</small>
+          <i class="el-icon-arrow-right" aria-hidden="true" />
+        </button>
+      </div>
+      <el-empty v-else-if="!dashboardLoading" description="当前岗位暂无可查看的运营指标" :image-size="72" />
+      <p v-if="dashboardError" class="dashboard-error"><i class="el-icon-warning-outline" /> {{ dashboardError }}</p>
+    </section>
+
     <section class="function-section">
       <div class="section-heading">
         <div><h2>我的功能</h2><span>{{ activeRole.features.length }} 个已授权业务入口</span></div>
@@ -55,12 +72,19 @@
 
 <script>
 import { roleDefinitions } from './roles'
+import { getOperationsDashboard } from '@/api/mall/operations'
 
 export default {
   name: 'MallOperationsHome',
   data () {
-    return { activeRoleKey: 'mall_ops_lead' }
+    return {
+      activeRoleKey: 'mall_ops_lead',
+      dashboardLoading: false,
+      dashboardError: '',
+      dashboard: { asOfDate: '', metrics: [] }
+    }
   },
+  created () { this.loadDashboard() },
   computed: {
     currentRoles () { return this.$store.getters.roles || [] },
     isAdmin () { return this.currentRoles.includes('admin') },
@@ -81,6 +105,20 @@ export default {
     }
   },
   methods: {
+    loadDashboard () {
+      this.dashboardLoading = true
+      this.dashboardError = ''
+      getOperationsDashboard().then(response => {
+        this.dashboard = response.data || { asOfDate: '', metrics: [] }
+      }).catch(() => {
+        this.dashboard = { asOfDate: '', metrics: [] }
+        this.dashboardError = '运营指标暂时无法加载，请刷新重试'
+      }).finally(() => { this.dashboardLoading = false })
+    },
+    formatMetric (metric) {
+      if (metric.valueType === 'AMOUNT') return `¥${Number(metric.amount || 0).toFixed(2)}`
+      return String(metric.count || 0)
+    },
     goFeature (path) { this.$router.push(path) },
     goResponsibilities () { this.$router.push('/mall/operations-roles') },
     featureIcon (name) {
@@ -119,6 +157,20 @@ export default {
 .summary-section small { display: block; margin-top: 12px; color: #939dac; font-size: 10px; line-height: 1.5; }
 .change { background: #f7fbff; }
 .boundary { background: #fcfaf7; }
+.dashboard-section { margin: 14px 0; border: 1px solid #dfe5ed; border-radius: 5px; background: #fff; }
+.dashboard-heading { border-bottom: 1px solid #e7ebf0; }
+.metric-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.metric-card { position: relative; min-height: 112px; padding: 16px 40px 14px 17px; border: 0; border-right: 1px solid #e9edf2; border-bottom: 1px solid #e9edf2; background: #fff; color: #303744; text-align: left; transition: background .15s ease; }
+.metric-card:nth-child(4n) { border-right: 0; }
+.metric-card:hover { background: #f7fbff; }
+.metric-card > span, .metric-card > strong, .metric-card > small { display: block; }
+.metric-label { color: #66748a; font-size: 12px; }
+.metric-card strong { margin-top: 9px; color: #26364e; font-size: 22px; line-height: 1.1; }
+.metric-card small { margin-top: 8px; overflow: hidden; color: #929cab; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+.metric-card i { position: absolute; top: 17px; right: 17px; color: #a8b2c0; font-size: 13px; }
+.metric-warning strong { color: #b77818; }
+.metric-danger strong { color: #c94e49; }
+.dashboard-error { margin: 0; padding: 10px 17px; border-top: 1px solid #f1d4d1; color: #c94e49; font-size: 12px; }
 .function-section { border: 1px solid #dfe5ed; border-radius: 5px; background: #fff; }
 .section-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 15px 18px; border-bottom: 1px solid #e7ebf0; }
 .section-heading h2, .section-heading span { display: block; }
@@ -141,5 +193,12 @@ export default {
   .function-list { grid-template-columns: 1fr; }
   .function-item { border-right: 0; }
   .section-heading { align-items: flex-start; flex-direction: column; }
+  .metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .metric-card:nth-child(4n) { border-right: 1px solid #e9edf2; }
+  .metric-card:nth-child(2n) { border-right: 0; }
+}
+@media (max-width: 560px) {
+  .metric-grid { grid-template-columns: 1fr; }
+  .metric-card, .metric-card:nth-child(2n), .metric-card:nth-child(4n) { border-right: 0; }
 }
 </style>

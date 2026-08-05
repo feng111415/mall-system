@@ -17,7 +17,7 @@ async function refreshCaptcha() {
     const response = await getCaptcha()
     captchaEnabled.value = response.data.captchaEnabled !== false
     form.uuid = response.data.uuid || ''
-    captchaImage.value = response.data.img ? `data:image/gif;base64,${response.data.img}` : ''
+  captchaImage.value = response.data.img ? `data:image/jpeg;base64,${response.data.img}` : ''
   } catch {
     captchaEnabled.value = false
   }
