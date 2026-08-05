@@ -811,7 +811,7 @@ async function confirmAvatarCrop() {
 
     <div v-else class="login-panel">
       <label>手机号<input v-model.trim="phone" inputmode="numeric" maxlength="11" placeholder="请输入手机号" /></label>
-      <label>短信验证码<div class="code-field"><input v-model.trim="code" inputmode="numeric" maxlength="6" placeholder="6 位验证码" /><button type="button" :disabled="loading || seconds > 0" @click="sendCode">{{ seconds ? `${seconds}s 后重发` : '获取验证码' }}</button></div></label>
+      <label>短信验证码<div class="code-field"><input v-model.trim="code" inputmode="numeric" maxlength="6" placeholder="6 位验证码" /><button type="button" :disabled="loading || seconds > 0" @click="sendCode()">{{ seconds ? `${seconds}s 后重发` : '获取验证码' }}</button></div></label>
       <label class="agreement"><input v-model="agreed" type="checkbox" /> 我已阅读并同意《用户协议》和《隐私政策》</label>
       <button class="primary-button login-button" :disabled="loading" @click="login">{{ loading ? '处理中...' : '登录 / 注册' }}</button>
     </div>
