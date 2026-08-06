@@ -567,16 +567,17 @@
 .message-conversation-copy b { display: grid; min-width: 22px; height: 22px; place-items: center; border-radius: 11px; padding: 0 6px; background: var(--red); color: #fff; font-size: 10px; }
 .message-conversation-copy small { overflow: hidden; color: var(--muted); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
 .message-conversation-copy em { color: #99958d; font-size: 10px; font-style: normal; }
-.message-list { display: grid; padding-top: 18px; }
-.message-item { display: grid; min-height: 92px; grid-template-columns: 10px minmax(0, 1fr) 20px; align-items: center; gap: 14px; border: 0; border-bottom: 1px solid var(--line); padding: 16px 8px; background: transparent; color: var(--ink); text-align: left; }
-.message-item:active { background: #fff7df; }
+.message-list { display: grid; gap: 12px; padding-top: 18px; }
+.message-item { display: grid; min-height: 92px; grid-template-columns: 10px minmax(0, 1fr) 20px; align-items: center; gap: 14px; border: 2px solid var(--ink); border-radius: 8px; padding: 16px 14px; background: var(--paper); color: var(--ink); text-align: left; box-shadow: 4px 4px 0 rgb(32 32 42 / 13%); transition: background .12s ease, box-shadow .12s ease, transform .12s ease; }
+.message-item.unread { border-left: 6px solid var(--red); padding-left: 10px; background: #fffaf0; }
+.message-item:active { background: #fff0bd; box-shadow: 2px 2px 0 rgb(32 32 42 / 13%); transform: translate(2px, 2px); }
 .message-unread-dot { width: 8px; height: 8px; border-radius: 50%; background: transparent; }
 .message-item.unread .message-unread-dot { background: var(--red); }
 .message-item-copy { display: grid; min-width: 0; gap: 7px; }
-.message-item-copy strong { font-size: 15px; }
+.message-item-copy strong { color: var(--ink); font-size: 15px; font-weight: 800; }
 .message-item.unread .message-item-copy strong { font-weight: 900; }
-.message-item-copy small { overflow: hidden; color: var(--muted); font-size: 12px; line-height: 1.5; text-overflow: ellipsis; white-space: nowrap; }
-.message-item-copy em { color: #99958d; font-size: 10px; font-style: normal; }
+.message-item-copy small { overflow: hidden; color: #514d47; font-size: 12px; font-weight: 600; line-height: 1.5; text-overflow: ellipsis; white-space: nowrap; }
+.message-item-copy em { color: #68635c; font-size: 11px; font-style: normal; }
 .message-empty { display: grid; min-height: 320px; place-items: center; align-content: center; gap: 10px; color: var(--muted); text-align: center; }
 .message-empty > .van-icon { font-size: 40px; }
 .message-empty h2 { margin: 4px 0 0; color: var(--ink); font-family: var(--font-display); font-weight: 900; }
