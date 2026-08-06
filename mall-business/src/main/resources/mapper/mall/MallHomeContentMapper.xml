@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.mall.content.mapper.MallHomeContentMapper">
+    <resultMap id="HomeContent" type="com.ruoyi.mall.content.domain.MallHomeContent">
+        <id property="contentId" column="content_id"/>
+        <result property="contentType" column="content_type"/>
+        <result property="contentName" column="content_name"/>
+        <result property="status" column="status"/>
+        <result property="effectiveTime" column="effective_time"/>
+        <result property="expireTime" column="expire_time"/>
+        <result property="sortNo" column="sort_no"/>
+        <result property="heroEyebrow" column="hero_eyebrow"/>
+        <result property="heroTitle" column="hero_title"/>
+        <result property="heroSubtitle" column="hero_subtitle"/>
+        <result property="heroActionText" column="hero_action_text"/>
+        <result property="heroTargetType" column="hero_target_type"/>
+        <result property="heroTargetValue" column="hero_target_value"/>
+        <result property="heroPrimaryImage" column="hero_primary_image"/>
+        <result property="heroSecondaryImage" column="hero_secondary_image"/>
+        <result property="heroNewItemCount" column="hero_new_item_count"/>
+        <result property="recommendationKicker" column="recommendation_kicker"/>
+        <result property="recommendationTitle" column="recommendation_title"/>
+        <result property="recommendationTargetType" column="recommendation_target_type"/>
+        <result property="recommendationTargetValue" column="recommendation_target_value"/>
+        <result property="recommendationDisplayCount" column="recommendation_display_count"/>
+        <result property="recommendationFallbackMode" column="recommendation_fallback_mode"/>
+        <result property="runtimeStatus" column="runtime_status"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+
+    <select id="selectPublishedContentList" resultMap="HomeContent">
+        select c.*,
+               case when c.effective_time &gt; #{now} then 'SCHEDULED'
+                    when c.expire_time is not null and c.expire_time &lt;= #{now} then 'EXPIRED'
+                    else 'ONLINE' end as runtime_status
+        from mall_home_content c
+        where c.del_flag = '0' and c.status = 'PUBLISHED'
+          and c.effective_time &lt;= #{now}
+          and (c.expire_time is null or c.expire_time &gt; #{now})
+        order by c.content_type, c.sort_no, c.content_id desc
+    </select>
+
+    <select id="selectAdminContentList" resultMap="HomeContent">
+        select c.*,
+               case when c.status = 'DRAFT' then 'DRAFT'
+                    when c.status = 'DISABLED' then 'DISABLED'
+                    when c.effective_time &gt; now() then 'SCHEDULED'
+                    when c.expire_time is not null and c.expire_time &lt;= now() then 'EXPIRED'
+                    else 'ONLINE' end as runtime_status
+        from mall_home_content c
+        where c.del_flag = '0'
+        <if test="contentType != null and contentType != ''">and c.content_type = #{contentType}</if>
+        <if test="status != null and status != ''">and c.status = #{status}</if>
+        <if test="keyword != null and keyword != ''">and c.content_name like concat('%', #{keyword}, '%')</if>
+        order by c.effective_time desc, c.content_type, c.content_id desc
+    </select>
+
+    <select id="selectContentById" resultMap="HomeContent">
+        select c.*,
+               case when c.status = 'DRAFT' then 'DRAFT'
+                    when c.status = 'DISABLED' then 'DISABLED'
+                    when c.effective_time &gt; now() then 'SCHEDULED'
+                    when c.expire_time is not null and c.expire_time &lt;= now() then 'EXPIRED'
+                    else 'ONLINE' end as runtime_status
+        from mall_home_content c where c.content_id = #{contentId} and c.del_flag = '0'
+    </select>
+
+    <select id="selectTickerItems" resultType="com.ruoyi.mall.content.domain.MallHomeTicker">
+        select ticker_id as tickerId, content_id as contentId, sort_no as sortNo, label, text
+        from mall_home_content_ticker where content_id = #{contentId} order by sort_no, ticker_id
+    </select>
+
+    <select id="selectRecommendationSpuIds" resultType="long">
+        select spu_id from mall_home_content_product where content_id = #{contentId} order by sort_no, relation_id
+    </select>
+
+    <select id="countOverlappingPublished" resultType="int">
+        select count(*) from mall_home_content
+        where del_flag = '0' and status = 'PUBLISHED' and content_type = #{contentType}
+          and (#{contentId} is null or content_id &lt;&gt; #{contentId})
+          and effective_time &lt; coalesce(#{expireTime}, '9999-12-31 23:59:59')
+          and coalesce(expire_time, '9999-12-31 23:59:59') &gt; #{effectiveTime}
+    </select>
+
+    <sql id="contentColumns">
+        content_type, content_name, status, effective_time, expire_time, sort_no,
+        hero_eyebrow, hero_title, hero_subtitle, hero_action_text, hero_target_type, hero_target_value,
+        hero_primary_image, hero_secondary_image, hero_new_item_count,
+        recommendation_kicker, recommendation_title, recommendation_target_type, recommendation_target_value,
+        recommendation_display_count, recommendation_fallback_mode
+    </sql>
+
+    <insert id="insertContent" useGeneratedKeys="true" keyProperty="contentId">
+        insert into mall_home_content (<include refid="contentColumns"/>, del_flag, create_by, create_time)
+        values (#{contentType}, #{contentName}, #{status}, #{effectiveTime}, #{expireTime}, #{sortNo},
+                #{heroEyebrow}, #{heroTitle}, #{heroSubtitle}, #{heroActionText}, #{heroTargetType}, #{heroTargetValue},
+                #{heroPrimaryImage}, #{heroSecondaryImage}, #{heroNewItemCount},
+                #{recommendationKicker}, #{recommendationTitle}, #{recommendationTargetType}, #{recommendationTargetValue},
+                #{recommendationDisplayCount}, #{recommendationFallbackMode}, '0', #{createBy}, now())
+    </insert>
+
+    <update id="updateContent">
+        update mall_home_content set
+            content_type=#{contentType}, content_name=#{contentName}, status=#{status}, effective_time=#{effectiveTime}, expire_time=#{expireTime}, sort_no=#{sortNo},
+            hero_eyebrow=#{heroEyebrow}, hero_title=#{heroTitle}, hero_subtitle=#{heroSubtitle}, hero_action_text=#{heroActionText}, hero_target_type=#{heroTargetType}, hero_target_value=#{heroTargetValue},
+            hero_primary_image=#{heroPrimaryImage}, hero_secondary_image=#{heroSecondaryImage}, hero_new_item_count=#{heroNewItemCount},
+            recommendation_kicker=#{recommendationKicker}, recommendation_title=#{recommendationTitle}, recommendation_target_type=#{recommendationTargetType}, recommendation_target_value=#{recommendationTargetValue},
+            recommendation_display_count=#{recommendationDisplayCount}, recommendation_fallback_mode=#{recommendationFallbackMode}, update_by=#{updateBy}, update_time=now()
+        where content_id=#{contentId} and del_flag='0'
+    </update>
+
+    <delete id="deleteTickerItems">delete from mall_home_content_ticker where content_id=#{contentId}</delete>
+    <insert id="insertTickerItem" useGeneratedKeys="true" keyProperty="tickerId">
+        insert into mall_home_content_ticker(content_id,sort_no,label,text) values(#{contentId},#{sortNo},#{label},#{text})
+    </insert>
+    <delete id="deleteRecommendationProducts">delete from mall_home_content_product where content_id=#{contentId}</delete>
+    <insert id="insertRecommendationProduct">
+        insert into mall_home_content_product(content_id,spu_id,sort_no) values(#{contentId},#{spuId},#{sortNo})
+    </insert>
+    <update id="disableContent">update mall_home_content set status='DISABLED', update_by=#{updateBy}, update_time=now() where content_id=#{contentId} and del_flag='0'</update>
+</mapper>

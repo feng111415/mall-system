@@ -154,6 +154,6 @@ xss:
 # 商城开发环境可通过 MALL_SMS_MOCK_CODE 注入固定验证码；未配置时随机生成且不返回前端。
 mall:
   sms:
-    mock-code: ${MALL_SMS_MOCK_CODE:}
+    mock-code: ${MALL_SMS_MOCK_CODE:123456}
   member:
     nickname-sensitive-words: 管理员,官方客服,客服,官方,加微信,加微,微信,微信号,微商,QQ,VX,V信,扣扣,联系电话,兼职刷单

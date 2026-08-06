@@ -633,7 +633,8 @@ h1, h2, h3, .primary-button, .add-button, .order-secondary-action, .avatar-uploa
 .hero-c-collage > span { position: absolute; top: 28px; left: 24px; z-index: 2; border: 2px solid var(--ink); border-radius: 8px; padding: 11px 14px; background: var(--yellow); font-size: 13px; font-weight: 700; transform: rotate(-2deg); }
 .hero-c-collage > span b { font-size: 26px; }
 .ticker { display: flex; min-height: 48px; align-items: center; justify-content: space-around; gap: 16px; overflow: hidden; border: 2px solid var(--ink); border-top: 0; background: var(--yellow); font-size: 12px; white-space: nowrap; }
-.ticker span { font-weight: 800; }
+.ticker-item { display: inline-flex; min-width: 0; align-items: center; justify-content: center; gap: 16px; }
+.ticker-item span { font-weight: 800; }
 .product-section { padding: 66px 0 10px; }
 .section-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 36px; border: 0; padding: 0 0 28px; }
 .section-heading h2 { margin: 10px 0 0; font-size: 30px; font-weight: 900; }
@@ -814,6 +815,7 @@ h1, h2, h3, .primary-button, .add-button, .order-secondary-action, .avatar-uploa
   .hero-c-copy h1 { font-size: 42px; }
   .hero-c-collage { min-height: 380px; }
   .ticker { justify-content: flex-start; padding: 0 16px; }
+  .ticker-item { flex: 0 0 auto; }
   .product-grid, .catalog-grid, .related-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 12px; }
   .product-card:hover, .order-card:hover { box-shadow: 5px 5px 0 rgb(32 32 42 / 15%); transform: none; }
   .product-card:hover .product-image img, .hero-c-collage a:hover img { transform: none; }
@@ -847,7 +849,9 @@ h1, h2, h3, .primary-button, .add-button, .order-secondary-action, .avatar-uploa
   .hero-c-copy h1 { font-size: 38px; }
   .hero-c-collage { min-height: 300px; }
   .hero-c-collage a:first-child { right: 18px; width: 70%; }
-  .ticker b:nth-of-type(n+2), .ticker span:nth-of-type(n+2) { display: none; }
+  .ticker { justify-content: flex-start; gap: 0; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; scrollbar-width: none; -webkit-overflow-scrolling: touch; touch-action: pan-x; }
+  .ticker::-webkit-scrollbar { display: none; }
+  .ticker-item { flex: 0 0 100%; min-height: 48px; scroll-snap-align: start; justify-content: center; gap: 10px; padding: 0 8px; }
   .section-heading { align-items: flex-start; gap: 12px; flex-direction: column; }
   .section-heading h2 { font-size: 27px; }
   .product-image { aspect-ratio: 1 / 1.15; }
