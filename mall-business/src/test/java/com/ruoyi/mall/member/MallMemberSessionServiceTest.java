@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -16,6 +17,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import com.ruoyi.common.exception.ServiceException;
+import com.ruoyi.mall.application.port.MemberMessagePort;
 import com.ruoyi.mall.member.domain.MallMember;
 import com.ruoyi.mall.member.domain.MallMemberDevice;
 import com.ruoyi.mall.member.domain.MallMemberSession;
@@ -34,6 +36,7 @@ class MallMemberSessionServiceTest
     @Mock private MallMemberMapper memberMapper;
     @Mock private MallMemberSessionMapper sessionMapper;
     @Mock private MallMemberTokenService tokenService;
+    @Mock private MemberMessagePort memberMessagePort;
     private MallMemberSessionService service;
 
     @BeforeEach
@@ -41,7 +44,7 @@ class MallMemberSessionServiceTest
     {
         MockitoAnnotations.openMocks(this);
         service = new MallMemberSessionService(memberMapper, sessionMapper, new MallMemberSessionPolicy(),
-                new MallDeviceClassifier(), tokenService);
+                new MallDeviceClassifier(), tokenService, memberMessagePort);
         MallMember member = new MallMember();
         member.setMemberId(MEMBER_ID);
         member.setStatus("0");
@@ -72,6 +75,8 @@ class MallMemberSessionServiceTest
         assertEquals("MOBILE", device.getValue().getDeviceType());
         assertEquals("1", device.getValue().getPrimaryMobile());
         verify(tokenService).activateToken(any(), any());
+        verify(memberMessagePort).publish(eq(MEMBER_ID), eq("ACCOUNT"), eq("新设备登录"), any(), any(),
+                eq("SESSION"), eq(200L), isNull(), eq("/account"));
     }
 
     @Test

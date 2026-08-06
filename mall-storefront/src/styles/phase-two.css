@@ -293,7 +293,7 @@
   .header-actions { display: none; }
   .storefront-shell main { min-height: calc(100vh - 220px); padding-bottom: 70px; }
   .site-footer { margin-bottom: 62px; }
-  .mobile-nav { position: fixed; z-index: 20; right: 0; bottom: 0; left: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); border-top: 1px solid var(--line); background: rgba(255, 255, 255, .98); }
+  .mobile-nav { position: fixed; z-index: 20; right: 0; bottom: 0; left: 0; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); border-top: 1px solid var(--line); background: rgba(255, 255, 255, .98); }
   .mobile-nav a { display: flex; min-height: 60px; align-items: center; justify-content: center; gap: 3px; flex-direction: column; color: var(--muted); font-size: 10px; }
   .mobile-nav a.active { color: var(--ink); }
   .mobile-nav-icon { position: relative; display: grid; min-height: 20px; place-items: center; font-size: 20px; }
@@ -546,6 +546,71 @@
   .order-card:hover { transform: none; }
 }
 
+/* V0.5 member message center: B business-conversation layout. */
+.message-wrap { width: min(1184px, calc(100% - 56px)); margin: 0 auto; padding: 38px 0 92px; }
+.message-heading { display: grid; min-height: 160px; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 20px; border-bottom: 2px solid var(--ink); }
+.message-heading h1 { margin: 10px 0 8px; font-family: var(--font-display); font-size: 38px; font-weight: 900; }
+.message-heading p { margin: 0; color: var(--muted); font-size: 13px; }
+.message-back { display: grid; width: 44px; height: 44px; place-items: center; border: 2px solid var(--ink); border-radius: 8px; background: var(--paper); color: var(--ink); font-size: 20px; box-shadow: 3px 3px 0 rgb(32 32 42 / 15%); }
+.message-read-all { min-height: 44px; border: 0; padding: 0 4px; background: transparent; color: var(--red); font-weight: 800; }
+.message-conversations { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; padding-top: 28px; }
+.message-conversation { display: grid; min-height: 126px; grid-template-columns: 58px minmax(0, 1fr) 24px; align-items: center; gap: 16px; border: 2px solid var(--ink); border-radius: 8px; padding: 20px; background: var(--paper); color: var(--ink); text-align: left; box-shadow: 5px 5px 0 rgb(32 32 42 / 13%); transition: transform .1s ease, box-shadow .1s ease; }
+.message-conversation:active { box-shadow: 2px 2px 0 rgb(32 32 42 / 13%); transform: translate(2px, 2px); }
+.message-conversation-icon { display: grid; width: 54px; height: 54px; flex: 0 0 54px; place-items: center; border: 2px solid var(--ink); border-radius: 8px; font-size: 25px; }
+.message-conversation-icon.coral { background: #f8a38d; }
+.message-conversation-icon.mint { background: #a3d8d1; }
+.message-conversation-icon.yellow { background: #ffe7a0; }
+.message-conversation-icon.sky { background: #badcf1; }
+.message-conversation-copy { display: grid; min-width: 0; gap: 8px; }
+.message-conversation-copy > span { display: flex; align-items: center; gap: 8px; }
+.message-conversation-copy strong { font-family: var(--font-display); font-size: 18px; font-weight: 900; }
+.message-conversation-copy b { display: grid; min-width: 22px; height: 22px; place-items: center; border-radius: 11px; padding: 0 6px; background: var(--red); color: #fff; font-size: 10px; }
+.message-conversation-copy small { overflow: hidden; color: var(--muted); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.message-conversation-copy em { color: #99958d; font-size: 10px; font-style: normal; }
+.message-list { display: grid; padding-top: 18px; }
+.message-item { display: grid; min-height: 92px; grid-template-columns: 10px minmax(0, 1fr) 20px; align-items: center; gap: 14px; border: 0; border-bottom: 1px solid var(--line); padding: 16px 8px; background: transparent; color: var(--ink); text-align: left; }
+.message-item:active { background: #fff7df; }
+.message-unread-dot { width: 8px; height: 8px; border-radius: 50%; background: transparent; }
+.message-item.unread .message-unread-dot { background: var(--red); }
+.message-item-copy { display: grid; min-width: 0; gap: 7px; }
+.message-item-copy strong { font-size: 15px; }
+.message-item.unread .message-item-copy strong { font-weight: 900; }
+.message-item-copy small { overflow: hidden; color: var(--muted); font-size: 12px; line-height: 1.5; text-overflow: ellipsis; white-space: nowrap; }
+.message-item-copy em { color: #99958d; font-size: 10px; font-style: normal; }
+.message-empty { display: grid; min-height: 320px; place-items: center; align-content: center; gap: 10px; color: var(--muted); text-align: center; }
+.message-empty > .van-icon { font-size: 40px; }
+.message-empty h2 { margin: 4px 0 0; color: var(--ink); font-family: var(--font-display); font-weight: 900; }
+.message-empty p { margin: 0; font-size: 12px; }
+.message-sheet-backdrop { position: fixed; z-index: 80; inset: 0; display: grid; place-items: center; padding: 20px; background: rgb(32 32 42 / 45%); }
+.message-sheet { width: min(520px, 100%); border: 2px solid var(--ink); border-radius: 8px; padding: 24px; background: var(--paper); box-shadow: 7px 7px 0 var(--ink); }
+.message-sheet-head { display: grid; grid-template-columns: 54px minmax(0, 1fr) 44px; align-items: center; gap: 14px; }
+.message-sheet-head small { color: var(--muted); font-size: 10px; }
+.message-sheet-head h2 { margin: 5px 0 0; font-family: var(--font-display); font-size: 20px; font-weight: 900; }
+.message-sheet-head > button { display: grid; width: 44px; height: 44px; place-items: center; border: 0; background: transparent; color: var(--ink); font-size: 20px; }
+.message-sheet > p { margin: 24px 0 12px; color: var(--muted); font-size: 14px; line-height: 1.8; }
+.message-sheet > time { color: #99958d; font-size: 10px; }
+.message-sheet-action { width: 100%; min-height: 46px; justify-content: center; margin-top: 24px; border: 2px solid var(--ink); border-radius: 8px; background: var(--yellow); color: var(--ink); font-weight: 900; }
+
+@media (max-width: 900px) {
+  .message-wrap { width: calc(100% - 32px); padding: 22px 0 calc(88px + env(safe-area-inset-bottom)); }
+  .message-heading { min-height: 132px; }
+  .message-heading h1 { font-size: 30px; }
+  .message-conversations { grid-template-columns: 1fr; gap: 12px; padding-top: 18px; }
+  .message-conversation { min-height: 112px; padding: 16px; }
+  .message-sheet-backdrop { align-items: end; padding: 12px 12px calc(12px + env(safe-area-inset-bottom)); }
+  .message-sheet { border-radius: 12px 12px 8px 8px; padding: 20px; box-shadow: 5px 5px 0 var(--ink); }
+}
+
+@media (max-width: 520px) {
+  .message-heading { grid-template-columns: auto minmax(0, 1fr); }
+  .message-read-all { grid-column: 2; justify-self: start; min-height: 38px; }
+  .message-conversation { grid-template-columns: 50px minmax(0, 1fr) 18px; gap: 12px; }
+  .message-conversation-icon { width: 48px; height: 48px; flex-basis: 48px; font-size: 22px; }
+  .message-sheet-head { grid-template-columns: 48px minmax(0, 1fr) 40px; }
+  .mobile-nav a { font-size: 9px; }
+  .mobile-nav-icon { min-width: 28px; }
+}
+
 @media (max-width: 800px) {
   .orders-wrap, .order-page { padding: 18px 18px 72px; }
   .order-page-header { align-items: flex-start; padding-top: 32px; flex-direction: column; }
@@ -592,7 +657,7 @@ h1, h2, h3, .primary-button, .add-button, .order-secondary-action, .avatar-uploa
 .brand strong, .brand small { display: block; }
 .brand strong { font-family: var(--font-display); font-size: 16px; font-weight: 900; letter-spacing: 0; }
 .brand small { margin-top: 2px; color: var(--muted); font-size: 11px; }
-.header-actions { display: grid; width: min(100%, 720px); min-height: 48px; align-self: center; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; overflow: hidden; border: 1px solid rgb(32 32 42 / 28%); border-radius: 12px; justify-self: center; margin: 0; padding: 4px; background: rgb(255 255 255 / 70%); color: var(--muted); }
+.header-actions { display: grid; width: min(100%, 720px); min-height: 48px; align-self: center; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; overflow: hidden; border: 1px solid rgb(32 32 42 / 28%); border-radius: 12px; justify-self: center; margin: 0; padding: 4px; background: rgb(255 255 255 / 70%); color: var(--muted); }
 .header-actions > a { position: relative; display: flex; min-width: 0; min-height: 38px; align-items: center; justify-content: center; gap: 8px; border: 0; border-radius: 7px; padding: 0 10px; transition: background .16s ease, color .16s ease; }
 .header-actions > a > small { display: grid; width: auto; height: 20px; flex: 0 0 auto; place-items: center; border: 0; border-radius: 0; font-family: "Arial Black", sans-serif; font-size: 8px; font-weight: 900; }
 .header-actions > a > span { display: grid; gap: 2px; }
@@ -832,7 +897,7 @@ h1, h2, h3, .primary-button, .add-button, .order-secondary-action, .avatar-uploa
   .sort-menu header strong { color: var(--ink); font-family: var(--font-display); font-size: 16px; }
   .sort-close { display: grid; width: 34px; height: 34px; place-items: center; border: 2px solid var(--ink); border-radius: 7px; background: var(--paper); color: var(--ink); font-size: 18px; }
   .sort-menu > button { min-height: 54px; padding: 0 18px; font-size: 14px; }
-  .mobile-nav { position: fixed; z-index: 30; right: 0; bottom: 0; left: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); border-top: 2px solid var(--ink); background: rgb(255 255 255 / 98%); padding-bottom: env(safe-area-inset-bottom); }
+  .mobile-nav { position: fixed; z-index: 30; right: 0; bottom: 0; left: 0; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); border-top: 2px solid var(--ink); background: rgb(255 255 255 / 98%); padding-bottom: env(safe-area-inset-bottom); }
   .mobile-nav a { position: relative; display: flex; min-height: 64px; align-items: center; justify-content: center; gap: 3px; border-right: 1px solid var(--line); flex-direction: column; color: var(--muted); font-family: var(--font-display); font-size: 10px; font-weight: 800; }
   .mobile-nav a:last-child { border-right: 0; }
   .mobile-nav a::before { position: absolute; top: 0; right: 8px; left: 8px; height: 5px; background: transparent; content: ''; }

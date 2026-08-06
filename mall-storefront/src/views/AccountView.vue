@@ -26,9 +26,11 @@ import { getOrders } from '../api/order'
 import { getCart } from '../api/cart'
 import { useCartStore } from '../stores/cart'
 import { useNoticeStore } from '../stores/notice'
+import { useMessageStore } from '../stores/message'
 
 const cart = useCartStore()
 const notice = useNoticeStore()
+const messageStore = useMessageStore()
 const SMS_COOLDOWN_KEY = 'mall-sms-code-cooldown'
 const SMS_COOLDOWN_MS = 60 * 1000
 
@@ -226,6 +228,7 @@ async function login() {
     member.value = response.data.data.member
     message.value = response.data.data.newMember ? '账号已创建并登录' : '登录成功'
     await cart.load().catch(() => {})
+    await messageStore.load().catch(() => {})
     await loadProfile()
     notice.show(message.value)
   } catch (error) {
@@ -242,6 +245,7 @@ async function logout() {
   } finally {
     sessionStorage.removeItem('mall-user-token')
     cart.reset()
+    messageStore.reset()
     member.value = null
     addresses.value = []
     sessionOverview.value = { sessions: [], primaryChangesRemaining: 0, primaryChangeWindowDays: 30 }

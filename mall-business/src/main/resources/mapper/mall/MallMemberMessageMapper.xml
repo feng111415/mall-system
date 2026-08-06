@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.mall.member.message.mapper.MallMemberMessageMapper">
+    <resultMap id="Message" type="com.ruoyi.mall.member.message.domain.MallMemberMessage">
+        <id property="messageId" column="message_id"/><result property="memberId" column="member_id"/>
+        <result property="category" column="category"/><result property="title" column="title"/>
+        <result property="summary" column="summary"/><result property="content" column="content"/>
+        <result property="businessType" column="business_type"/><result property="businessId" column="business_id"/>
+        <result property="businessNo" column="business_no"/><result property="actionPath" column="action_path"/>
+        <result property="readFlag" column="read_flag"/><result property="readTime" column="read_time"/>
+        <result property="createTime" column="create_time"/><result property="expireTime" column="expire_time"/>
+    </resultMap>
+    <resultMap id="Summary" type="com.ruoyi.mall.member.message.domain.MallMemberMessageSummary">
+        <result property="category" column="category"/><result property="unreadCount" column="unread_count"/>
+        <result property="totalCount" column="total_count"/><result property="latestTitle" column="latest_title"/>
+        <result property="latestSummary" column="latest_summary"/><result property="latestTime" column="latest_time"/>
+    </resultMap>
+    <sql id="columns">message_id,member_id,category,title,summary,content,business_type,business_id,business_no,action_path,read_flag,read_time,create_time,expire_time</sql>
+    <select id="selectSummary" resultMap="Summary">
+        select category, count(*) total_count,
+               coalesce(sum(read_flag='0'),0) unread_count,
+               substring_index(group_concat(title order by create_time desc,message_id desc separator '||'),'||',1) latest_title,
+               substring_index(group_concat(summary order by create_time desc,message_id desc separator '||'),'||',1) latest_summary,
+               max(create_time) latest_time
+        from mall_member_message
+        where member_id=#{memberId} and del_flag='0'
+          and (expire_time is null or expire_time &gt; now())
+        group by category
+    </select>
+    <select id="selectList" resultMap="Message">
+        select <include refid="columns"/> from mall_member_message
+        where member_id=#{memberId} and del_flag='0'
+          and (expire_time is null or expire_time &gt; now())
+        <if test="category != null and category != ''">and category=#{category}</if>
+        order by create_time desc,message_id desc
+    </select>
+    <select id="selectById" resultMap="Message">
+        select <include refid="columns"/> from mall_member_message
+        where member_id=#{memberId} and message_id=#{messageId} and del_flag='0'
+    </select>
+    <insert id="insert" useGeneratedKeys="true" keyProperty="messageId">
+        insert into mall_member_message(member_id,category,title,summary,content,business_type,business_id,business_no,action_path,read_flag,create_time,expire_time,del_flag)
+        values(#{memberId},#{category},#{title},#{summary},#{content},#{businessType},#{businessId},#{businessNo},#{actionPath},'0',now(),#{expireTime},'0')
+    </insert>
+    <update id="markRead">
+        update mall_member_message set read_flag='1',read_time=coalesce(read_time,now())
+        where member_id=#{memberId} and message_id=#{messageId} and del_flag='0'
+    </update>
+    <update id="markAllRead">
+        update mall_member_message set read_flag='1',read_time=coalesce(read_time,now())
+        where member_id=#{memberId} and del_flag='0' and read_flag='0'
+        <if test="category != null and category != ''">and category=#{category}</if>
+    </update>
+</mapper>

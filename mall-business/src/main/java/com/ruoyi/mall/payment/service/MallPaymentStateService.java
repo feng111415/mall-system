@@ -4,10 +4,12 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.concurrent.ThreadLocalRandom;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.mall.application.port.InventoryPort;
+import com.ruoyi.mall.application.port.MemberMessagePort;
 import com.ruoyi.mall.application.port.PaymentExpirationPort;
 import com.ruoyi.mall.order.domain.MallOrder;
 import com.ruoyi.mall.order.domain.MallOrderOperationLog;
@@ -25,13 +27,20 @@ public class MallPaymentStateService implements PaymentExpirationPort
     private final MallPaymentMapper paymentMapper;
     private final MallOrderMapper orderMapper;
     private final InventoryPort inventoryPort;
+    private final MemberMessagePort memberMessagePort;
 
     public MallPaymentStateService(MallPaymentMapper paymentMapper, MallOrderMapper orderMapper,
             InventoryPort inventoryPort)
+    { this(paymentMapper, orderMapper, inventoryPort, null); }
+
+    @Autowired
+    public MallPaymentStateService(MallPaymentMapper paymentMapper, MallOrderMapper orderMapper,
+            InventoryPort inventoryPort, MemberMessagePort memberMessagePort)
     {
         this.paymentMapper = paymentMapper;
         this.orderMapper = orderMapper;
         this.inventoryPort = inventoryPort;
+        this.memberMessagePort = memberMessagePort;
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -70,6 +79,7 @@ public class MallPaymentStateService implements PaymentExpirationPort
             orderMapper.resetPaymentUnpaid(payment.getOrderId());
             payment.setStatus(MallPaymentStatus.FAILED.name());
             payment.setFailureReason(result == null ? "支付渠道未返回结果" : result.message());
+            publishPaymentMessage(payment, "支付创建失败", "订单 " + payment.getOrderNo() + " 的支付单创建失败，请重新尝试");
             return payment;
         }
         MallOrder order = orderMapper.selectByIdForUpdate(payment.getOrderId(), payment.getMemberId());
@@ -126,7 +136,15 @@ public class MallPaymentStateService implements PaymentExpirationPort
         log.setRemark("模拟支付成功"); log.setRequestId(payment.getPaymentNo());
         if (orderMapper.insertOperationLog(log) != 1) throw new ServiceException("订单日志保存失败");
         payment.setStatus(MallPaymentStatus.SUCCESS.name()); payment.setPaidTime(LocalDateTime.now());
+        publishPaymentMessage(payment, "支付成功", "订单 " + payment.getOrderNo() + " 已支付成功，等待商家发货");
         return payment;
+    }
+
+    private void publishPaymentMessage(MallPayment payment, String title, String summary)
+    {
+        if (memberMessagePort != null)
+            memberMessagePort.publish(payment.getMemberId(), "ORDER", title, summary, summary,
+                    "PAYMENT", payment.getOrderId(), payment.getOrderNo(), "/orders/" + payment.getOrderId());
     }
 
     private void closeForLatePayment(MallOrder order, MallPayment payment)

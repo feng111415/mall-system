@@ -15,6 +15,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.mall.application.port.InventoryPort;
+import com.ruoyi.mall.application.port.MemberMessagePort;
 import com.ruoyi.mall.application.port.PaymentPort.PaymentCreateResult;
 import com.ruoyi.mall.order.domain.MallOrder;
 import com.ruoyi.mall.order.mapper.MallOrderMapper;
@@ -27,13 +28,14 @@ class MallPaymentStateServiceTest
     @Mock private MallPaymentMapper paymentMapper;
     @Mock private MallOrderMapper orderMapper;
     @Mock private InventoryPort inventoryPort;
+    @Mock private MemberMessagePort memberMessagePort;
     private MallPaymentStateService service;
 
     @BeforeEach
     void setUp()
     {
         MockitoAnnotations.openMocks(this);
-        service = new MallPaymentStateService(paymentMapper, orderMapper, inventoryPort);
+        service = new MallPaymentStateService(paymentMapper, orderMapper, inventoryPort, memberMessagePort);
     }
 
     @Test
@@ -124,6 +126,10 @@ class MallPaymentStateServiceTest
 
         assertEquals("SUCCESS", result.getStatus());
         verify(inventoryPort).confirm("M20260727150000000001", true);
+        verify(memberMessagePort).publish(7L, "ORDER", "支付成功",
+                "订单 M20260727150000000001 已支付成功，等待商家发货",
+                "订单 M20260727150000000001 已支付成功，等待商家发货", "PAYMENT", 1L,
+                "M20260727150000000001", "/orders/1");
     }
 
     @Test

@@ -19,6 +19,7 @@ import org.mockito.MockitoAnnotations;
 import org.mockito.ArgumentCaptor;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.mall.application.port.LogisticsPort;
+import com.ruoyi.mall.application.port.MemberMessagePort;
 import com.ruoyi.mall.logistics.domain.MallLogisticsShipment;
 import com.ruoyi.mall.logistics.domain.MallFulfillmentOrder;
 import com.ruoyi.mall.logistics.domain.MallLogisticsNodeStatus;
@@ -33,13 +34,14 @@ class MallLogisticsServiceTest
     @Mock private MallLogisticsMapper logisticsMapper;
     @Mock private MallOrderMapper orderMapper;
     @Mock private LogisticsPort logisticsPort;
+    @Mock private MemberMessagePort memberMessagePort;
     private MallLogisticsService service;
 
     @BeforeEach
     void setUp()
     {
         MockitoAnnotations.openMocks(this);
-        service = new MallLogisticsService(logisticsMapper, orderMapper, logisticsPort);
+        service = new MallLogisticsService(logisticsMapper, orderMapper, logisticsPort, memberMessagePort);
         when(logisticsMapper.insertShipment(any())).thenAnswer(invocation -> {
             MallLogisticsShipment value = invocation.getArgument(0);
             value.setShipmentId(11L);
@@ -66,6 +68,10 @@ class MallLogisticsServiceTest
         verify(orderMapper).markShipped(9L);
         verify(logisticsMapper).insertNode(any());
         verify(orderMapper).insertOperationLog(any());
+        verify(memberMessagePort).publish(eq(7L), eq("LOGISTICS"), eq("物流已发货"),
+                eq("订单 " + order.getOrderNo() + " 已发货，运单号 MOCK-TRACK-1"),
+                eq("订单 " + order.getOrderNo() + " 已发货，运单号 MOCK-TRACK-1"), eq("LOGISTICS"),
+                eq(9L), eq(order.getOrderNo()), eq("/orders/9/logistics"));
     }
 
     @Test

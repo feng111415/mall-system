@@ -4,18 +4,21 @@ import { useRoute, useRouter } from 'vue-router'
 import { Icon as VanIcon } from 'vant'
 import { useCartStore } from './stores/cart'
 import { useNoticeStore } from './stores/notice'
+import { useMessageStore } from './stores/message'
 
 const route = useRoute()
 const router = useRouter()
 const cart = useCartStore()
 const notice = useNoticeStore()
+const messages = useMessageStore()
 const search = ref('')
 const searchOpen = ref(false)
 const navItems = [
   { code: '01', label: '首页', sublabel: 'HOME', to: '/' },
   { code: '02', label: '全部商品', sublabel: 'SHOP', to: '/catalog' },
   { code: '03', label: '我的订单', sublabel: 'ORDERS', to: '/orders' },
-  { code: '04', label: '个人中心', sublabel: 'ACCOUNT', to: '/account' }
+  { code: '04', label: '消息中心', sublabel: 'MESSAGES', to: '/messages' },
+  { code: '05', label: '个人中心', sublabel: 'ACCOUNT', to: '/account' }
 ]
 function isActive(path) {
   if (path === '/catalog') return route.path === '/catalog' || route.path.startsWith('/product/')
@@ -27,6 +30,7 @@ const mobileNavItems = [
   { label: '商品', to: '/catalog', icon: 'apps-o' },
   { label: '购物车', to: '/cart', icon: 'cart-o', cart: true },
   { label: '订单', to: '/orders', icon: 'orders-o' },
+  { label: '消息', to: '/messages', icon: 'chat-o', message: true },
   { label: '我的', to: '/account', icon: 'user-o' }
 ]
 function submitSearch() {
@@ -41,6 +45,7 @@ watch(() => route.fullPath, () => {
   search.value = route.path === '/catalog' ? String(route.query.q || '') : ''
   searchOpen.value = Boolean(search.value)
   cart.load().catch(() => {})
+  messages.load().catch(() => {})
 }, { immediate: true })
 </script>
 
@@ -62,7 +67,7 @@ watch(() => route.fullPath, () => {
     </header>
     <main><router-view /></main>
     <footer class="site-footer"><span>日常商城 · V0.3 体验版</span><span>配送范围：全国大部分地区</span></footer>
-    <nav class="mobile-nav" aria-label="移动端导航"><router-link v-for="item in mobileNavItems" :key="item.to" :class="{ active: isActive(item.to) }" :to="item.to"><span class="mobile-nav-icon"><VanIcon :name="item.icon" /><b v-if="item.cart && cart.totalCount">{{ cart.totalCount }}</b></span><span>{{ item.label }}</span></router-link></nav>
+    <nav class="mobile-nav" aria-label="移动端导航"><router-link v-for="item in mobileNavItems" :key="item.to" :class="{ active: isActive(item.to) }" :to="item.to"><span class="mobile-nav-icon"><VanIcon :name="item.icon" /><b v-if="item.cart && cart.totalCount">{{ cart.totalCount }}</b><b v-if="item.message && messages.unreadCount">{{ messages.unreadCount > 99 ? '99+' : messages.unreadCount }}</b></span><span>{{ item.label }}</span></router-link></nav>
     <Transition name="notice"><div v-if="notice.message" :class="['global-notice', notice.type, { 'above-cart-summary': route.path === '/cart' }]" role="status" aria-live="polite"><VanIcon :name="notice.type === 'error' ? 'warning-o' : 'success'" /><span>{{ notice.message }}</span><button class="notice-close" type="button" aria-label="关闭提示" title="关闭提示" @click="notice.clear"><VanIcon name="cross" /></button></div></Transition>
   </div>
 </template>

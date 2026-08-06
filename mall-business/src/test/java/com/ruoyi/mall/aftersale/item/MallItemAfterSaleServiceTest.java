@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.eq;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -23,6 +24,7 @@ import com.ruoyi.mall.aftersale.item.mapper.MallItemAfterSaleMapper;
 import com.ruoyi.mall.aftersale.item.service.MallItemAfterSaleApprovalStateService;
 import com.ruoyi.mall.aftersale.item.service.MallItemAfterSaleService;
 import com.ruoyi.mall.application.port.RefundPort;
+import com.ruoyi.mall.application.port.MemberMessagePort;
 import com.ruoyi.mall.order.domain.MallOrder;
 import com.ruoyi.mall.order.domain.MallOrderItem;
 import com.ruoyi.mall.order.mapper.MallOrderMapper;
@@ -35,6 +37,7 @@ class MallItemAfterSaleServiceTest
     @Mock private MallOrderMapper orderMapper;
     @Mock private MallPaymentMapper paymentMapper;
     @Mock private RefundPort refundPort;
+    @Mock private MemberMessagePort memberMessagePort;
     private MallItemAfterSaleService service;
 
     @BeforeEach
@@ -42,7 +45,7 @@ class MallItemAfterSaleServiceTest
     {
         MockitoAnnotations.openMocks(this);
         service = new MallItemAfterSaleService(mapper, orderMapper,
-                new MallItemAfterSaleApprovalStateService(mapper, paymentMapper), refundPort);
+                new MallItemAfterSaleApprovalStateService(mapper, paymentMapper), refundPort, memberMessagePort);
         when(mapper.insert(any())).thenAnswer(invocation -> { MallItemAfterSale value = invocation.getArgument(0); value.setAfterSaleId(20L); return 1; });
         when(mapper.insertItem(any())).thenReturn(1);
         when(mapper.selectActiveRequestedQuantity(101L)).thenReturn(0);
@@ -62,6 +65,10 @@ class MallItemAfterSaleServiceTest
         assertEquals(new BigDecimal("39.80"), result.getRefundAmount());
         assertEquals(new BigDecimal("8.00"), result.getShippingRefundAmount());
         verify(mapper).insertItem(any());
+        verify(memberMessagePort).publish(eq(7L), eq("AFTER_SALE"), eq("售后申请已提交"),
+                eq("售后单 " + result.getAfterSaleNo() + " 等待审核"),
+                eq("售后单 " + result.getAfterSaleNo() + " 等待审核"), eq("AFTER_SALE"),
+                eq(20L), eq(result.getAfterSaleNo()), eq("/orders/9"));
     }
 
     @Test

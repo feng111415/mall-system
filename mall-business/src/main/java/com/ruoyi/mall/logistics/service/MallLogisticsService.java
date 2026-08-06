@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.common.utils.StringUtils;
 import com.ruoyi.mall.application.port.LogisticsPort;
+import com.ruoyi.mall.application.port.MemberMessagePort;
 import com.ruoyi.mall.logistics.domain.MallLogisticsNode;
 import com.ruoyi.mall.logistics.domain.MallLogisticsShipment;
 import com.ruoyi.mall.logistics.domain.MallLogisticsNodeStatus;
@@ -24,6 +25,7 @@ import com.ruoyi.mall.order.domain.MallOrder;
 import com.ruoyi.mall.order.domain.MallOrderOperationLog;
 import com.ruoyi.mall.order.mapper.MallOrderMapper;
 import java.util.List;
+import org.springframework.beans.factory.annotation.Autowired;
 
 @Service
 public class MallLogisticsService
@@ -35,13 +37,20 @@ public class MallLogisticsService
     private final MallLogisticsMapper logisticsMapper;
     private final MallOrderMapper orderMapper;
     private final LogisticsPort logisticsPort;
+    private final MemberMessagePort memberMessagePort;
 
     public MallLogisticsService(MallLogisticsMapper logisticsMapper, MallOrderMapper orderMapper,
             LogisticsPort logisticsPort)
+    { this(logisticsMapper, orderMapper, logisticsPort, null); }
+
+    @Autowired
+    public MallLogisticsService(MallLogisticsMapper logisticsMapper, MallOrderMapper orderMapper,
+            LogisticsPort logisticsPort, MemberMessagePort memberMessagePort)
     {
         this.logisticsMapper = logisticsMapper;
         this.orderMapper = orderMapper;
         this.logisticsPort = logisticsPort;
+        this.memberMessagePort = memberMessagePort;
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -88,6 +97,8 @@ public class MallLogisticsService
         log.setRemark("后台发货，物流公司：" + normalizedCompany);
         log.setRequestId(shipment.getTrackingNo());
         if (orderMapper.insertOperationLog(log) != 1) throw new ServiceException("订单日志保存失败");
+        publishLogisticsMessage(shipment, "物流已发货",
+                "订单 " + shipment.getOrderNo() + " 已发货，运单号 " + shipment.getTrackingNo());
         shipment.setNodes(java.util.List.of(node));
         return shipment;
     }
@@ -131,7 +142,16 @@ public class MallLogisticsService
         log.setOperatorId(normalizeOperator(operatorId));
         log.setRemark("后台追加物流节点：" + status.getLabel()); log.setRequestId(shipment.getTrackingNo());
         if (orderMapper.insertOperationLog(log) != 1) throw new ServiceException("订单日志保存失败");
+        publishLogisticsMessage(shipment, "物流状态更新", "订单 " + shipment.getOrderNo() + "：" + status.getLabel());
         return withNodes(shipment);
+    }
+
+    private void publishLogisticsMessage(MallLogisticsShipment shipment, String title, String summary)
+    {
+        if (memberMessagePort == null || shipment.getMemberId() == null) return;
+        memberMessagePort.publish(shipment.getMemberId(), "LOGISTICS", title, summary, summary,
+                "LOGISTICS", shipment.getOrderId(), shipment.getOrderNo(),
+                "/orders/" + shipment.getOrderId() + "/logistics");
     }
 
     @Transactional(rollbackFor = Exception.class)

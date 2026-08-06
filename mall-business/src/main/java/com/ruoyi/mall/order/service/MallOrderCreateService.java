@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.mall.application.port.InventoryPort;
+import com.ruoyi.mall.application.port.MemberMessagePort;
 import com.ruoyi.mall.cart.domain.MallCartItem;
 import com.ruoyi.mall.cart.domain.MallCartResult;
 import com.ruoyi.mall.cart.service.IMallCartService;
@@ -35,29 +36,32 @@ public class MallOrderCreateService
     private final MallMemberAuthService memberService;
     private final InventoryPort inventoryPort;
     private final MallRiskService riskService;
+    private final MemberMessagePort memberMessagePort;
 
     /** Constructor kept for isolated unit tests that do not exercise stock reservation. */
     public MallOrderCreateService(MallOrderMapper mapper, IMallCartService cartService,
             MallMemberAuthService memberService)
     {
-        this(mapper, cartService, memberService, null, null);
+        this(mapper, cartService, memberService, null, null, null);
     }
 
     public MallOrderCreateService(MallOrderMapper mapper, IMallCartService cartService,
             MallMemberAuthService memberService, InventoryPort inventoryPort)
     {
-        this(mapper, cartService, memberService, inventoryPort, null);
+        this(mapper, cartService, memberService, inventoryPort, null, null);
     }
 
     @Autowired
     public MallOrderCreateService(MallOrderMapper mapper, IMallCartService cartService,
-            MallMemberAuthService memberService, InventoryPort inventoryPort, MallRiskService riskService)
+            MallMemberAuthService memberService, InventoryPort inventoryPort, MallRiskService riskService,
+            MemberMessagePort memberMessagePort)
     {
         this.mapper = mapper;
         this.cartService = cartService;
         this.memberService = memberService;
         this.inventoryPort = inventoryPort;
         this.riskService = riskService;
+        this.memberMessagePort = memberMessagePort;
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -108,6 +112,10 @@ public class MallOrderCreateService
         log.setOperatorId(String.valueOf(order.getMemberId())); log.setRemark("会员创建订单");
         log.setRequestId(request.getIdempotencyKey());
         if (mapper.insertOperationLog(log) != 1) throw new ServiceException("订单日志保存失败，请重试");
+        if (memberMessagePort != null)
+            memberMessagePort.publish(order.getMemberId(), "ORDER", "订单已创建",
+                    "订单 " + order.getOrderNo() + " 已创建，等待支付", "请在支付时限内完成付款",
+                    "ORDER", order.getOrderId(), order.getOrderNo(), "/orders/" + order.getOrderId());
     }
 
     private MallOrder buildOrder(Long memberId, MallCreateOrderRequest request,

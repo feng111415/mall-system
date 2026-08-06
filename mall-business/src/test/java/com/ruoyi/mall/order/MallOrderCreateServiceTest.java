@@ -15,6 +15,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.mall.application.port.InventoryPort;
+import com.ruoyi.mall.application.port.MemberMessagePort;
 import com.ruoyi.mall.cart.domain.MallCartItem;
 import com.ruoyi.mall.cart.domain.MallCartResult;
 import com.ruoyi.mall.cart.service.IMallCartService;
@@ -31,13 +32,14 @@ class MallOrderCreateServiceTest
     @Mock private IMallCartService cartService;
     @Mock private MallMemberAuthService memberService;
     @Mock private InventoryPort inventoryPort;
+    @Mock private MemberMessagePort memberMessagePort;
     private MallOrderCreateService service;
 
     @BeforeEach
     void setUp()
     {
         MockitoAnnotations.openMocks(this);
-        service = new MallOrderCreateService(mapper, cartService, memberService, inventoryPort);
+        service = new MallOrderCreateService(mapper, cartService, memberService, inventoryPort, null, memberMessagePort);
     }
 
     @Test
@@ -57,6 +59,8 @@ class MallOrderCreateServiceTest
         assertEquals("PENDING_PAYMENT", order.getStatus());
         verify(mapper).insertItem(any());
         verify(mapper).insertOperationLog(any());
+        verify(memberMessagePort).publish(1L, "ORDER", "订单已创建", "订单 " + order.getOrderNo() + " 已创建，等待支付",
+                "请在支付时限内完成付款", "ORDER", 100L, order.getOrderNo(), "/orders/100");
         verify(inventoryPort).reserve(order.getOrderNo(), 10L, 2);
     }
 

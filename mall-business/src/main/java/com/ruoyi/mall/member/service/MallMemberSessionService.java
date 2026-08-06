@@ -3,6 +3,7 @@ package com.ruoyi.mall.member.service;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
@@ -14,6 +15,7 @@ import com.ruoyi.mall.member.domain.MallMemberDeviceAudit;
 import com.ruoyi.mall.member.domain.MallMemberSession;
 import com.ruoyi.mall.member.domain.vo.MallMemberSessionOverviewVo;
 import com.ruoyi.mall.member.domain.vo.MallMemberSessionVo;
+import com.ruoyi.mall.application.port.MemberMessagePort;
 import com.ruoyi.mall.member.mapper.MallMemberMapper;
 import com.ruoyi.mall.member.mapper.MallMemberSessionMapper;
 import com.ruoyi.mall.member.service.MallDeviceClassifier.DeviceInfo;
@@ -33,16 +35,24 @@ public class MallMemberSessionService
     private final MallMemberSessionPolicy sessionPolicy;
     private final MallDeviceClassifier deviceClassifier;
     private final MallMemberTokenService tokenService;
+    private final MemberMessagePort memberMessagePort;
 
     public MallMemberSessionService(MallMemberMapper memberMapper, MallMemberSessionMapper sessionMapper,
             MallMemberSessionPolicy sessionPolicy, MallDeviceClassifier deviceClassifier,
             MallMemberTokenService tokenService)
+    { this(memberMapper, sessionMapper, sessionPolicy, deviceClassifier, tokenService, null); }
+
+    @Autowired
+    public MallMemberSessionService(MallMemberMapper memberMapper, MallMemberSessionMapper sessionMapper,
+            MallMemberSessionPolicy sessionPolicy, MallDeviceClassifier deviceClassifier,
+            MallMemberTokenService tokenService, MemberMessagePort memberMessagePort)
     {
         this.memberMapper = memberMapper;
         this.sessionMapper = sessionMapper;
         this.sessionPolicy = sessionPolicy;
         this.deviceClassifier = deviceClassifier;
         this.tokenService = tokenService;
+        this.memberMessagePort = memberMessagePort;
     }
 
     @Transactional
@@ -104,6 +114,10 @@ public class MallMemberSessionService
         if (sessionMapper.insertSession(newSession) != 1) throw new ServiceException("会话创建失败，请稍后重试");
 
         MemberSession cacheSession = cacheSession(newSession, device, token.hash());
+        if (memberMessagePort != null)
+            memberMessagePort.publish(memberId, "ACCOUNT", "新设备登录",
+                    detected.name() + " 已登录你的商城账号", "如果这不是你的操作，请立即在安全中心下线该设备",
+                    "SESSION", newSession.getSessionId(), null, "/account");
         afterCommit(() -> {
             revokedTokenHashes.forEach(tokenService::deleteByHash);
             tokenService.activateToken(token, cacheSession);
@@ -169,6 +183,10 @@ public class MallMemberSessionService
         audit.setNewMemberDeviceId(current.getMemberDeviceId());
         audit.setRequestIp(requestIp);
         if (sessionMapper.insertDeviceAudit(audit) != 1) throw new ServiceException("主设备审计记录失败");
+        if (memberMessagePort != null)
+            memberMessagePort.publish(current.getMemberId(), "ACCOUNT", "主设备已更换",
+                    "当前设备已设为主移动设备", "如非本人操作，请检查登录设备并及时下线异常设备",
+                    "DEVICE", current.getMemberDeviceId(), null, "/account");
         List<MallMemberSession> active = sessionMapper.selectActiveSessions(current.getMemberId(), LocalDateTime.now());
         afterCommit(() -> active.forEach(value -> tokenService.updatePrimaryMobile(
                 value.getTokenHash(), "1".equals(value.getPrimaryMobile()))));

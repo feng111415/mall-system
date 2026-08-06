@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.ruoyi.common.exception.ServiceException;
@@ -22,6 +23,7 @@ import com.ruoyi.mall.order.domain.MallOrder;
 import com.ruoyi.mall.order.domain.MallOrderItem;
 import com.ruoyi.mall.order.mapper.MallOrderMapper;
 import com.ruoyi.mall.application.port.RefundPort;
+import com.ruoyi.mall.application.port.MemberMessagePort;
 
 @Service
 public class MallItemAfterSaleService
@@ -31,11 +33,19 @@ public class MallItemAfterSaleService
     private final MallOrderMapper orderMapper;
     private final MallItemAfterSaleApprovalStateService approvalStateService;
     private final RefundPort refundPort;
+    private final MemberMessagePort memberMessagePort;
 
     public MallItemAfterSaleService(MallItemAfterSaleMapper mapper, MallOrderMapper orderMapper,
             MallItemAfterSaleApprovalStateService approvalStateService, RefundPort refundPort)
+    { this(mapper, orderMapper, approvalStateService, refundPort, null); }
+
+    @Autowired
+    public MallItemAfterSaleService(MallItemAfterSaleMapper mapper, MallOrderMapper orderMapper,
+            MallItemAfterSaleApprovalStateService approvalStateService, RefundPort refundPort,
+            MemberMessagePort memberMessagePort)
     {
         this.mapper = mapper; this.orderMapper = orderMapper; this.approvalStateService = approvalStateService; this.refundPort = refundPort;
+        this.memberMessagePort = memberMessagePort;
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -94,6 +104,7 @@ public class MallItemAfterSaleService
             detail.setRefundAmount(item.getUnitPrice().multiply(BigDecimal.valueOf(quantity)).setScale(2, RoundingMode.HALF_UP));
             if (mapper.insertItem(detail) != 1) throw new ServiceException("售后明细保存失败");
         }
+        publishMessage(afterSale, "售后申请已提交", "售后单 " + afterSale.getAfterSaleNo() + " 等待审核");
         return afterSale;
     }
 
@@ -140,7 +151,9 @@ public class MallItemAfterSaleService
         if ("APPROVED".equals(value.getStatus()) || "RETURN_SHIPPED".equals(value.getStatus())) return value;
         if (!"PENDING_REVIEW".equals(value.getStatus())) throw new ServiceException("当前售后单不允许审核通过");
         if (mapper.markApproved(afterSaleId) != 1) throw new ServiceException("售后单状态已变化，请刷新后重试");
-        value.setStatus("APPROVED"); return value;
+        value.setStatus("APPROVED");
+        publishMessage(value, "售后审核通过", "售后单 " + value.getAfterSaleNo() + " 已审核通过");
+        return value;
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -151,7 +164,9 @@ public class MallItemAfterSaleService
         if (!"PENDING_REVIEW".equals(value.getStatus())) throw new ServiceException("当前售后单不允许驳回");
         String message = StringUtils.isBlank(reason) ? "售后申请未通过" : trim(reason, 255);
         if (mapper.markRejected(afterSaleId, message) != 1) throw new ServiceException("售后单状态已变化，请刷新后重试");
-        value.setStatus("REJECTED"); value.setFailureReason(message); return value;
+        value.setStatus("REJECTED"); value.setFailureReason(message);
+        publishMessage(value, "售后申请未通过", "售后单 " + value.getAfterSaleNo() + " 未通过审核");
+        return value;
     }
 
     public List<MallItemAfterSale> adminList(String status) { return mapper.selectAdminList(status); }
@@ -163,4 +178,12 @@ public class MallItemAfterSaleService
     private String trim(String value, int max) { if (value == null) return null; String v=value.trim(); return v.length()>max?v.substring(0,max):v; }
     private BigDecimal safe(BigDecimal value) { return value == null ? BigDecimal.ZERO : value; }
     private void requireMember(Long memberId) { if (memberId == null || memberId <= 0) throw new ServiceException("会员身份无效"); }
+
+    private void publishMessage(MallItemAfterSale value, String title, String summary)
+    {
+        if (memberMessagePort != null)
+            memberMessagePort.publish(value.getMemberId(), "AFTER_SALE", title, summary, summary,
+                    "AFTER_SALE", value.getAfterSaleId(), value.getAfterSaleNo(),
+                    "/orders/" + value.getOrderId());
+    }
 }
