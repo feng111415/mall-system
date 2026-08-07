@@ -293,7 +293,7 @@
   .header-actions { display: none; }
   .storefront-shell main { min-height: calc(100vh - 220px); padding-bottom: 70px; }
   .site-footer { margin-bottom: 62px; }
-  .mobile-nav { position: fixed; z-index: 20; right: 0; bottom: 0; left: 0; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); border-top: 1px solid var(--line); background: rgba(255, 255, 255, .98); }
+  .mobile-nav { position: fixed; z-index: 20; right: 0; bottom: 0; left: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); border-top: 1px solid var(--line); background: rgba(255, 255, 255, .98); }
   .mobile-nav a { display: flex; min-height: 60px; align-items: center; justify-content: center; gap: 3px; flex-direction: column; color: var(--muted); font-size: 10px; }
   .mobile-nav a.active { color: var(--ink); }
   .mobile-nav-icon { position: relative; display: grid; min-height: 20px; place-items: center; font-size: 20px; }
@@ -664,7 +664,7 @@ h1, h2, h3, .primary-button, .add-button, .order-secondary-action, .avatar-uploa
 .brand strong, .brand small { display: block; }
 .brand strong { font-family: var(--font-display); font-size: 16px; font-weight: 900; letter-spacing: 0; }
 .brand small { margin-top: 2px; color: var(--muted); font-size: 11px; }
-.header-actions { display: grid; width: min(100%, 720px); min-height: 48px; align-self: center; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; overflow: hidden; border: 1px solid rgb(32 32 42 / 28%); border-radius: 12px; justify-self: center; margin: 0; padding: 4px; background: rgb(255 255 255 / 70%); color: var(--muted); }
+.header-actions { display: grid; width: min(100%, 720px); min-height: 48px; align-self: center; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; overflow: hidden; border: 1px solid rgb(32 32 42 / 28%); border-radius: 12px; justify-self: center; margin: 0; padding: 4px; background: rgb(255 255 255 / 70%); color: var(--muted); }
 .header-actions > a { position: relative; display: flex; min-width: 0; min-height: 38px; align-items: center; justify-content: center; gap: 8px; border: 0; border-radius: 7px; padding: 0 10px; transition: background .16s ease, color .16s ease; }
 .header-actions > a > small { display: grid; width: auto; height: 20px; flex: 0 0 auto; place-items: center; border: 0; border-radius: 0; font-family: "Arial Black", sans-serif; font-size: 8px; font-weight: 900; }
 .header-actions > a > span { display: grid; gap: 2px; }
@@ -906,7 +906,7 @@ h1, h2, h3, .primary-button, .add-button, .order-secondary-action, .avatar-uploa
   .sort-menu header strong { color: var(--ink); font-family: var(--font-display); font-size: 16px; }
   .sort-close { display: grid; width: 34px; height: 34px; place-items: center; border: 2px solid var(--ink); border-radius: 7px; background: var(--paper); color: var(--ink); font-size: 18px; }
   .sort-menu > button { min-height: 54px; padding: 0 18px; font-size: 14px; }
-  .mobile-nav { position: fixed; z-index: 30; right: 0; bottom: 0; left: 0; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); border-top: 2px solid var(--ink); background: rgb(255 255 255 / 98%); padding-bottom: env(safe-area-inset-bottom); }
+  .mobile-nav { position: fixed; z-index: 30; right: 0; bottom: 0; left: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); border-top: 2px solid var(--ink); background: rgb(255 255 255 / 98%); padding-bottom: env(safe-area-inset-bottom); }
   .mobile-nav a { position: relative; display: flex; min-height: 64px; align-items: center; justify-content: center; gap: 3px; border-right: 1px solid var(--line); flex-direction: column; color: var(--muted); font-family: var(--font-display); font-size: 10px; font-weight: 800; }
   .mobile-nav a:last-child { border-right: 0; }
   .mobile-nav a::before { position: absolute; top: 0; right: 8px; left: 8px; height: 5px; background: transparent; content: ''; }
