@@ -3,6 +3,7 @@ package com.ruoyi.mall.order.web;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import com.ruoyi.common.annotation.Anonymous;
 import com.ruoyi.common.core.domain.AjaxResult;
@@ -24,8 +25,9 @@ public class MallCheckoutPortalController
     }
 
     @GetMapping("/preview")
-    public AjaxResult preview(@RequestHeader(value = MallMemberTokenService.MALL_AUTHORIZATION_HEADER, required = false) String authorization)
+    public AjaxResult preview(@RequestHeader(value = MallMemberTokenService.MALL_AUTHORIZATION_HEADER, required = false) String authorization,
+            @RequestParam(required = false) Long memberCouponId)
     {
-        return AjaxResult.success(service.preview(tokenService.requireMemberId(authorization)));
+        return AjaxResult.success(service.preview(tokenService.requireMemberId(authorization), memberCouponId));
     }
 }

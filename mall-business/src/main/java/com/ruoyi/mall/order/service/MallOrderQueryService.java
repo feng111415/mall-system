@@ -3,11 +3,13 @@ package com.ruoyi.mall.order.service;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.mall.order.domain.MallOrder;
 import com.ruoyi.mall.order.domain.MallOrderStatus;
 import com.ruoyi.mall.order.domain.MallOrderPaymentWindow;
 import com.ruoyi.mall.order.mapper.MallOrderMapper;
+import com.ruoyi.mall.coupon.service.MallCouponService;
 
 @Service
 public class MallOrderQueryService implements com.ruoyi.mall.application.port.MemberOrderStatePort
@@ -15,10 +17,17 @@ public class MallOrderQueryService implements com.ruoyi.mall.application.port.Me
     private static final int DEFAULT_LIMIT = 20;
     private static final int MAX_LIMIT = 50;
     private final MallOrderMapper mapper;
+    private final MallCouponService couponService;
 
     public MallOrderQueryService(MallOrderMapper mapper)
     {
-        this.mapper = mapper;
+        this(mapper, null);
+    }
+
+    @Autowired
+    public MallOrderQueryService(MallOrderMapper mapper, MallCouponService couponService)
+    {
+        this.mapper = mapper; this.couponService = couponService;
     }
 
     public List<MallOrder> list(Long memberId, String status, Integer limit, Integer offset)
@@ -42,6 +51,7 @@ public class MallOrderQueryService implements com.ruoyi.mall.application.port.Me
         if (order == null) throw new ServiceException("订单不存在");
         order.setItems(mapper.selectMemberOrderItems(orderId, memberId));
         order.setOperations(mapper.selectMemberOrderOperations(orderId, memberId));
+        if (couponService != null) order.setCoupon(couponService.orderCoupon(memberId, orderId));
         LocalDateTime now = LocalDateTime.now();
         order.setPaymentCreateDeadline(MallOrderPaymentWindow.createDeadline(order));
         order.setPaymentResultDeadline(MallOrderPaymentWindow.resultDeadline(order));

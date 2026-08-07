@@ -19,6 +19,7 @@ const navItems = [
   { code: '03', label: '我的订单', sublabel: 'ORDERS', to: '/orders' },
   { code: '04', label: '消息中心', sublabel: 'MESSAGES', to: '/messages' },
   { code: '05', label: '个人中心', sublabel: 'ACCOUNT', to: '/account' }
+  ,{ code: '06', label: '优惠券', sublabel: 'COUPONS', to: '/coupons' }
 ]
 function isActive(path) {
   if (path === '/catalog') return route.path === '/catalog' || route.path.startsWith('/product/')

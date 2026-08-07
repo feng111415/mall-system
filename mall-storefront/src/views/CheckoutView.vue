@@ -12,6 +12,7 @@ const preview = ref(null)
 const loading = ref(true)
 const message = ref('')
 const selectedAddressId = ref(null)
+const selectedCouponId = ref(null)
 const remark = ref('')
 const busy = ref(false)
 const paymentBusy = ref(false)
@@ -28,12 +29,13 @@ const paymentIdempotencyKey = randomUuid ? randomUuid() : `payment-${Date.now()}
 
 onMounted(loadPreview)
 
-async function loadPreview() {
+async function loadPreview(couponId = selectedCouponId.value) {
   if (!hasToken.value) return router.replace('/account')
   loading.value = true
   message.value = ''
   try {
-    preview.value = (await getCheckoutPreview()).data.data
+    preview.value = (await getCheckoutPreview(couponId)).data.data
+    selectedCouponId.value = preview.value.selectedMemberCouponId || couponId || null
     selectedAddressId.value = preview.value.defaultAddressId || preview.value.addresses?.[0]?.addressId || null
   } catch (error) {
     preview.value = null
@@ -43,6 +45,12 @@ async function loadPreview() {
   }
 }
 
+async function chooseCoupon(couponId) {
+  if (order.value) return
+  selectedCouponId.value = couponId || null
+  await loadPreview(selectedCouponId.value)
+}
+
 function formatPrice(value) { return Number(value || 0).toLocaleString() }
 
 async function submitOrder() {
@@ -50,7 +58,7 @@ async function submitOrder() {
   busy.value = true
   message.value = ''
   try {
-    order.value = (await createOrder({ idempotencyKey, addressId: selectedAddressId.value, remark: remark.value.trim() || undefined })).data.data
+    order.value = (await createOrder({ idempotencyKey, addressId: selectedAddressId.value, memberCouponId: selectedCouponId.value || undefined, remark: remark.value.trim() || undefined })).data.data
     notice.show('订单创建成功，请继续完成模拟支付')
   } catch (error) {
     message.value = error.response?.data?.msg || '订单创建失败，请稍后重试'
@@ -111,6 +119,14 @@ async function confirmMockPayment() {
         <section class="checkout-section checkout-remark">
           <div class="checkout-heading"><div><span class="checkout-step-label">03</span><h2>订单备注</h2></div><small>{{ remark.length }}/200</small></div>
           <textarea v-model.trim="remark" maxlength="200" rows="3" :disabled="Boolean(order)" placeholder="选填，可填写配送时间等说明；商品规格请以已选 SKU 为准"></textarea>
+        </section>
+        <section class="checkout-section checkout-coupons">
+          <div class="checkout-heading"><div><span class="checkout-step-label">04</span><h2>优惠券</h2></div><router-link to="/coupons">去领取</router-link></div>
+          <div v-if="preview.coupons?.filter(item => item.status === 'AVAILABLE').length" class="checkout-coupon-options">
+            <label class="checkout-coupon-option" :class="{ active: !selectedCouponId }"><input type="radio" :checked="!selectedCouponId" :disabled="Boolean(order)" @change="chooseCoupon(null)" /><span><strong>不使用优惠券</strong><small>本单保留优惠券</small></span></label>
+            <label v-for="coupon in preview.coupons.filter(item => item.status === 'AVAILABLE')" :key="coupon.memberCouponId" class="checkout-coupon-option" :class="{ active: selectedCouponId === coupon.memberCouponId }"><input type="radio" :value="coupon.memberCouponId" :checked="selectedCouponId === coupon.memberCouponId" :disabled="Boolean(order)" @change="chooseCoupon(coupon.memberCouponId)" /><span><strong>{{ coupon.couponName }} · 减 ¥{{ formatPrice(coupon.discountAmount) }}</strong><small>满 ¥{{ formatPrice(coupon.thresholdAmount) }} 可用</small></span></label>
+          </div>
+          <p v-else class="checkout-empty">暂无可用优惠券</p>
         </section>
       </div>
       <aside class="checkout-summary">

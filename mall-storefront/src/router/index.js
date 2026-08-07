@@ -9,6 +9,7 @@ import OrderListView from '../views/OrderListView.vue'
 import OrderDetailView from '../views/OrderDetailView.vue'
 import MessageCenterView from '../views/MessageCenterView.vue'
 import AccountPrivacyView from '../views/AccountPrivacyView.vue'
+import CouponView from '../views/CouponView.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -23,6 +24,7 @@ const router = createRouter({
     { path: '/messages', name: 'messages', component: MessageCenterView },
     { path: '/account', name: 'account', component: AccountView },
     { path: '/account/privacy', name: 'account-privacy', component: AccountPrivacyView }
+    ,{ path: '/coupons', name: 'coupons', component: CouponView }
   ],
   scrollBehavior: () => ({ top: 0 })
 })

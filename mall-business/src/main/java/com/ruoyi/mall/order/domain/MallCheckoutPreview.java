@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.List;
 import com.ruoyi.mall.member.domain.MallMemberAddress;
+import com.ruoyi.mall.coupon.domain.MallMemberCoupon;
 
 public class MallCheckoutPreview implements Serializable
 {
@@ -17,6 +18,9 @@ public class MallCheckoutPreview implements Serializable
     private BigDecimal payableAmount;
     private Boolean canSubmit;
     private List<String> validationMessages;
+    private List<MallMemberCoupon> coupons;
+    private Long selectedMemberCouponId;
+    private String couponName;
 
     public List<MallCheckoutItem> getItems() { return items; }
     public void setItems(List<MallCheckoutItem> items) { this.items = items; }
@@ -36,4 +40,10 @@ public class MallCheckoutPreview implements Serializable
     public void setCanSubmit(Boolean canSubmit) { this.canSubmit = canSubmit; }
     public List<String> getValidationMessages() { return validationMessages; }
     public void setValidationMessages(List<String> validationMessages) { this.validationMessages = validationMessages; }
+    public List<MallMemberCoupon> getCoupons() { return coupons; }
+    public void setCoupons(List<MallMemberCoupon> coupons) { this.coupons = coupons; }
+    public Long getSelectedMemberCouponId() { return selectedMemberCouponId; }
+    public void setSelectedMemberCouponId(Long selectedMemberCouponId) { this.selectedMemberCouponId = selectedMemberCouponId; }
+    public String getCouponName() { return couponName; }
+    public void setCouponName(String couponName) { this.couponName = couponName; }
 }

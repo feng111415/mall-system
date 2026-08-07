@@ -429,6 +429,12 @@
 .checkout-submit-note { margin: 9px 0 0; text-align: center; color: var(--red); font-size: 11px; }
 .checkout-assurance { display: flex; align-items: flex-start; gap: 6px; margin: 16px 0 0; color: var(--muted); font-size: 10px; line-height: 1.5; }
 .checkout-back-link { display: block; margin-top: 18px; }
+.checkout-coupon-options { display: grid; gap: 8px; margin-top: 14px; }
+.checkout-coupon-option { display: flex; align-items: center; gap: 10px; padding: 12px; border: 1px solid var(--line); background: var(--paper); cursor: pointer; }
+.checkout-coupon-option.active { border-color: var(--red); background: #fff8f4; }
+.checkout-coupon-option input { accent-color: var(--red); }
+.checkout-coupon-option strong, .checkout-coupon-option small { display: block; }
+.checkout-coupon-option small { margin-top: 4px; color: var(--muted); font-size: 10px; }
 .checkout-loading { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 52px; padding-top: 30px; }
 .checkout-loading > div { display: grid; gap: 14px; }
 .checkout-loading span, .checkout-loading aside { display: block; height: 118px; background: #ebe9e4; animation: store-pulse 1.2s ease-in-out infinite; }

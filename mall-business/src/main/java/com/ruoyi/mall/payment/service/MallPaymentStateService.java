@@ -19,6 +19,7 @@ import com.ruoyi.mall.payment.domain.MallPayment;
 import com.ruoyi.mall.payment.domain.MallPaymentStatus;
 import com.ruoyi.mall.payment.mapper.MallPaymentMapper;
 import com.ruoyi.mall.application.port.PaymentPort.PaymentCreateResult;
+import com.ruoyi.mall.coupon.service.MallCouponService;
 
 @Service
 public class MallPaymentStateService implements PaymentExpirationPort
@@ -28,19 +29,25 @@ public class MallPaymentStateService implements PaymentExpirationPort
     private final MallOrderMapper orderMapper;
     private final InventoryPort inventoryPort;
     private final MemberMessagePort memberMessagePort;
+    private final MallCouponService couponService;
 
     public MallPaymentStateService(MallPaymentMapper paymentMapper, MallOrderMapper orderMapper,
             InventoryPort inventoryPort)
-    { this(paymentMapper, orderMapper, inventoryPort, null); }
+    { this(paymentMapper, orderMapper, inventoryPort, null, null); }
+
+    public MallPaymentStateService(MallPaymentMapper paymentMapper, MallOrderMapper orderMapper,
+            InventoryPort inventoryPort, MemberMessagePort memberMessagePort)
+    { this(paymentMapper, orderMapper, inventoryPort, memberMessagePort, null); }
 
     @Autowired
     public MallPaymentStateService(MallPaymentMapper paymentMapper, MallOrderMapper orderMapper,
-            InventoryPort inventoryPort, MemberMessagePort memberMessagePort)
+            InventoryPort inventoryPort, MemberMessagePort memberMessagePort, MallCouponService couponService)
     {
         this.paymentMapper = paymentMapper;
         this.orderMapper = orderMapper;
         this.inventoryPort = inventoryPort;
         this.memberMessagePort = memberMessagePort;
+        this.couponService = couponService;
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -129,6 +136,7 @@ public class MallPaymentStateService implements PaymentExpirationPort
         if (paymentMapper.updateSuccess(payment.getPaymentId()) != 1)
             throw new ServiceException("支付结果保存失败，请重试");
         inventoryPort.confirm(order.getOrderNo(), true);
+        if (couponService != null) couponService.consume(order.getOrderId());
         MallOrderOperationLog log = new MallOrderOperationLog();
         log.setOrderId(order.getOrderId()); log.setOrderNo(order.getOrderNo());
         log.setFromStatus("PENDING_PAYMENT"); log.setToStatus("PENDING_SHIPMENT");
@@ -153,6 +161,7 @@ public class MallPaymentStateService implements PaymentExpirationPort
         if (orderMapper.closeExpired(order.getOrderId(), order.getPaymentStatus(), reason) != 1)
             throw new ServiceException("订单超时状态保存失败，请重试");
         inventoryPort.release(order.getOrderNo());
+        if (couponService != null) couponService.release(order.getOrderId());
         MallOrderOperationLog log = new MallOrderOperationLog();
         log.setOrderId(order.getOrderId()); log.setOrderNo(order.getOrderNo());
         log.setFromStatus("PENDING_PAYMENT"); log.setToStatus("CLOSED");

@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
 import com.ruoyi.mall.cart.domain.MallCartItem;
 import com.ruoyi.mall.cart.domain.MallCartResult;
 import com.ruoyi.mall.cart.service.IMallCartService;
@@ -11,20 +12,34 @@ import com.ruoyi.mall.member.domain.MallMemberAddress;
 import com.ruoyi.mall.member.service.MallMemberAuthService;
 import com.ruoyi.mall.order.domain.MallCheckoutItem;
 import com.ruoyi.mall.order.domain.MallCheckoutPreview;
+import com.ruoyi.mall.coupon.domain.MallCouponQuote;
+import com.ruoyi.mall.coupon.service.MallCouponService;
 
 @Service
 public class MallCheckoutPreviewService
 {
     private final IMallCartService cartService;
     private final MallMemberAuthService memberService;
+    private final MallCouponService couponService;
 
     public MallCheckoutPreviewService(IMallCartService cartService, MallMemberAuthService memberService)
     {
-        this.cartService = cartService;
-        this.memberService = memberService;
+        this(cartService, memberService, null);
+    }
+
+    @Autowired
+    public MallCheckoutPreviewService(IMallCartService cartService, MallMemberAuthService memberService,
+            MallCouponService couponService)
+    {
+        this.cartService = cartService; this.memberService = memberService; this.couponService = couponService;
     }
 
     public MallCheckoutPreview preview(Long memberId)
+    {
+        return preview(memberId, null);
+    }
+
+    public MallCheckoutPreview preview(Long memberId, Long memberCouponId)
     {
         MallCartResult cart = cartService.selectCart(memberId);
         List<MallMemberAddress> addresses = memberService.addresses(memberId);
@@ -51,13 +66,18 @@ public class MallCheckoutPreviewService
                 .filter(address -> "1".equals(address.getIsDefault())).map(MallMemberAddress::getAddressId)
                 .findFirst().orElse(addresses.isEmpty() ? null : addresses.get(0).getAddressId());
         BigDecimal shippingFee = BigDecimal.ZERO;
-        BigDecimal discountAmount = BigDecimal.ZERO;
+        MallCouponQuote couponQuote = couponService == null ? null : couponService.quote(memberId, memberCouponId,
+                cart.getItems().stream().filter(item -> "1".equals(item.getSelectedFlag())).toList());
+        BigDecimal discountAmount = couponQuote == null ? BigDecimal.ZERO : couponQuote.getDiscountAmount();
         MallCheckoutPreview preview = new MallCheckoutPreview();
         preview.setItems(items); preview.setAddresses(addresses == null ? List.of() : addresses);
         preview.setDefaultAddressId(defaultAddressId); preview.setProductAmount(productAmount);
         preview.setShippingFee(shippingFee); preview.setDiscountAmount(discountAmount);
         preview.setPayableAmount(productAmount.add(shippingFee).subtract(discountAmount));
         preview.setCanSubmit(messages.isEmpty()); preview.setValidationMessages(messages);
+        preview.setCoupons(couponService == null ? List.of() : couponService.memberCoupons(memberId));
+        preview.setSelectedMemberCouponId(memberCouponId);
+        preview.setCouponName(couponQuote == null ? null : couponQuote.getCouponName());
         return preview;
     }
 }

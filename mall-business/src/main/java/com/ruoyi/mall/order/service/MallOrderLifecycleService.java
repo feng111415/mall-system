@@ -3,6 +3,7 @@ package com.ruoyi.mall.order.service;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.common.utils.StringUtils;
@@ -13,6 +14,7 @@ import com.ruoyi.mall.order.domain.MallOrderPaymentWindow;
 import com.ruoyi.mall.order.domain.MallOrderStatus;
 import com.ruoyi.mall.order.domain.MallOrderOperationLog;
 import com.ruoyi.mall.order.mapper.MallOrderMapper;
+import com.ruoyi.mall.coupon.service.MallCouponService;
 
 @Service
 public class MallOrderLifecycleService
@@ -21,13 +23,22 @@ public class MallOrderLifecycleService
     private final MallOrderMapper mapper;
     private final InventoryPort inventoryPort;
     private final PaymentExpirationPort paymentExpirationPort;
+    private final MallCouponService couponService;
 
     public MallOrderLifecycleService(MallOrderMapper mapper, InventoryPort inventoryPort,
             PaymentExpirationPort paymentExpirationPort)
     {
+        this(mapper, inventoryPort, paymentExpirationPort, null);
+    }
+
+    @Autowired
+    public MallOrderLifecycleService(MallOrderMapper mapper, InventoryPort inventoryPort,
+            PaymentExpirationPort paymentExpirationPort, MallCouponService couponService)
+    {
         this.mapper = mapper;
         this.inventoryPort = inventoryPort;
         this.paymentExpirationPort = paymentExpirationPort;
+        this.couponService = couponService;
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -96,6 +107,7 @@ public class MallOrderLifecycleService
             String operatorType, String operatorId)
     {
         inventoryPort.release(order.getOrderNo());
+        if (couponService != null) couponService.release(order.getOrderId());
 
         MallOrderOperationLog log = new MallOrderOperationLog();
         log.setOrderId(order.getOrderId()); log.setOrderNo(order.getOrderNo());

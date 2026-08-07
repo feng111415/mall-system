@@ -25,6 +25,8 @@ import com.ruoyi.mall.order.domain.MallOrderPaymentStatus;
 import com.ruoyi.mall.order.domain.dto.MallCreateOrderRequest;
 import com.ruoyi.mall.order.mapper.MallOrderMapper;
 import com.ruoyi.mall.risk.service.MallRiskService;
+import com.ruoyi.mall.coupon.domain.MallCouponQuote;
+import com.ruoyi.mall.coupon.service.MallCouponService;
 
 @Service
 public class MallOrderCreateService
@@ -37,24 +39,32 @@ public class MallOrderCreateService
     private final InventoryPort inventoryPort;
     private final MallRiskService riskService;
     private final MemberMessagePort memberMessagePort;
+    private final MallCouponService couponService;
 
     /** Constructor kept for isolated unit tests that do not exercise stock reservation. */
     public MallOrderCreateService(MallOrderMapper mapper, IMallCartService cartService,
             MallMemberAuthService memberService)
     {
-        this(mapper, cartService, memberService, null, null, null);
+        this(mapper, cartService, memberService, null, null, null, null);
     }
 
     public MallOrderCreateService(MallOrderMapper mapper, IMallCartService cartService,
             MallMemberAuthService memberService, InventoryPort inventoryPort)
     {
-        this(mapper, cartService, memberService, inventoryPort, null, null);
+        this(mapper, cartService, memberService, inventoryPort, null, null, null);
+    }
+
+    public MallOrderCreateService(MallOrderMapper mapper, IMallCartService cartService,
+            MallMemberAuthService memberService, InventoryPort inventoryPort, MallRiskService riskService,
+            MemberMessagePort memberMessagePort)
+    {
+        this(mapper, cartService, memberService, inventoryPort, riskService, memberMessagePort, null);
     }
 
     @Autowired
     public MallOrderCreateService(MallOrderMapper mapper, IMallCartService cartService,
             MallMemberAuthService memberService, InventoryPort inventoryPort, MallRiskService riskService,
-            MemberMessagePort memberMessagePort)
+            MemberMessagePort memberMessagePort, MallCouponService couponService)
     {
         this.mapper = mapper;
         this.cartService = cartService;
@@ -62,6 +72,7 @@ public class MallOrderCreateService
         this.inventoryPort = inventoryPort;
         this.riskService = riskService;
         this.memberMessagePort = memberMessagePort;
+        this.couponService = couponService;
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -74,7 +85,9 @@ public class MallOrderCreateService
         MallCartResult cart = cartService.selectCart(memberId);
         List<MallCartItem> selectedItems = validateCart(cart);
         MallMemberAddress address = findAddress(memberId, request.getAddressId());
-        MallOrder order = buildOrder(memberId, request, address, selectedItems);
+        MallCouponQuote couponQuote = couponService == null ? null
+                : couponService.quote(memberId, request.getMemberCouponId(), selectedItems);
+        MallOrder order = buildOrder(memberId, request, address, selectedItems, couponQuote);
         if (riskService != null) riskService.checkOrder(memberId, order.getPayableAmount());
 
         for (int attempt = 0; attempt < MAX_ORDER_NO_ATTEMPTS; attempt++)
@@ -83,6 +96,9 @@ public class MallOrderCreateService
             if (mapper.insertOrderIgnore(order) == 1)
             {
                 saveItemsAndLog(order, selectedItems, request);
+                if (couponService != null && request.getMemberCouponId() != null)
+                    couponService.lockToOrder(memberId, request.getMemberCouponId(), order.getOrderId(),
+                            order.getOrderNo(), selectedItems);
                 if (riskService != null) riskService.recordPassed(order);
                 return order;
             }
@@ -119,7 +135,7 @@ public class MallOrderCreateService
     }
 
     private MallOrder buildOrder(Long memberId, MallCreateOrderRequest request,
-            MallMemberAddress address, List<MallCartItem> selectedItems)
+            MallMemberAddress address, List<MallCartItem> selectedItems, MallCouponQuote couponQuote)
     {
         BigDecimal productAmount = selectedItems.stream().map(item -> item.getLineAmount() == null
                 ? BigDecimal.ZERO : item.getLineAmount()).reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -128,7 +144,8 @@ public class MallOrderCreateService
         order.setPaymentStatus(MallOrderPaymentStatus.UNPAID.name()); order.setIdempotencyKey(request.getIdempotencyKey());
         order.setRiskStatus("PENDING_CHECK");
         order.setProductAmount(productAmount); order.setShippingFee(BigDecimal.ZERO);
-        order.setDiscountAmount(BigDecimal.ZERO); order.setPayableAmount(productAmount);
+        BigDecimal discount = couponQuote == null ? BigDecimal.ZERO : couponQuote.getDiscountAmount();
+        order.setDiscountAmount(discount); order.setPayableAmount(productAmount.subtract(discount));
         order.setReceiverName(address.getReceiverName()); order.setReceiverPhone(address.getReceiverPhone());
         order.setReceiverProvince(address.getProvince()); order.setReceiverCity(address.getCity());
         order.setReceiverDistrict(address.getDistrict()); order.setReceiverDetailAddress(address.getDetailAddress());

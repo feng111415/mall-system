@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.mall.coupon.mapper.MallCouponMapper">
+    <resultMap id="Template" type="com.ruoyi.mall.coupon.domain.MallCouponTemplate">
+        <id property="couponId" column="coupon_id"/><result property="couponName" column="coupon_name"/>
+        <result property="scopeType" column="scope_type"/><result property="thresholdAmount" column="threshold_amount"/>
+        <result property="discountAmount" column="discount_amount"/><result property="totalQuantity" column="total_quantity"/>
+        <result property="claimedQuantity" column="claimed_quantity"/><result property="perMemberLimit" column="per_member_limit"/>
+        <result property="status" column="status"/><result property="validFrom" column="valid_from"/>
+        <result property="validTo" column="valid_to"/><result property="remark" column="remark"/>
+        <result property="version" column="version"/><result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/><result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+    <resultMap id="MemberCoupon" type="com.ruoyi.mall.coupon.domain.MallMemberCoupon">
+        <id property="memberCouponId" column="member_coupon_id"/><result property="couponId" column="coupon_id"/>
+        <result property="memberId" column="member_id"/><result property="status" column="member_status"/>
+        <result property="lockOrderId" column="lock_order_id"/><result property="usedOrderId" column="used_order_id"/>
+        <result property="receiveTime" column="receive_time"/><result property="lockTime" column="lock_time"/>
+        <result property="usedTime" column="used_time"/><result property="couponName" column="coupon_name"/>
+        <result property="scopeType" column="scope_type"/><result property="thresholdAmount" column="threshold_amount"/>
+        <result property="discountAmount" column="discount_amount"/><result property="templateStatus" column="template_status"/>
+        <result property="validFrom" column="valid_from"/><result property="validTo" column="valid_to"/>
+    </resultMap>
+    <sql id="templateColumns">coupon_id,coupon_name,scope_type,threshold_amount,discount_amount,total_quantity,
+        claimed_quantity,per_member_limit,status,valid_from,valid_to,remark,version,create_by,create_time,update_by,update_time</sql>
+    <sql id="memberCouponColumns">mc.member_coupon_id,mc.coupon_id,mc.member_id,
+        case when mc.status='AVAILABLE' and t.valid_to&lt;now() then 'EXPIRED' else mc.status end member_status,
+        mc.lock_order_id,mc.used_order_id,mc.receive_time,mc.lock_time,mc.used_time,
+        t.coupon_name,t.scope_type,t.threshold_amount,t.discount_amount,t.status template_status,t.valid_from,t.valid_to</sql>
+
+    <select id="selectMemberCoupon" resultMap="MemberCoupon">
+        select <include refid="memberCouponColumns"/> from mall_member_coupon mc
+        join mall_coupon_template t on t.coupon_id=mc.coupon_id
+        where mc.member_coupon_id=#{memberCouponId} and mc.member_id=#{memberId}
+    </select>
+    <select id="selectMemberCoupons" resultMap="MemberCoupon">
+        select <include refid="memberCouponColumns"/> from mall_member_coupon mc
+        join mall_coupon_template t on t.coupon_id=mc.coupon_id where mc.member_id=#{memberId}
+        order by case mc.status when 'AVAILABLE' then 1 when 'LOCKED' then 2 else 3 end,t.valid_to,mc.member_coupon_id desc
+    </select>
+    <select id="selectClaimableTemplates" resultMap="Template">
+        select <include refid="templateColumns"/> from mall_coupon_template t
+        where t.status='PUBLISHED' and t.valid_to&gt;now() and t.claimed_quantity&lt;t.total_quantity
+          and not exists(select 1 from mall_member_coupon mc where mc.coupon_id=t.coupon_id and mc.member_id=#{memberId})
+        order by t.valid_to,t.coupon_id desc
+    </select>
+    <select id="selectTemplateForUpdate" resultMap="Template">
+        select <include refid="templateColumns"/> from mall_coupon_template where coupon_id=#{couponId} for update
+    </select>
+    <select id="countMemberClaims" resultType="int">
+        select count(1) from mall_member_coupon where coupon_id=#{couponId} and member_id=#{memberId}
+    </select>
+    <select id="selectEligibleSkuIds" resultType="long">
+        select distinct s.sku_id from mall_sku s join mall_spu p on p.spu_id=s.spu_id
+        where s.sku_id in
+        <foreach collection="skuIds" item="skuId" open="(" separator="," close=")">#{skuId}</foreach>
+        and exists(select 1 from mall_coupon_scope cs where cs.coupon_id=#{couponId}
+            <choose><when test="scopeType == 'CATEGORY'">and cs.target_id=p.category_id</when>
+            <otherwise>and cs.target_id=p.spu_id</otherwise></choose>)
+    </select>
+    <update id="incrementClaimed">
+        update mall_coupon_template set claimed_quantity=claimed_quantity+1,version=version+1,update_time=now()
+        where coupon_id=#{couponId} and version=#{version} and status='PUBLISHED' and claimed_quantity&lt;total_quantity
+    </update>
+    <insert id="insertMemberCoupon" useGeneratedKeys="true" keyProperty="memberCouponId">
+        insert into mall_member_coupon(coupon_id,member_id,status,receive_time,update_time)
+        values(#{couponId},#{memberId},#{status},now(),now())
+    </insert>
+    <update id="lockMemberCoupon">
+        update mall_member_coupon mc join mall_coupon_template t on t.coupon_id=mc.coupon_id
+        set mc.status='LOCKED',mc.lock_order_id=#{orderId},mc.lock_time=now(),mc.update_time=now()
+        where mc.member_coupon_id=#{memberCouponId} and mc.member_id=#{memberId} and mc.status='AVAILABLE'
+          and t.status='PUBLISHED' and now() between t.valid_from and t.valid_to
+    </update>
+    <insert id="insertOrderCoupon" useGeneratedKeys="true" keyProperty="orderCouponId">
+        insert into mall_order_coupon(order_id,order_no,member_coupon_id,coupon_id,coupon_name,scope_type,
+            threshold_amount,discount_amount,status,create_time,update_time)
+        values(#{orderId},#{orderNo},#{memberCouponId},#{couponId},#{couponName},#{scopeType},
+            #{thresholdAmount},#{discountAmount},#{status},now(),now())
+    </insert>
+    <update id="consumeByOrderId">
+        update mall_member_coupon mc join mall_order_coupon oc on oc.member_coupon_id=mc.member_coupon_id
+        set mc.status='USED',mc.used_order_id=oc.order_id,mc.used_time=now(),mc.update_time=now(),
+            oc.status='USED',oc.update_time=now()
+        where oc.order_id=#{orderId} and mc.status='LOCKED' and oc.status='LOCKED'
+    </update>
+    <update id="releaseByOrderId">
+        update mall_member_coupon mc join mall_order_coupon oc on oc.member_coupon_id=mc.member_coupon_id
+        set mc.status='AVAILABLE',mc.lock_order_id=null,mc.lock_time=null,mc.update_time=now(),
+            oc.status='RELEASED',oc.update_time=now()
+        where oc.order_id=#{orderId} and mc.status='LOCKED' and oc.status='LOCKED'
+    </update>
+    <select id="selectMemberOrderCoupon" resultType="com.ruoyi.mall.coupon.domain.MallOrderCoupon">
+        select oc.order_coupon_id orderCouponId,oc.order_id orderId,oc.order_no orderNo,
+            oc.member_coupon_id memberCouponId,oc.coupon_id couponId,oc.coupon_name couponName,
+            oc.scope_type scopeType,oc.threshold_amount thresholdAmount,oc.discount_amount discountAmount,
+            oc.status status
+        from mall_order_coupon oc join mall_order o on o.order_id=oc.order_id
+        where oc.order_id=#{orderId} and o.member_id=#{memberId}
+    </select>
+    <select id="selectAdminTemplates" resultMap="Template">
+        select <include refid="templateColumns"/> from mall_coupon_template
+        where (#{keyword} is null or #{keyword}='' or coupon_name like concat('%',#{keyword},'%'))
+          and (#{status} is null or #{status}='' or status=#{status})
+        order by create_time desc,coupon_id desc
+    </select>
+    <select id="selectAdminTemplate" resultMap="Template">
+        select <include refid="templateColumns"/> from mall_coupon_template where coupon_id=#{couponId}
+    </select>
+    <select id="selectScopeTargetIds" resultType="long">
+        select target_id from mall_coupon_scope where coupon_id=#{couponId} order by scope_id
+    </select>
+    <insert id="insertTemplate" useGeneratedKeys="true" keyProperty="couponId">
+        insert into mall_coupon_template(coupon_name,scope_type,threshold_amount,discount_amount,total_quantity,
+            claimed_quantity,per_member_limit,status,valid_from,valid_to,remark,version,create_by,create_time,update_by,update_time)
+        values(#{couponName},#{scopeType},#{thresholdAmount},#{discountAmount},#{totalQuantity},0,1,#{status},
+            #{validFrom},#{validTo},#{remark},0,#{createBy},now(),#{createBy},now())
+    </insert>
+    <update id="updateTemplate">
+        update mall_coupon_template set coupon_name=#{couponName},scope_type=#{scopeType},threshold_amount=#{thresholdAmount},
+            discount_amount=#{discountAmount},total_quantity=#{totalQuantity},valid_from=#{validFrom},valid_to=#{validTo},
+            remark=#{remark},update_by=#{updateBy},update_time=now(),version=version+1
+        where coupon_id=#{couponId} and status='DRAFT'
+    </update>
+    <delete id="deleteScopes">delete from mall_coupon_scope where coupon_id=#{couponId}</delete>
+    <insert id="insertScope">insert ignore into mall_coupon_scope(coupon_id,target_id) values(#{couponId},#{targetId})</insert>
+    <update id="updateTemplateStatus">
+        update mall_coupon_template set status=#{status},update_by=#{updateBy},update_time=now(),version=version+1
+        where coupon_id=#{couponId} and status in ('DRAFT','PUBLISHED','PAUSED')
+    </update>
+    <insert id="insertAudit">
+        insert into mall_coupon_operation_audit(coupon_id,action_type,operator_id,detail,create_time)
+        values(#{couponId},#{actionType},#{operatorId},#{detail},now())
+    </insert>
+</mapper>

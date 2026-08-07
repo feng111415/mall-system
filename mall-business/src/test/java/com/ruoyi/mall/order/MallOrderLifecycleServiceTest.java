@@ -17,6 +17,7 @@ import org.mockito.MockitoAnnotations;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.mall.application.port.InventoryPort;
 import com.ruoyi.mall.application.port.PaymentExpirationPort;
+import com.ruoyi.mall.coupon.service.MallCouponService;
 import com.ruoyi.mall.order.domain.MallOrder;
 import com.ruoyi.mall.order.mapper.MallOrderMapper;
 import com.ruoyi.mall.order.service.MallOrderLifecycleService;
@@ -26,13 +27,14 @@ class MallOrderLifecycleServiceTest
     @Mock private MallOrderMapper mapper;
     @Mock private InventoryPort inventoryPort;
     @Mock private PaymentExpirationPort paymentExpirationPort;
+    @Mock private MallCouponService couponService;
     private MallOrderLifecycleService service;
 
     @BeforeEach
     void setUp()
     {
         MockitoAnnotations.openMocks(this);
-        service = new MallOrderLifecycleService(mapper, inventoryPort, paymentExpirationPort);
+        service = new MallOrderLifecycleService(mapper, inventoryPort, paymentExpirationPort, couponService);
         when(mapper.insertOperationLog(any())).thenReturn(1);
     }
 
@@ -47,6 +49,7 @@ class MallOrderLifecycleServiceTest
 
         assertEquals("CANCELLED", result.getStatus());
         verify(inventoryPort).release("M20260727150000000001");
+        verify(couponService).release(1L);
         verify(mapper).insertOperationLog(any());
     }
 

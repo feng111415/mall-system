@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import com.ruoyi.mall.coupon.domain.MallOrderCoupon;
 
 public class MallOrder implements Serializable
 {
@@ -45,6 +46,7 @@ public class MallOrder implements Serializable
     private String latestAfterSaleType;
     private String latestAfterSaleStatus;
     private LocalDateTime latestAfterSaleUpdateTime;
+    private MallOrderCoupon coupon;
 
     public Long getOrderId() { return orderId; }
     public void setOrderId(Long orderId) { this.orderId = orderId; }
@@ -120,4 +122,6 @@ public class MallOrder implements Serializable
     public void setLatestAfterSaleStatus(String latestAfterSaleStatus) { this.latestAfterSaleStatus = latestAfterSaleStatus; }
     public LocalDateTime getLatestAfterSaleUpdateTime() { return latestAfterSaleUpdateTime; }
     public void setLatestAfterSaleUpdateTime(LocalDateTime latestAfterSaleUpdateTime) { this.latestAfterSaleUpdateTime = latestAfterSaleUpdateTime; }
+    public MallOrderCoupon getCoupon() { return coupon; }
+    public void setCoupon(MallOrderCoupon coupon) { this.coupon = coupon; }
 }
