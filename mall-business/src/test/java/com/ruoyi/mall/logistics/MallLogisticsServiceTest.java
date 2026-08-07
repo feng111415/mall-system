@@ -179,6 +179,27 @@ class MallLogisticsServiceTest
     }
 
     @Test
+    void arrivedNodeDoesNotMarkShipmentDelivered()
+    {
+        MallLogisticsShipment shipment = new MallLogisticsShipment();
+        shipment.setShipmentId(11L); shipment.setOrderId(9L); shipment.setOrderNo("ORDER-9");
+        shipment.setTrackingNo("TRACK-1"); shipment.setStatus("IN_TRANSIT");
+        MallLogisticsNode latest = new MallLogisticsNode();
+        latest.setNodeStatus("OUT_FOR_DELIVERY"); latest.setEventTime(LocalDateTime.of(2026, 7, 30, 10, 0));
+        when(logisticsMapper.selectByIdForUpdate(11L)).thenReturn(shipment);
+        when(logisticsMapper.selectLatestNode(11L)).thenReturn(latest);
+        when(logisticsMapper.insertNode(any())).thenReturn(1);
+        when(logisticsMapper.selectNodes(11L)).thenReturn(java.util.List.of(latest));
+        MallLogisticsNodeRequest request = new MallLogisticsNodeRequest();
+        request.setNodeStatus("ARRIVED"); request.setTitle("已送达"); request.setDescription("包裹已送达收件点");
+        request.setEventTime("2026-07-30T11:00:00");
+
+        assertEquals(shipment, service.appendNode(11L, request, "admin"));
+        assertEquals("IN_TRANSIT", shipment.getStatus());
+        verify(logisticsMapper, never()).updateShipmentDelivered(any(), any());
+    }
+
+    @Test
     void allowsCorrectionAfterDeliveredWithoutChangingReceiptState()
     {
         MallLogisticsShipment shipment = new MallLogisticsShipment();
@@ -212,6 +233,19 @@ class MallLogisticsServiceTest
         verify(orderMapper).markCompleted(9L);
         verify(orderMapper).insertOperationLog(any());
         verify(logisticsMapper, never()).selectLatestNode(11L);
+    }
+
+    @Test
+    void memberCannotConfirmArrivedShipment()
+    {
+        MallLogisticsShipment shipment = new MallLogisticsShipment();
+        shipment.setShipmentId(11L); shipment.setOrderId(9L); shipment.setOrderNo("ORDER-9");
+        shipment.setStatus("IN_TRANSIT");
+        when(logisticsMapper.selectMemberShipment(9L, 7L)).thenReturn(shipment);
+
+        assertThrows(ServiceException.class, () -> service.confirmReceipt(7L, 9L));
+        verify(orderMapper, never()).markCompleted(any());
+        verify(orderMapper, never()).insertOperationLog(any());
     }
 
     @Test

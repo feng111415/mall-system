@@ -273,7 +273,7 @@ export default {
     paymentDetailStatusLabel (value) { return ({ CREATING: '创建中', PAYING: '支付中', SUCCESS: '支付成功', CLOSED: '已关闭', FAILED: '失败', REFUNDING: '退款中', REFUNDED: '已退款' })[value] || value || '-' },
     inventoryStatusLabel (value) { return ({ LOCKED: '已锁定', CONFIRMED: '已扣减', RELEASED: '已释放', NOT_RESERVED: '未预占' })[value] || value || '-' },
     logisticsStatusLabel (value, orderStatus) { if (value === 'DELIVERED') return '已签收'; if (value === 'IN_TRANSIT') return '运输中'; return orderStatus === 'PENDING_SHIPMENT' ? '待发货' : '未建物流单' },
-    operationStatusLabel (value) { return ({ SHIPPED: '已发货', IN_TRANSIT: '运输中', OUT_FOR_DELIVERY: '派送中', DELIVERED: '已签收', EXCEPTION: '运输异常', CORRECTION: '更正说明' })[value] || this.orderStatusLabel(value) },
+    operationStatusLabel (value) { return ({ SHIPPED: '已发货', IN_TRANSIT: '运输中', OUT_FOR_DELIVERY: '派送中', ARRIVED: '已送达', DELIVERED: '已签收', EXCEPTION: '运输异常', CORRECTION: '更正说明' })[value] || this.orderStatusLabel(value) },
     operatorTypeLabel (value) { return ({ ADMIN: '管理员', MEMBER: '会员', PAYMENT: '支付系统', SYSTEM: '系统' })[value] || value || '系统' },
     riskDecisionLabel (value) { return ({ PASS: '通过', REVIEW: '人工复核', REJECT: '拒绝' })[value] || value || '-' },
     afterSaleStatusLabel (value) { return (this.afterSaleStatuses.find(item => item.value === value) || {}).label || value || '-' },

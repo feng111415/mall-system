@@ -9,6 +9,7 @@ public class MallFulfillmentSummary implements Serializable
     private Integer waitingShipmentCount;
     private Integer inTransitCount;
     private Integer outForDeliveryCount;
+    private Integer arrivedCount;
     private Integer exceptionCount;
     private Integer deliveredWaitReceiptCount;
     private Integer completedCount;
@@ -23,6 +24,8 @@ public class MallFulfillmentSummary implements Serializable
     public void setInTransitCount(Integer value) { inTransitCount = value; }
     public Integer getOutForDeliveryCount() { return outForDeliveryCount; }
     public void setOutForDeliveryCount(Integer value) { outForDeliveryCount = value; }
+    public Integer getArrivedCount() { return arrivedCount; }
+    public void setArrivedCount(Integer value) { arrivedCount = value; }
     public Integer getExceptionCount() { return exceptionCount; }
     public void setExceptionCount(Integer value) { exceptionCount = value; }
     public Integer getDeliveredWaitReceiptCount() { return deliveredWaitReceiptCount; }

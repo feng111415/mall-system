@@ -59,6 +59,9 @@
       <button type="button" :class="{ active: query.workflowStatus === 'IN_TRANSIT' }" @click="applySummaryFilter('IN_TRANSIT')">
         <span>运输中</span><strong>{{ summary.inTransitCount || 0 }}</strong>
       </button>
+      <button type="button" :class="{ active: query.workflowStatus === 'ARRIVED' }" @click="applySummaryFilter('ARRIVED')">
+        <span>已送达</span><strong>{{ summary.arrivedCount || 0 }}</strong>
+      </button>
       <button type="button" :class="{ active: query.workflowStatus === 'DELIVERED_WAIT_RECEIPT' }" @click="applySummaryFilter('DELIVERED_WAIT_RECEIPT')">
         <span>签收待确认</span><strong>{{ summary.deliveredWaitReceiptCount || 0 }}</strong>
       </button>
@@ -280,6 +283,7 @@ export default {
         { value: 'WAITING_SHIPMENT', label: '待发货' },
         { value: 'IN_TRANSIT', label: '运输中' },
         { value: 'OUT_FOR_DELIVERY', label: '派送中' },
+        { value: 'ARRIVED', label: '已送达' },
         { value: 'EXCEPTION', label: '运输异常' },
         { value: 'DELIVERED_WAIT_RECEIPT', label: '签收待确认' },
         { value: 'COMPLETED', label: '已完成' },
@@ -293,6 +297,7 @@ export default {
       nodeStatuses: [
         { value: 'IN_TRANSIT', label: '运输中' },
         { value: 'OUT_FOR_DELIVERY', label: '派送中' },
+        { value: 'ARRIVED', label: '已送达' },
         { value: 'DELIVERED', label: '已签收' },
         { value: 'EXCEPTION', label: '运输异常' },
         { value: 'CORRECTION', label: '更正说明' }
@@ -400,9 +405,9 @@ export default {
     workflowLabel (value) { return (this.workflowStatuses.find(item => item.value === value) || {}).label || value || '-' },
     attentionLabel (value) { return (this.attentionTypes.find(item => item.value === value) || {}).label || value || '-' },
     orderStatusLabel (value) { return ({ PENDING_SHIPMENT: '订单待发货', SHIPPED: '订单待收货', COMPLETED: '订单已完成' })[value] || value || '-' },
-    workflowTagType (value) { return ({ WAITING_SHIPMENT: 'warning', IN_TRANSIT: '', OUT_FOR_DELIVERY: '', EXCEPTION: 'danger', DELIVERED_WAIT_RECEIPT: 'success', COMPLETED: 'success', DATA_INCONSISTENT: 'danger' })[value] || 'info' },
+    workflowTagType (value) { return ({ WAITING_SHIPMENT: 'warning', IN_TRANSIT: '', OUT_FOR_DELIVERY: '', ARRIVED: 'warning', EXCEPTION: 'danger', DELIVERED_WAIT_RECEIPT: 'success', COMPLETED: 'success', DATA_INCONSISTENT: 'danger' })[value] || 'info' },
     attentionTagType (value) { return value === 'OVERDUE_UNSHIPPED' ? 'warning' : 'danger' },
-    nodeTimelineType (value) { return ({ DELIVERED: 'success', EXCEPTION: 'danger', CORRECTION: 'warning' })[value] || 'primary' },
+    nodeTimelineType (value) { return ({ ARRIVED: 'warning', DELIVERED: 'success', EXCEPTION: 'danger', CORRECTION: 'warning' })[value] || 'primary' },
     maskedPhone (value) { return value && value.length >= 7 ? value.slice(0, 3) + '****' + value.slice(-4) : value || '-' },
     formatRefreshTime () {
       const now = new Date()
@@ -423,7 +428,7 @@ export default {
 .query-form .el-input { width: 166px; }
 .query-form .el-select { width: 150px; }
 .query-form .el-date-editor { width: 350px; }
-.summary-band { display: grid; grid-template-columns: repeat(7, minmax(112px, 1fr)); margin: 13px 0; overflow: hidden; border: 1px solid #dfe5ed; border-radius: 5px; background: #fff; }
+.summary-band { display: grid; grid-template-columns: repeat(8, minmax(108px, 1fr)); margin: 13px 0; overflow: hidden; border: 1px solid #dfe5ed; border-radius: 5px; background: #fff; }
 .summary-band button { position: relative; min-width: 0; min-height: 67px; padding: 11px 14px; border: 0; border-right: 1px solid #e8ecf1; background: #fff; color: inherit; text-align: left; cursor: pointer; }
 .summary-band button:last-child { border-right: 0; }
 .summary-band button:hover { background: #f7faff; }

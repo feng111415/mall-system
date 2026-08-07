@@ -31,7 +31,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 public class MallLogisticsService
 {
     private static final Set<String> WORKFLOW_STATUSES = Set.of("WAITING_SHIPMENT", "IN_TRANSIT",
-            "OUT_FOR_DELIVERY", "EXCEPTION", "DELIVERED_WAIT_RECEIPT", "COMPLETED", "DATA_INCONSISTENT");
+            "OUT_FOR_DELIVERY", "ARRIVED", "EXCEPTION", "DELIVERED_WAIT_RECEIPT", "COMPLETED", "DATA_INCONSISTENT");
     private static final Set<String> ATTENTION_TYPES = Set.of("OVERDUE_UNSHIPPED", "TRANSPORT_EXCEPTION",
             "DATA_INCONSISTENT");
     private final MallLogisticsMapper logisticsMapper;

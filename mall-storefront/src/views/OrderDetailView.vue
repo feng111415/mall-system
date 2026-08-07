@@ -247,7 +247,7 @@ function attemptLabel(status) { return attemptLabels[status] || status || '-' }
 function afterSaleStatusLabel(status) { return afterSaleStatusLabels[status] || status || '-' }
 function afterSaleTypeLabel(type) { return type === 'RETURN_REFUND' ? '退货退款' : '仅退款' }
 function logisticsCompanyName(code) { return logisticsCompanies.find(item => item.code === code)?.name || code || '-' }
-function logisticsNodeLabel(status) { return ({ SHIPPED: '已发货', IN_TRANSIT: '运输中', OUT_FOR_DELIVERY: '派送中', DELIVERED: '已签收', EXCEPTION: '运输异常', CORRECTION: '更正说明' })[status] || status || '-' }
+function logisticsNodeLabel(status) { return ({ SHIPPED: '已发货', IN_TRANSIT: '运输中', OUT_FOR_DELIVERY: '派送中', ARRIVED: '已送达', DELIVERED: '已签收', EXCEPTION: '运输异常', CORRECTION: '更正说明' })[status] || status || '-' }
 </script>
 
 <template>
@@ -268,7 +268,7 @@ function logisticsNodeLabel(status) { return ({ SHIPPED: '已发货', IN_TRANSIT
       </section>
 
       <section v-if="logistics" class="order-delivery-hero">
-        <div><VanIcon name="logistics" /><span><small>最新物流</small><h2>{{ logistics.status === 'DELIVERED' ? '你的包裹已经送达' : '你的包裹正在向你靠近' }}</h2><p>{{ latestLogisticsNode?.description || '物流信息已更新' }}<template v-if="latestLogisticsNode?.location"> · {{ latestLogisticsNode.location }}</template></p></span></div>
+        <div><VanIcon name="logistics" /><span><small>最新物流</small><h2>{{ logistics.status === 'DELIVERED' ? '你的包裹已经签收' : latestLogisticsNode?.nodeStatus === 'ARRIVED' ? '你的包裹已经送达' : '你的包裹正在向你靠近' }}</h2><p>{{ latestLogisticsNode?.description || '物流信息已更新' }}<template v-if="latestLogisticsNode?.location"> · {{ latestLogisticsNode.location }}</template></p></span></div>
         <b>当前<br /><strong>{{ logisticsNodeLabel(latestLogisticsNode?.nodeStatus || logistics.status) }}</strong></b>
       </section>
       <nav class="order-detail-tabs" aria-label="订单详情导航"><a v-if="logistics" href="#order-logistics">物流进度</a><a href="#order-products">商品信息</a><a href="#order-address">收货信息</a></nav>

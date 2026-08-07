@@ -72,6 +72,7 @@
     <resultMap id="FulfillmentSummary" type="com.ruoyi.mall.logistics.domain.MallFulfillmentSummary">
         <result property="totalCount" column="total_count"/><result property="waitingShipmentCount" column="waiting_shipment_count"/>
         <result property="inTransitCount" column="in_transit_count"/><result property="outForDeliveryCount" column="out_for_delivery_count"/>
+        <result property="arrivedCount" column="arrived_count"/>
         <result property="exceptionCount" column="exception_count"/><result property="deliveredWaitReceiptCount" column="delivered_wait_receipt_count"/>
         <result property="completedCount" column="completed_count"/><result property="overdueUnshippedCount" column="overdue_unshipped_count"/>
         <result property="dataInconsistentCount" column="data_inconsistent_count"/>
@@ -94,6 +95,7 @@
                      when order_status='PENDING_SHIPMENT' then 'WAITING_SHIPMENT'
                      when shipment_status='DELIVERED' then 'DELIVERED_WAIT_RECEIPT'
                      when operational_node_status='EXCEPTION' then 'EXCEPTION'
+                     when operational_node_status='ARRIVED' then 'ARRIVED'
                      when operational_node_status='OUT_FOR_DELIVERY' then 'OUT_FOR_DELIVERY'
                      else 'IN_TRANSIT' end workflow_status
             from (
@@ -140,6 +142,7 @@
             coalesce(sum(workflow_status='WAITING_SHIPMENT'),0) waiting_shipment_count,
             coalesce(sum(workflow_status='IN_TRANSIT'),0) in_transit_count,
             coalesce(sum(workflow_status='OUT_FOR_DELIVERY'),0) out_for_delivery_count,
+            coalesce(sum(workflow_status='ARRIVED'),0) arrived_count,
             coalesce(sum(workflow_status='EXCEPTION'),0) exception_count,
             coalesce(sum(workflow_status='DELIVERED_WAIT_RECEIPT'),0) delivered_wait_receipt_count,
             coalesce(sum(workflow_status='COMPLETED'),0) completed_count,
