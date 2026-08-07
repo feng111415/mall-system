@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { Icon as VanIcon } from 'vant'
 import { cancelOrder, getOrderDetail, getOrderLogistics, confirmReceipt, applyItemAfterSale, getAfterSales, submitReturnTracking } from '../api/order'
 import { createPayment, getOrderPayments, mockPaymentSuccess } from '../api/payment'
+import { getOrderReviewItems, submitReview, uploadReviewImage } from '../api/review'
 import { useNoticeStore } from '../stores/notice'
 
 const route = useRoute()
@@ -20,6 +21,14 @@ const afterSaleReason = ref('OTHER')
 const afterSaleEvidence = ref('')
 const afterSaleItems = ref([])
 const afterSales = ref([])
+const reviewItems = ref([])
+const reviewOpen = ref(false)
+const reviewTarget = ref(null)
+const reviewRating = ref(5)
+const reviewContent = ref('')
+const reviewAnonymous = ref(false)
+const reviewImages = ref([])
+const reviewBusy = ref(false)
 const returnTrackingDrafts = ref({})
 const logistics = ref(null)
 const now = ref(Date.now())
@@ -80,6 +89,10 @@ async function loadDetail() {
     order.value = orderResponse.data.data
     payments.value = paymentResponse.data.data || []
     afterSales.value = (afterSaleResponse.data.data || []).filter(item => item.orderId === orderId)
+    reviewItems.value = []
+    if (order.value.status === 'COMPLETED') {
+      try { reviewItems.value = (await getOrderReviewItems(orderId)).data.data || [] } catch { reviewItems.value = [] }
+    }
     logistics.value = null
     if (['SHIPPED', 'COMPLETED', 'AFTER_SALE'].includes(order.value.status)) {
       try { logistics.value = (await getOrderLogistics(orderId)).data.data } catch { logistics.value = null }
@@ -190,6 +203,38 @@ async function submitAfterSale() {
   finally { busy.value = false }
 }
 
+function reviewState(orderItemId) { return reviewItems.value.find(item => item.orderItemId === orderItemId) }
+function canReviewItem(item) { return order.value?.status === 'COMPLETED' && reviewState(item.orderItemId)?.canReview }
+function openReview(item) {
+  reviewTarget.value = item; reviewRating.value = 5; reviewContent.value = ''; reviewAnonymous.value = false; reviewImages.value = []; reviewOpen.value = true
+}
+function chooseReviewRating(value) { reviewRating.value = value }
+async function handleReviewFiles(event) {
+  const files = Array.from(event.target.files || [])
+  event.target.value = ''
+  if (!files.length || reviewBusy.value) return
+  if (reviewImages.value.length + files.length > 6) { notice.show('评价图片最多上传6张', 'error'); return }
+  reviewBusy.value = true
+  try {
+    for (const file of files) {
+      if (!['image/jpeg', 'image/png'].includes(file.type) || file.size > 5 * 1024 * 1024) throw new Error('评价图片仅支持5MB以内的 JPG、PNG')
+      reviewImages.value.push((await uploadReviewImage(file)).data.data)
+    }
+  } catch (error) { notice.show(error.response?.data?.msg || error.message || '评价图片上传失败', 'error') }
+  finally { reviewBusy.value = false }
+}
+function removeReviewImage(image) { reviewImages.value = reviewImages.value.filter(value => value !== image) }
+async function submitReviewForm() {
+  if (!reviewTarget.value || reviewBusy.value) return
+  if (!reviewContent.value.trim()) { notice.show('请填写评价内容', 'error'); return }
+  reviewBusy.value = true
+  try {
+    await submitReview({ orderItemId: reviewTarget.value.orderItemId, rating: reviewRating.value, content: reviewContent.value.trim(), anonymous: reviewAnonymous.value, imageUrls: reviewImages.value })
+    reviewOpen.value = false; notice.show('评价已提交，审核通过后展示'); await loadDetail()
+  } catch (error) { notice.show(error.response?.data?.msg || '评价提交失败', 'error') }
+  finally { reviewBusy.value = false }
+}
+
 function formatPrice(value) { return Number(value || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2 }) }
 function formatTime(value) { return value ? new Date(value).toLocaleString('zh-CN', { hour12: false }) : '-' }
 function statusLabel(status) { return statusLabels[status] || status || '-' }
@@ -235,7 +280,7 @@ function logisticsNodeLabel(status) { return ({ SHIPPED: '已发货', IN_TRANSIT
             <article v-for="item in order.items" :key="item.orderItemId" class="order-product">
               <img :src="item.productImage || '/assets/chair.jpg'" :alt="item.productName" />
               <div><strong>{{ item.productName }}</strong><small>{{ item.skuName || item.skuCode }}</small><span>¥{{ formatPrice(item.unitPrice) }} × {{ item.quantity }}</span></div>
-              <b>¥{{ formatPrice(item.lineAmount) }}</b>
+              <div class="order-product-actions"><b>¥{{ formatPrice(item.lineAmount) }}</b><button v-if="canReviewItem(item)" class="order-review-action" type="button" @click="openReview(item)">去评价</button><small v-else-if="reviewState(item.orderItemId)?.reviewId" class="order-review-status">{{ reviewState(item.orderItemId)?.reviewStatus === 'PENDING' ? '评价审核中' : reviewState(item.orderItemId)?.reviewStatus === 'PUBLISHED' ? '已评价' : '评价未通过' }}</small></div>
             </article>
           </section>
 
@@ -302,6 +347,7 @@ function logisticsNodeLabel(status) { return ({ SHIPPED: '已发货', IN_TRANSIT
         </aside>
       </div>
       <div v-if="afterSaleOpen" class="after-sale-dialog"><div class="after-sale-panel"><h2>申请售后</h2><label>类型<select v-model="afterSaleType"><option value="ONLY_REFUND">仅退款</option><option value="RETURN_REFUND">退货退款</option></select></label><label>原因<select v-model="afterSaleReason"><option value="OTHER">其他</option><option value="QUALITY">质量问题</option><option value="NOT_RECEIVED">未收到货</option></select></label><label v-if="afterSaleReason === 'QUALITY'">凭证地址<input v-model="afterSaleEvidence" placeholder="请填写凭证地址" /></label><div v-for="item in afterSaleItems" :key="item.orderItemId" class="after-sale-item"><span>{{ item.productName }}（最多 {{ item.quantity }} 件）</span><input v-model.number="item.requestedQuantity" type="number" min="0" :max="item.quantity" /></div><div class="after-sale-actions"><button class="order-secondary-action" @click="afterSaleOpen = false">取消</button><button class="primary-button" :disabled="busy" @click="submitAfterSale">提交申请</button></div></div></div>
+      <div v-if="reviewOpen" class="after-sale-dialog"><div class="after-sale-panel review-panel"><h2>评价商品</h2><div class="review-target"><img :src="reviewTarget?.productImage || '/assets/chair.jpg'" :alt="reviewTarget?.productName" /><div><strong>{{ reviewTarget?.productName }}</strong><small>{{ reviewTarget?.skuName || '已购买规格' }}</small></div></div><div class="review-rating-field"><span>满意度</span><div><button v-for="value in 5" :key="value" :class="{ active: value <= reviewRating }" type="button" :aria-label="`${value}星`" @click="chooseReviewRating(value)">★</button></div></div><label>评价内容<textarea v-model="reviewContent" maxlength="1000" rows="5" placeholder="说说这件商品的实际体验" /></label><label class="review-anonymous"><input v-model="reviewAnonymous" type="checkbox" /> 匿名评价</label><div class="review-upload"><span>评价图片（最多6张）</span><div class="review-upload-grid"><label v-for="image in reviewImages" :key="image" class="review-upload-image"><img :src="image" alt="已上传评价图片" /><button type="button" aria-label="移除图片" @click="removeReviewImage(image)">×</button></label><label v-if="reviewImages.length < 6" class="review-upload-add"><input type="file" accept="image/jpeg,image/png" multiple @change="handleReviewFiles" /><span>＋</span><small>添加图片</small></label></div></div><div class="after-sale-actions"><button class="order-secondary-action" type="button" @click="reviewOpen = false">取消</button><button class="primary-button" :disabled="reviewBusy" type="button" @click="submitReviewForm">{{ reviewBusy ? '正在提交...' : '提交评价' }}</button></div></div></div>
     </template>
     <div v-else-if="!loading" class="empty-state"><h2>无法查看此订单</h2><p>{{ message }}</p><router-link class="primary-button" to="/orders">返回订单列表</router-link></div>
   </section>

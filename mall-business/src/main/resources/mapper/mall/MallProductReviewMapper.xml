@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.mall.review.mapper.MallProductReviewMapper">
+    <resultMap id="Review" type="com.ruoyi.mall.review.domain.MallProductReview">
+        <id property="reviewId" column="review_id"/>
+        <result property="orderId" column="order_id"/><result property="orderNo" column="order_no"/>
+        <result property="orderItemId" column="order_item_id"/><result property="memberId" column="member_id"/>
+        <result property="spuId" column="spu_id"/><result property="skuId" column="sku_id"/>
+        <result property="productName" column="product_name"/><result property="skuName" column="sku_name"/>
+        <result property="productImage" column="product_image"/><result property="rating" column="rating"/>
+        <result property="content" column="content"/><result property="anonymous" column="anonymous"/>
+        <result property="status" column="status"/><result property="reviewerName" column="reviewer_name"/>
+        <result property="memberPhone" column="member_phone"/><result property="auditBy" column="audit_by"/>
+        <result property="auditTime" column="audit_time"/><result property="auditRemark" column="audit_remark"/>
+        <result property="createTime" column="create_time"/><result property="updateTime" column="update_time"/>
+    </resultMap>
+    <resultMap id="ReviewOrderItem" type="com.ruoyi.mall.review.domain.MallProductReviewOrderItem">
+        <id property="orderItemId" column="order_item_id"/><result property="orderId" column="order_id"/>
+        <result property="orderNo" column="order_no"/><result property="memberId" column="member_id"/>
+        <result property="spuId" column="spu_id"/><result property="skuId" column="sku_id"/>
+        <result property="productName" column="product_name"/><result property="skuName" column="sku_name"/>
+        <result property="productImage" column="product_image"/><result property="quantity" column="quantity"/>
+        <result property="reviewId" column="review_id"/><result property="reviewStatus" column="review_status"/>
+        <result property="canReview" column="can_review"/>
+    </resultMap>
+
+    <sql id="reviewColumns">
+        r.review_id,r.order_id,r.order_no,r.order_item_id,r.member_id,r.spu_id,r.sku_id,
+        r.product_name,r.sku_name,r.product_image,r.rating,r.content,r.anonymous,r.status,
+        r.audit_by,r.audit_time,r.audit_remark,r.create_time,r.update_time
+    </sql>
+
+    <select id="selectOrderItemForReview" resultMap="ReviewOrderItem">
+        select i.order_item_id,o.order_id,o.order_no,o.member_id,s.spu_id,i.sku_id,
+               i.product_name,i.sku_name,i.product_image,i.quantity,
+               r.review_id,r.status review_status,
+               case when r.review_id is null then 1 else 0 end can_review
+        from mall_order_item i
+        join mall_order o on o.order_id=i.order_id and o.member_id=#{memberId}
+            and o.status='COMPLETED' and o.payment_status='PAID'
+        join mall_sku s on s.sku_id=i.sku_id
+        left join mall_product_review r on r.order_item_id=i.order_item_id
+        where i.order_item_id=#{orderItemId}
+    </select>
+
+    <select id="selectMemberOrderReviewItems" resultMap="ReviewOrderItem">
+        select i.order_item_id,o.order_id,o.order_no,o.member_id,s.spu_id,i.sku_id,
+               i.product_name,i.sku_name,i.product_image,i.quantity,
+               r.review_id,r.status review_status,
+               case when r.review_id is null then 1 else 0 end can_review
+        from mall_order_item i
+        join mall_order o on o.order_id=i.order_id and o.member_id=#{memberId}
+            and o.status='COMPLETED' and o.payment_status='PAID'
+        join mall_sku s on s.sku_id=i.sku_id
+        left join mall_product_review r on r.order_item_id=i.order_item_id
+        where o.order_id=#{orderId}
+        order by i.order_item_id
+    </select>
+
+    <insert id="insertReview" useGeneratedKeys="true" keyProperty="reviewId">
+        insert into mall_product_review(
+            order_id,order_no,order_item_id,member_id,spu_id,sku_id,product_name,sku_name,product_image,
+            rating,content,anonymous,status,create_time,update_time
+        ) values(
+            #{orderId},#{orderNo},#{orderItemId},#{memberId},#{spuId},#{skuId},#{productName},#{skuName},#{productImage},
+            #{rating},#{content},#{anonymous},'PENDING',now(),now()
+        )
+    </insert>
+
+    <insert id="insertImage">
+        insert into mall_product_review_image(review_id,image_url,sort_no,create_time)
+        values(#{reviewId},#{imageUrl},#{sortNo},now())
+    </insert>
+
+    <select id="selectPublishedSummary" resultType="com.ruoyi.mall.review.domain.MallProductReviewSummary">
+        select count(1) reviewCount,
+               coalesce(round(avg(rating),2),0) averageRating,
+               sum(case when rating=5 then 1 else 0 end) fiveStarCount,
+               sum(case when rating=4 then 1 else 0 end) fourStarCount,
+               sum(case when rating=3 then 1 else 0 end) threeStarCount,
+               sum(case when rating=2 then 1 else 0 end) twoStarCount,
+               sum(case when rating=1 then 1 else 0 end) oneStarCount
+        from mall_product_review where spu_id=#{spuId} and status='PUBLISHED'
+    </select>
+
+    <select id="selectPublishedReviews" resultMap="Review">
+        select <include refid="reviewColumns"/>,
+               case when r.anonymous='1' then '匿名用户'
+                    else coalesce(nullif(m.nickname,''), concat(left(m.phone,3),'****',right(m.phone,4))) end reviewer_name
+        from mall_product_review r join mall_member m on m.member_id=r.member_id
+        where r.spu_id=#{spuId} and r.status='PUBLISHED'
+        order by r.create_time desc,r.review_id desc
+        limit #{limit} offset #{offset}
+    </select>
+
+    <select id="selectImageUrls" resultType="string">
+        select image_url from mall_product_review_image where review_id=#{reviewId}
+        order by sort_no,review_image_id
+    </select>
+
+    <select id="selectAdminReviews" resultMap="Review">
+        select <include refid="reviewColumns"/>,m.phone member_phone,
+               case when r.anonymous='1' then '匿名用户'
+                    else coalesce(nullif(m.nickname,''), concat(left(m.phone,3),'****',right(m.phone,4))) end reviewer_name
+        from mall_product_review r join mall_member m on m.member_id=r.member_id
+        where 1=1
+        <if test="status != null and status != ''">and r.status=#{status}</if>
+        <if test="spuId != null">and r.spu_id=#{spuId}</if>
+        <if test="keyword != null and keyword != ''">
+            and (r.product_name like concat('%',#{keyword},'%')
+              or r.content like concat('%',#{keyword},'%')
+              or r.order_no like concat('%',#{keyword},'%'))
+        </if>
+        order by case when r.status='PENDING' then 0 else 1 end,r.create_time desc,r.review_id desc
+    </select>
+
+    <select id="selectAdminReview" resultMap="Review">
+        select <include refid="reviewColumns"/>,m.phone member_phone,
+               case when r.anonymous='1' then '匿名用户'
+                    else coalesce(nullif(m.nickname,''), concat(left(m.phone,3),'****',right(m.phone,4))) end reviewer_name
+        from mall_product_review r join mall_member m on m.member_id=r.member_id
+        where r.review_id=#{reviewId}
+    </select>
+
+    <update id="updateAudit">
+        update mall_product_review
+        set status=#{status},audit_by=#{auditBy},audit_time=now(),audit_remark=#{remark},update_time=now()
+        where review_id=#{reviewId} and status='PENDING'
+    </update>
+</mapper>

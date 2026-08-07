@@ -2,6 +2,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getProduct, getProducts } from '../api/catalog'
+import { getProductReviews } from '../api/review'
 import { useCartStore } from '../stores/cart'
 import { useNoticeStore } from '../stores/notice'
 import StoreProductCard from '../components/StoreProductCard.vue'
@@ -17,6 +18,8 @@ const selectedImage = ref('')
 const quantity = ref(1)
 const loading = ref(true)
 const relatedLoading = ref(false)
+const reviewLoading = ref(false)
+const reviewView = ref({ summary: {}, reviews: [] })
 const busy = ref(false)
 const message = ref('')
 
@@ -76,6 +79,7 @@ async function loadProduct() {
     selectSku(firstAvailable)
     selectedImage.value = firstAvailable?.imageUrl || product.value?.mainImage || ''
     await loadRelated()
+    await loadReviews()
     rememberProduct(product.value)
   } catch (error) {
     message.value = error.response?.data?.msg || '商品信息读取失败，请确认后端与数据库已启动'
@@ -93,6 +97,14 @@ async function loadRelated() {
       .slice(0, 3)
   } catch { related.value = [] }
   finally { relatedLoading.value = false }
+}
+
+async function loadReviews() {
+  if (!product.value?.spuId) return
+  reviewLoading.value = true
+  try { reviewView.value = (await getProductReviews(product.value.spuId, { limit: 8 })).data.data || { summary: {}, reviews: [] } }
+  catch { reviewView.value = { summary: {}, reviews: [] } }
+  finally { reviewLoading.value = false }
 }
 
 function rememberProduct(value) {
@@ -118,6 +130,8 @@ async function addToCart() {
 }
 
 function chooseAnother() { router.push('/catalog') }
+function reviewStars(rating) { return '★'.repeat(Number(rating || 0)) + '☆'.repeat(Math.max(0, 5 - Number(rating || 0))) }
+function reviewDate(value) { return value ? new Date(value).toLocaleDateString('zh-CN') : '' }
 
 watch(() => route.params.id, loadProduct)
 onMounted(loadProduct)
@@ -145,6 +159,15 @@ onMounted(loadProduct)
         </div>
       </div>
       <section class="detail-description"><div><span class="section-kicker">商品详情</span><h2>关于这件日常好物</h2></div><div class="detail-richtext" v-html="safeDetailHtml"></div></section>
+      <section class="detail-reviews">
+        <div class="detail-reviews-heading"><div><span class="section-kicker">买家评价</span><h2>大家怎么说</h2></div><span v-if="reviewView.summary?.reviewCount">{{ reviewView.summary.reviewCount }} 条已审核评价</span></div>
+        <div class="review-summary"><strong>{{ Number(reviewView.summary?.averageRating || 0).toFixed(1) }}</strong><div><span class="review-stars">{{ reviewStars(Math.round(Number(reviewView.summary?.averageRating || 0))) }}</span><small>综合评分</small></div><div class="review-summary-count"><span>五星 {{ reviewView.summary?.fiveStarCount || 0 }}</span><span>四星 {{ reviewView.summary?.fourStarCount || 0 }}</span></div></div>
+        <div v-if="reviewLoading" class="loading-note">正在读取评价...</div>
+        <div v-else-if="reviewView.reviews?.length" class="review-list">
+          <article v-for="review in reviewView.reviews" :key="review.reviewId" class="review-card"><header><div><strong>{{ review.reviewerName || '匿名用户' }}</strong><span class="review-stars">{{ reviewStars(review.rating) }}</span></div><time>{{ reviewDate(review.createTime) }}</time></header><p>{{ review.content }}</p><div v-if="review.imageUrls?.length" class="review-images"><img v-for="image in review.imageUrls" :key="image" :src="image" alt="评价图片" /></div><small v-if="review.skuName" class="review-sku">规格：{{ review.skuName }}</small></article>
+        </div>
+        <p v-else class="review-empty">还没有公开评价，确认收货后欢迎分享你的体验。</p>
+      </section>
       <section v-if="relatedLoading || related.length" class="related-section"><div class="section-heading"><div><span class="section-kicker">你可能还喜欢</span><h2>同一类的其他选择</h2></div><router-link to="/catalog" class="text-link">返回商品列表 →</router-link></div><div v-if="relatedLoading" class="loading-note">正在寻找相近商品...</div><div v-else class="product-grid related-grid"><StoreProductCard v-for="item in related" :key="item.spuId" :product="item" /></div></section>
     </template>
     <div v-else class="empty-state"><h2>暂时无法查看商品</h2><p>{{ message }}</p><button class="primary-button" type="button" @click="chooseAnother">返回商品列表</button></div>
