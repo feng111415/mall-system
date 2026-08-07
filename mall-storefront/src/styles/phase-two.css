@@ -856,6 +856,8 @@ h1, h2, h3, .primary-button, .add-button, .order-secondary-action, .avatar-uploa
 .account-shortcuts-c .van-icon { font-size: 21px; }
 .account-shortcuts-c strong, .account-shortcuts-c small { display: block; }
 .account-shortcuts-c small { margin-top: 5px; color: var(--muted); }
+.account-shortcuts-c strong { display: flex; align-items: center; gap: 6px; }
+.shortcut-badge { display: inline-flex; min-width: 18px; height: 18px; align-items: center; justify-content: center; border-radius: 9px; padding: 0 5px; background: var(--red); color: #fff; font-size: 10px; line-height: 1; }
 .account-sections { max-width: none; grid-template-columns: minmax(280px, .7fr) minmax(0, 1.3fr); gap: 24px; padding-top: 0; }
 .account-section { border: 2px solid var(--ink); border-radius: 8px; padding: 22px; background: var(--paper); box-shadow: 5px 5px 0 rgb(32 32 42 / 13%); }
 .account-section .section-heading { border-bottom: 2px solid var(--ink); }

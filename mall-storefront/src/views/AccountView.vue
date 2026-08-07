@@ -640,6 +640,8 @@ async function confirmAvatarCrop() {
         <router-link to="/orders"><VanIcon name="orders-o" /><span><strong>我的订单</strong><small>查看交易和物流进度</small></span><VanIcon name="arrow" /></router-link>
         <a href="#address-book"><VanIcon name="location-o" /><span><strong>地址簿</strong><small>{{ addresses.length }} 个常用地址</small></span><VanIcon name="arrow" /></a>
         <a href="#account-security"><VanIcon name="shield-o" /><span><strong>安全中心</strong><small>管理登录设备</small></span><VanIcon name="arrow" /></a>
+        <router-link to="/messages"><VanIcon name="chat-o" /><span><strong>消息中心 <b v-if="messageStore.unreadCount" class="shortcut-badge">{{ messageStore.unreadCount > 99 ? '99+' : messageStore.unreadCount }}</b></strong><small>订单、物流和账户动态</small></span><VanIcon name="arrow" /></router-link>
+        <router-link to="/coupons"><VanIcon name="coupon-o" /><span><strong>优惠券</strong><small>领取和管理会员优惠</small></span><VanIcon name="arrow" /></router-link>
       </nav>
 
       <div class="account-sections">

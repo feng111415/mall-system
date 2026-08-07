@@ -17,9 +17,7 @@ const navItems = [
   { code: '01', label: '首页', sublabel: 'HOME', to: '/' },
   { code: '02', label: '全部商品', sublabel: 'SHOP', to: '/catalog' },
   { code: '03', label: '我的订单', sublabel: 'ORDERS', to: '/orders' },
-  { code: '04', label: '消息中心', sublabel: 'MESSAGES', to: '/messages' },
-  { code: '05', label: '个人中心', sublabel: 'ACCOUNT', to: '/account' }
-  ,{ code: '06', label: '优惠券', sublabel: 'COUPONS', to: '/coupons' }
+  { code: '04', label: '个人中心', sublabel: 'ACCOUNT', to: '/account' }
 ]
 function isActive(path) {
   if (path === '/catalog') return route.path === '/catalog' || route.path.startsWith('/product/')
@@ -31,7 +29,6 @@ const mobileNavItems = [
   { label: '商品', to: '/catalog', icon: 'apps-o' },
   { label: '购物车', to: '/cart', icon: 'cart-o', cart: true },
   { label: '订单', to: '/orders', icon: 'orders-o' },
-  { label: '消息', to: '/messages', icon: 'chat-o', message: true },
   { label: '我的', to: '/account', icon: 'user-o' }
 ]
 function submitSearch() {
