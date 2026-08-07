@@ -849,6 +849,7 @@ h1, h2, h3, .primary-button, .add-button, .order-secondary-action, .avatar-uploa
 .profile-avatar { width: 100px; height: 100px; flex-basis: 100px; border: 2px solid var(--ink); border-radius: 50%; background: #f05d45; color: #fff; font-size: 34px; }
 .account-overview { width: 300px; max-width: none; gap: 12px; border: 0; padding: 0; }
 .account-overview > * { min-height: 78px; justify-content: center; border: 2px solid var(--ink); border-radius: 8px; margin: 0; padding: 10px; background: var(--paper); box-shadow: none; text-align: center; }
+.account-overview > *:last-child { border-right: 2px solid var(--ink); }
 .account-overview strong { font-size: 25px; font-weight: 800; }
 .account-shortcuts-c { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; padding: 30px 0; }
 .account-shortcuts-c > * { display: grid; min-height: 90px; grid-template-columns: 34px 1fr 20px; align-items: center; gap: 10px; border: 2px solid var(--ink); border-radius: 8px; padding: 14px; background: var(--paper); color: var(--ink); transition: transform .2s ease, box-shadow .2s ease; }
