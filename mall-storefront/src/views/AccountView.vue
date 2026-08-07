@@ -645,6 +645,7 @@ async function confirmAvatarCrop() {
       <div class="account-sections">
         <section class="account-section">
           <div class="section-heading profile-heading">
+            <router-link class="text-button" to="/account/privacy"><VanIcon name="shield-o" />账号与隐私</router-link>
             <div><span class="section-kicker">账户资料</span><h2>个人资料</h2></div>
             <button v-if="!profileEditing" class="text-button" type="button" @click="openNicknameEditor"><VanIcon name="edit" />修改昵称</button>
           </div>

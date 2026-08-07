@@ -1,6 +1,7 @@
 package com.ruoyi.mall.member.mapper;
 
 import java.util.List;
+import org.apache.ibatis.annotations.Param;
 import com.ruoyi.mall.member.domain.MallMember;
 
 public interface MallMemberMapper
@@ -14,5 +15,7 @@ public interface MallMemberMapper
     int updateNickname(Long memberId, String nickname, String updateBy);
     int updateAvatar(Long memberId, String avatar, String updateBy);
     int updateLoginInfo(MallMember member);
+    int updatePhone(@Param("memberId") Long memberId, @Param("phone") String phone);
+    int deactivate(@Param("memberId") Long memberId);
     int deleteByIds(Long[] memberIds);
 }

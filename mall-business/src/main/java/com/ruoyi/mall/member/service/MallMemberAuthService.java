@@ -33,6 +33,9 @@ public class MallMemberAuthService
 {
     private static final String LOGIN_PURPOSE = "REGISTER_LOGIN";
     private static final String PRIMARY_DEVICE_CHANGE_PURPOSE = "PRIMARY_DEVICE_CHANGE";
+    public static final String PHONE_CHANGE_OLD_PURPOSE = "PHONE_CHANGE_OLD";
+    public static final String PHONE_CHANGE_NEW_PURPOSE = "PHONE_CHANGE_NEW";
+    public static final String ACCOUNT_CANCELLATION_PURPOSE = "ACCOUNT_CANCELLATION";
     private static final long CODE_VALID_MILLIS = 5 * 60 * 1000L;
     private static final long SEND_INTERVAL_MILLIS = 60 * 1000L;
     private static final int MAX_VERIFY_ATTEMPTS = 5;
@@ -98,6 +101,24 @@ public class MallMemberAuthService
         MallMember member = requireActiveMember(current.getMemberId());
         return sendVerificationCode(member.getPhone(), requestIp, PRIMARY_DEVICE_CHANGE_PURPOSE,
                 "MALL_PRIMARY_DEVICE_CHANGE_CODE");
+    }
+
+    public Map<String, Object> sendAccountLifecycleCode(String phone, String purpose, String templateCode,
+            String requestIp)
+    {
+        if (!PHONE_CHANGE_OLD_PURPOSE.equals(purpose) && !PHONE_CHANGE_NEW_PURPOSE.equals(purpose)
+                && !ACCOUNT_CANCELLATION_PURPOSE.equals(purpose))
+            throw new ServiceException("账号操作验证码用途无效");
+        return sendVerificationCode(phone, requestIp, purpose, templateCode);
+    }
+
+    @Transactional
+    public void verifySmsCode(String phone, String purpose, String code)
+    {
+        MallSmsCode smsCode = authMapper.selectLatestSmsCode(phone, purpose);
+        validateSmsCode(smsCode, phone, code);
+        if (authMapper.consumeSmsCode(smsCode.getSmsId()) != 1)
+            throw new ServiceException("验证码已使用，请重新获取");
     }
 
     public Map<String, Object> createCaptchaChallenge(String phone, String requestIp, String deviceIdentifier)

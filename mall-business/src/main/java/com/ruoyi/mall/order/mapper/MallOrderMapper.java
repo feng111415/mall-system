@@ -9,6 +9,8 @@ import com.ruoyi.mall.order.domain.MallOrderOperationLog;
 
 public interface MallOrderMapper
 {
+    int countUnfinishedMemberOrders(@Param("memberId") Long memberId);
+
     List<MallOrder> selectMemberOrders(@Param("memberId") Long memberId,
             @Param("status") String status, @Param("limit") int limit, @Param("offset") int offset);
 

@@ -25,7 +25,13 @@ import com.ruoyi.mall.member.domain.dto.MallPrimaryDeviceReplaceRequest;
 import com.ruoyi.mall.member.domain.dto.MallSendCodeRequest;
 import com.ruoyi.mall.member.domain.dto.MallCaptchaChallengeRequest;
 import com.ruoyi.mall.member.domain.dto.MallCaptchaVerifyRequest;
+import com.ruoyi.mall.member.domain.dto.MallPhoneChangeStartRequest;
+import com.ruoyi.mall.member.domain.dto.MallPhoneChangeTicketRequest;
+import com.ruoyi.mall.member.domain.dto.MallPhoneChangeVerifyRequest;
+import com.ruoyi.mall.member.domain.dto.MallAccountCancellationRequest;
 import com.ruoyi.mall.member.service.MallMemberAuthService;
+import com.ruoyi.mall.member.service.MallMemberAccountQueryService;
+import com.ruoyi.mall.member.service.MallMemberAccountLifecycleService;
 import com.ruoyi.mall.member.service.MallMemberProfileService;
 import com.ruoyi.mall.member.service.MallMemberSessionService;
 import com.ruoyi.mall.member.service.MallMemberTokenService;
@@ -38,15 +44,21 @@ import com.ruoyi.mall.member.service.MallMemberTokenService.MemberSession;
 public class MallMemberPortalController
 {
     private final MallMemberAuthService authService;
+    private final MallMemberAccountQueryService accountQueryService;
+    private final MallMemberAccountLifecycleService accountLifecycleService;
     private final MallMemberProfileService profileService;
     private final MallMemberSessionService sessionService;
     private final MallMemberTokenService tokenService;
 
     public MallMemberPortalController(MallMemberAuthService authService,
+            MallMemberAccountQueryService accountQueryService,
+            MallMemberAccountLifecycleService accountLifecycleService,
             MallMemberProfileService profileService, MallMemberSessionService sessionService,
             MallMemberTokenService tokenService)
     {
         this.authService = authService;
+        this.accountQueryService = accountQueryService;
+        this.accountLifecycleService = accountLifecycleService;
         this.profileService = profileService;
         this.sessionService = sessionService;
         this.tokenService = tokenService;
@@ -130,6 +142,78 @@ public class MallMemberPortalController
     public AjaxResult profile(@RequestHeader(value = MallMemberTokenService.MALL_AUTHORIZATION_HEADER, required = false) String authorization)
     {
         return AjaxResult.success(profileService.profile(tokenService.requireMemberId(authorization)));
+    }
+
+    @GetMapping("/profile/account-lifecycle")
+    public AjaxResult accountLifecycle(
+            @RequestHeader(value = MallMemberTokenService.MALL_AUTHORIZATION_HEADER, required = false) String authorization)
+    {
+        return AjaxResult.success(accountQueryService.overview(tokenService.requireMemberId(authorization)));
+    }
+
+    @PostMapping("/profile/phone-change")
+    public AjaxResult startPhoneChange(
+            @RequestHeader(value = MallMemberTokenService.MALL_AUTHORIZATION_HEADER, required = false) String authorization,
+            @Valid @RequestBody MallPhoneChangeStartRequest request, HttpServletRequest servletRequest)
+    {
+        return AjaxResult.success(accountLifecycleService.startPhoneChange(tokenService.requireSession(authorization),
+                request, IpUtils.getIpAddr(servletRequest)));
+    }
+
+    @PostMapping("/profile/phone-change/old-code")
+    public AjaxResult sendOldPhoneChangeCode(
+            @RequestHeader(value = MallMemberTokenService.MALL_AUTHORIZATION_HEADER, required = false) String authorization,
+            @RequestParam Long requestId, HttpServletRequest servletRequest)
+    {
+        return AjaxResult.success(accountLifecycleService.sendOldPhoneCode(tokenService.requireSession(authorization),
+                requestId, IpUtils.getIpAddr(servletRequest)));
+    }
+
+    @PostMapping("/profile/phone-change/old-verify")
+    public AjaxResult verifyOldPhoneChange(
+            @RequestHeader(value = MallMemberTokenService.MALL_AUTHORIZATION_HEADER, required = false) String authorization,
+            @Valid @RequestBody MallPhoneChangeVerifyRequest request, HttpServletRequest servletRequest)
+    {
+        return AjaxResult.success(accountLifecycleService.verifyOldPhone(tokenService.requireSession(authorization),
+                request.getRequestId(), request.getCode(), IpUtils.getIpAddr(servletRequest)));
+    }
+
+    @PostMapping("/profile/phone-change/new-code")
+    public AjaxResult sendNewPhoneChangeCode(
+            @RequestHeader(value = MallMemberTokenService.MALL_AUTHORIZATION_HEADER, required = false) String authorization,
+            @Valid @RequestBody MallPhoneChangeTicketRequest request, HttpServletRequest servletRequest)
+    {
+        return AjaxResult.success(accountLifecycleService.sendNewPhoneCode(tokenService.requireSession(authorization),
+                request.getRequestId(), request.getTicket(), IpUtils.getIpAddr(servletRequest)));
+    }
+
+    @PutMapping("/profile/phone-change")
+    public AjaxResult completePhoneChange(
+            @RequestHeader(value = MallMemberTokenService.MALL_AUTHORIZATION_HEADER, required = false) String authorization,
+            @Valid @RequestBody MallPhoneChangeVerifyRequest request, HttpServletRequest servletRequest)
+    {
+        accountLifecycleService.completePhoneChange(tokenService.requireSession(authorization), request.getRequestId(),
+                request.getTicket(), request.getCode(), IpUtils.getIpAddr(servletRequest));
+        return AjaxResult.success("手机号更换成功，请使用新手机号重新登录");
+    }
+
+    @PostMapping("/profile/account-cancellation/code")
+    public AjaxResult sendAccountCancellationCode(
+            @RequestHeader(value = MallMemberTokenService.MALL_AUTHORIZATION_HEADER, required = false) String authorization,
+            HttpServletRequest servletRequest)
+    {
+        return AjaxResult.success(accountLifecycleService.sendCancellationCode(tokenService.requireSession(authorization),
+                IpUtils.getIpAddr(servletRequest)));
+    }
+
+    @DeleteMapping("/profile/account")
+    public AjaxResult cancelAccount(
+            @RequestHeader(value = MallMemberTokenService.MALL_AUTHORIZATION_HEADER, required = false) String authorization,
+            @Valid @RequestBody MallAccountCancellationRequest request, HttpServletRequest servletRequest)
+    {
+        accountLifecycleService.cancelAccount(tokenService.requireSession(authorization), request.getCode(),
+                IpUtils.getIpAddr(servletRequest));
+        return AjaxResult.success("账号已停用");
     }
 
     @GetMapping("/profile/avatar-presets")

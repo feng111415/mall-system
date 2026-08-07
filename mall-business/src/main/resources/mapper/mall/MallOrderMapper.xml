@@ -61,6 +61,11 @@
         'PENDING_REVIEW','APPROVED','RETURN_SHIPPED','REFUNDING'
     </sql>
 
+    <select id="countUnfinishedMemberOrders" resultType="int">
+        select count(1) from mall_order
+        where member_id=#{memberId} and status in ('PENDING_PAYMENT','PENDING_SHIPMENT','SHIPPED')
+    </select>
+
     <sql id="memberOrderListQuery">
         select o.order_id,o.order_no,o.member_id,o.status,o.payment_status,o.risk_status,o.idempotency_key,
             o.product_amount,o.shipping_fee,o.discount_amount,o.payable_amount,

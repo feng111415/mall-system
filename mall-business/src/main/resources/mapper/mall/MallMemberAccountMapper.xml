@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.mall.member.mapper.MallMemberAccountMapper">
+    <resultMap id="ConsentResult" type="com.ruoyi.mall.member.domain.MallMemberConsent">
+        <id property="consentId" column="consent_id"/>
+        <result property="memberId" column="member_id"/>
+        <result property="consentType" column="consent_type"/>
+        <result property="consentVersion" column="consent_version"/>
+        <result property="consentIp" column="consent_ip"/>
+        <result property="consentTime" column="consent_time"/>
+    </resultMap>
+    <resultMap id="LifecycleResult" type="com.ruoyi.mall.member.domain.vo.MallMemberLifecycleEventVo">
+        <constructor>
+            <arg column="event_type" javaType="java.lang.String"/>
+            <arg column="title" javaType="java.lang.String"/>
+            <arg column="summary" javaType="java.lang.String"/>
+            <arg column="event_time" javaType="java.util.Date"/>
+        </constructor>
+    </resultMap>
+
+    <select id="selectConsents" resultMap="ConsentResult">
+        select consent_id,member_id,consent_type,consent_version,consent_ip,consent_time
+        from mall_member_consent
+        where member_id=#{memberId}
+        order by consent_time desc,consent_id desc
+    </select>
+
+    <select id="selectLifecycleEvents" resultMap="LifecycleResult">
+        select event_type,title,summary,event_time
+        from (
+            select 'SESSION_LOGIN' event_type,'设备登录' title,
+                concat(d.device_name,' · ',coalesce(s.login_ip,'未知网络')) summary,s.create_time event_time
+            from mall_member_session s
+            join mall_member_device d on d.member_device_id=s.member_device_id
+            where s.member_id=#{memberId}
+            union all
+            select 'CONSENT_CONFIRMED',
+                case when c.consent_type='USER_AGREEMENT' then '确认用户协议' else '确认隐私政策' end,
+                concat('版本 ',c.consent_version,' · 服务必需授权'),c.consent_time
+            from mall_member_consent c where c.member_id=#{memberId}
+            union all
+            select 'ACCOUNT_CREATED','账号创建','手机号验证注册',m.create_time
+            from mall_member m where m.member_id=#{memberId} and m.del_flag='0'
+            union all
+            select a.event_type,a.title,a.summary,a.create_time
+            from mall_member_lifecycle_audit a where a.member_id=#{memberId}
+        ) lifecycle
+        order by event_time desc
+        limit 50
+    </select>
+
+    <select id="countActiveSessions" resultType="int">
+        select count(1)
+        from mall_member_session
+        where member_id=#{memberId} and status='ACTIVE' and expire_time&gt;now()
+    </select>
+
+    <resultMap id="PhoneChangeResult" type="com.ruoyi.mall.member.domain.MallMemberPhoneChangeRequest">
+        <id property="requestId" column="request_id"/><result property="memberId" column="member_id"/>
+        <result property="oldPhone" column="old_phone"/><result property="newPhone" column="new_phone"/>
+        <result property="status" column="status"/><result property="oldVerifiedTime" column="old_verified_time"/>
+        <result property="newVerifiedTime" column="new_verified_time"/><result property="expiresTime" column="expires_time"/>
+        <result property="completedTime" column="completed_time"/><result property="requestIp" column="request_ip"/>
+        <result property="createTime" column="create_time"/><result property="updateTime" column="update_time"/>
+    </resultMap>
+    <resultMap id="TicketResult" type="com.ruoyi.mall.member.domain.MallMemberAccountActionTicket">
+        <id property="ticketId" column="ticket_id"/><result property="requestId" column="request_id"/>
+        <result property="memberId" column="member_id"/><result property="actionType" column="action_type"/>
+        <result property="ticketHash" column="ticket_hash"/><result property="expireTime" column="expire_time"/>
+        <result property="consumedTime" column="consumed_time"/>
+    </resultMap>
+    <insert id="insertPhoneChangeRequest" useGeneratedKeys="true" keyProperty="requestId">
+        insert into mall_member_phone_change_request(member_id,old_phone,new_phone,status,expires_time,request_ip,create_time,update_time)
+        values(#{memberId},#{oldPhone},#{newPhone},#{status},#{expiresTime},#{requestIp},now(),now())
+    </insert>
+    <select id="selectPhoneChangeRequest" resultMap="PhoneChangeResult">
+        select * from mall_member_phone_change_request where request_id=#{requestId} and member_id=#{memberId}
+    </select>
+    <update id="markOldPhoneVerified">
+        update mall_member_phone_change_request set status='NEW_PHONE_PENDING',old_verified_time=now(),update_time=now()
+        where request_id=#{requestId} and member_id=#{memberId} and status='OLD_PHONE_PENDING' and expires_time&gt;now()
+    </update>
+    <update id="markNewPhoneVerified">
+        update mall_member_phone_change_request set status='COMPLETED',new_verified_time=now(),completed_time=now(),update_time=now()
+        where request_id=#{requestId} and member_id=#{memberId} and status='NEW_PHONE_PENDING' and expires_time&gt;now()
+    </update>
+    <insert id="insertActionTicket" useGeneratedKeys="true" keyProperty="ticketId">
+        insert into mall_member_account_action_ticket(request_id,member_id,action_type,ticket_hash,expire_time,create_time)
+        values(#{requestId},#{memberId},#{actionType},#{ticketHash},#{expireTime},now())
+    </insert>
+    <select id="selectValidActionTicket" resultMap="TicketResult">
+        select * from mall_member_account_action_ticket where ticket_hash=#{ticketHash} and request_id=#{requestId}
+        and member_id=#{memberId} and consumed_time is null and expire_time&gt;now()
+    </select>
+    <update id="consumeActionTicket">update mall_member_account_action_ticket set consumed_time=now() where ticket_id=#{ticketId} and consumed_time is null</update>
+    <insert id="insertLifecycleAudit" useGeneratedKeys="true" keyProperty="auditId">
+        insert into mall_member_lifecycle_audit(member_id,event_type,title,summary,old_phone,new_phone,request_ip,create_time)
+        values(#{memberId},#{eventType},#{title},#{summary},#{oldPhone},#{newPhone},#{requestIp},now())
+    </insert>
+</mapper>

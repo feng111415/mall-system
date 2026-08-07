@@ -17,6 +17,7 @@ import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.common.enums.BusinessType;
 import com.ruoyi.mall.member.domain.MallMember;
 import com.ruoyi.mall.member.service.IMallMemberService;
+import com.ruoyi.mall.member.service.MallMemberAccountQueryService;
 
 /** 若依后台会员管理接口，仅接受后台管理员 Token。 */
 @RestController
@@ -24,10 +25,12 @@ import com.ruoyi.mall.member.service.IMallMemberService;
 public class MallMemberAdminController extends BaseController
 {
     private final IMallMemberService memberService;
+    private final MallMemberAccountQueryService accountQueryService;
 
-    public MallMemberAdminController(IMallMemberService memberService)
+    public MallMemberAdminController(IMallMemberService memberService, MallMemberAccountQueryService accountQueryService)
     {
         this.memberService = memberService;
+        this.accountQueryService = accountQueryService;
     }
 
     @PreAuthorize("@ss.hasPermi('mall:member:list')")
@@ -46,6 +49,13 @@ public class MallMemberAdminController extends BaseController
     {
         MallMember member = memberService.selectById(memberId);
         return success(member == null ? null : maskPhone(member));
+    }
+
+    @PreAuthorize("@ss.hasPermi('mall:member:query')")
+    @GetMapping("/{memberId}/account-lifecycle")
+    public AjaxResult accountLifecycle(@PathVariable Long memberId)
+    {
+        return success(accountQueryService.overviewForAdmin(memberId));
     }
 
     @PreAuthorize("@ss.hasPermi('mall:member:edit')")

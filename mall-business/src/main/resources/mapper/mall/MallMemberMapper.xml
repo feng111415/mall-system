@@ -21,5 +21,7 @@
     <update id="updateNickname">update mall_member set nickname=#{nickname},update_by=#{updateBy},update_time=now() where member_id=#{memberId} and del_flag='0'</update>
     <update id="updateAvatar">update mall_member set avatar=#{avatar},update_by=#{updateBy},update_time=now() where member_id=#{memberId} and del_flag='0'</update>
     <update id="updateLoginInfo">update mall_member set last_login_ip=#{lastLoginIp},last_login_time=#{lastLoginTime},update_time=now() where member_id=#{memberId}</update>
+    <update id="updatePhone">update mall_member set phone=#{phone},update_time=now() where member_id=#{memberId} and status='0' and del_flag='0'</update>
+    <update id="deactivate">update mall_member set status='1',deactivated_time=now(),update_time=now() where member_id=#{memberId} and status='0' and del_flag='0'</update>
     <update id="deleteByIds">update mall_member set del_flag='2',update_time=now() where member_id in <foreach collection="array" item="id" open="(" separator="," close=")">#{id}</foreach></update>
 </mapper>

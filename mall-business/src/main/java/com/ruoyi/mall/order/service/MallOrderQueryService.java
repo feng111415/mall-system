@@ -10,7 +10,7 @@ import com.ruoyi.mall.order.domain.MallOrderPaymentWindow;
 import com.ruoyi.mall.order.mapper.MallOrderMapper;
 
 @Service
-public class MallOrderQueryService
+public class MallOrderQueryService implements com.ruoyi.mall.application.port.MemberOrderStatePort
 {
     private static final int DEFAULT_LIMIT = 20;
     private static final int MAX_LIMIT = 50;
@@ -52,6 +52,13 @@ public class MallOrderQueryService
                 && !MallOrderPaymentWindow.isResultExpired(order, now));
         order.setCanCancel(pending && "UNPAID".equals(order.getPaymentStatus()));
         return order;
+    }
+
+    @Override
+    public int countUnfinishedOrders(Long memberId)
+    {
+        requireMember(memberId);
+        return mapper.countUnfinishedMemberOrders(memberId);
     }
 
     private String normalizeStatus(String status)

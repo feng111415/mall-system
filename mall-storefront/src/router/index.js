@@ -8,6 +8,7 @@ import CheckoutView from '../views/CheckoutView.vue'
 import OrderListView from '../views/OrderListView.vue'
 import OrderDetailView from '../views/OrderDetailView.vue'
 import MessageCenterView from '../views/MessageCenterView.vue'
+import AccountPrivacyView from '../views/AccountPrivacyView.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -20,7 +21,8 @@ const router = createRouter({
     { path: '/orders', name: 'orders', component: OrderListView },
     { path: '/orders/:orderId', name: 'order-detail', component: OrderDetailView },
     { path: '/messages', name: 'messages', component: MessageCenterView },
-    { path: '/account', name: 'account', component: AccountView }
+    { path: '/account', name: 'account', component: AccountView },
+    { path: '/account/privacy', name: 'account-privacy', component: AccountPrivacyView }
   ],
   scrollBehavior: () => ({ top: 0 })
 })

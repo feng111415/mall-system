@@ -19,6 +19,7 @@
     <result property="unitPrice" column="unit_price"/><result property="refundAmount" column="refund_amount"/>
   </resultMap>
   <sql id="columns">after_sale_id,after_sale_no,order_id,order_no,member_id,type,reason_code,reason,evidence_url,status,refund_amount,shipping_refund_amount,return_company_code,return_tracking_no,risk_signal,failure_reason,provider_refund_no,deadline_time,refund_time,create_time,update_time</sql>
+  <select id="countInProgressByMember" resultType="int">select count(1) from mall_item_after_sale where member_id=#{memberId} and status in ('PENDING_REVIEW','APPROVED','RETURN_SHIPPED','REFUNDING')</select>
   <select id="selectById" resultMap="AfterSale">select <include refid="columns"/> from mall_item_after_sale where after_sale_id=#{afterSaleId}</select>
   <select id="selectByIdForUpdate" resultMap="AfterSale">select <include refid="columns"/> from mall_item_after_sale where after_sale_id=#{afterSaleId} for update</select>
   <select id="selectMemberById" resultMap="AfterSale">select <include refid="columns"/> from mall_item_after_sale where after_sale_id=#{afterSaleId} and member_id=#{memberId}</select>

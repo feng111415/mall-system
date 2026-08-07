@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>商城 V0.3 风格细化原型</title>
+  <link rel="stylesheet" href="../../mall-storefront/node_modules/vant/lib/index.css" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <!-- Three storefront style refinements, switchable via ?variant=c1|c2|c3. Throwaway prototype only. -->
+  <div id="prototype-root">
+    <section class="variant variant-final" data-variant="c1plus" hidden>
+      <header class="c1-header final-header">
+        <a class="brand c1-brand final-brand" href="#" aria-label="日常商店首页"><b>日</b><span><strong>日常商店</strong><small>DAILY STORE</small></span></a>
+        <nav aria-label="主导航">
+          <a class="active" href="#"><small>01</small><span><strong>首页</strong><em>HOME</em></span></a>
+          <a href="#"><small>02</small><span><strong>全部商品</strong><em>SHOP</em></span></a>
+          <a href="#"><small>03</small><span><strong>我的订单</strong><em>ORDERS</em></span></a>
+          <a href="#"><small>04</small><span><strong>个人中心</strong><em>ACCOUNT</em></span></a>
+        </nav>
+        <div class="header-tools">
+          <button type="button" aria-label="搜索" title="搜索"><i class="van-icon van-icon-search"></i></button>
+          <button type="button" aria-label="购物袋" title="购物袋"><i class="van-icon van-icon-bag-o"></i><em>4</em></button>
+        </div>
+      </header>
+
+      <main class="c1-main final-main">
+        <section class="final-intro">
+          <div><p><b>WEEKLY EDIT</b> VOL. 07</p><h1>欢迎回来，<br />今天也挑点喜欢的。</h1></div>
+          <aside><span>GOOD LOOKS</span><b>好看</b><span>GOOD USE</span><b>好用</b><strong>还有一点新鲜</strong></aside>
+        </section>
+
+        <div class="c1-workspace final-workspace">
+          <section class="c1-login final-login" aria-labelledby="final-login-title">
+            <div class="panel-heading"><span>MEMBER ENTRY</span><b>01</b></div>
+            <h2 id="final-login-title">登录日常商店</h2>
+            <p>使用手机号验证码安全登录</p>
+            <form>
+              <label class="c1-field final-field"><span>手机号</span><input data-autofocus inputmode="numeric" placeholder="请输入手机号" /></label>
+              <label class="c1-field final-field code-field"><span>短信验证码</span><input inputmode="numeric" placeholder="6 位验证码" /><button type="button">获取验证码</button></label>
+              <label class="agreement"><input type="checkbox" /> <span>我已阅读并同意《用户协议》和《隐私政策》</span></label>
+              <button class="c1-primary final-primary" type="button">登录 / 注册 <i class="van-icon van-icon-arrow"></i></button>
+            </form>
+          </section>
+
+          <section class="c1-products final-products" aria-labelledby="final-products-title">
+            <div class="section-heading"><div><span>HOT PICKS</span><h2 id="final-products-title">大家正在买</h2></div><a href="#">再看更多 <i class="van-icon van-icon-arrow"></i></a></div>
+            <div class="product-pair">
+              <article class="c1-product final-product">
+                <div class="product-photo"><img src="../../mall-storefront/public/assets/lamp.jpg" alt="暖光阅读台灯" /><span>本周热销</span></div>
+                <div class="product-copy"><small>家居 · 光线研究所</small><h3>暖光阅读台灯</h3><div><strong>¥269 起</strong><a href="#">查看详情 ↗</a></div></div>
+              </article>
+              <article class="c1-product final-product">
+                <div class="product-photo"><img src="../../mall-storefront/public/assets/camera.jpg" alt="便携无反相机" /><span>编辑选择</span></div>
+                <div class="product-copy"><small>数码 · 行摄记录</small><h3>便携无反相机</h3><div><strong>¥3,499 起</strong><a href="#">查看详情 ↗</a></div></div>
+              </article>
+            </div>
+          </section>
+        </div>
+      </main>
+    </section>
+
+    <section class="variant variant-c1" data-variant="c1" hidden>
+      <header class="c1-header">
+        <a class="brand c1-brand" href="#" aria-label="日常商店首页"><b>日</b><span><strong>日常商店</strong><small>DAILY STORE</small></span></a>
+        <nav aria-label="主导航">
+          <a class="active" href="#"><small>01</small><span>首页</span></a>
+          <a href="#"><small>02</small><span>全部商品</span></a>
+          <a href="#"><small>03</small><span>我的订单</span></a>
+          <a href="#"><small>04</small><span>个人中心</span></a>
+        </nav>
+        <div class="header-tools">
+          <button type="button" aria-label="搜索" title="搜索"><i class="van-icon van-icon-search"></i></button>
+          <button type="button" aria-label="购物袋" title="购物袋"><i class="van-icon van-icon-bag-o"></i><em>4</em></button>
+        </div>
+      </header>
+
+      <main class="c1-main">
+        <section class="c1-intro">
+          <p><b>VOL. 07</b> WEEKLY EDIT</p>
+          <h1>欢迎回来，<br />今天也挑点喜欢的。</h1>
+          <div><span>好看</span><span>好用</span><span>有点新鲜</span></div>
+        </section>
+
+        <div class="c1-workspace">
+          <section class="c1-login" aria-labelledby="c1-login-title">
+            <div class="panel-heading"><span>MEMBER ENTRY</span><b>01</b></div>
+            <h2 id="c1-login-title">登录日常商店</h2>
+            <p>使用手机号验证码安全登录</p>
+            <form>
+              <label class="c1-field"><span>手机号</span><input data-autofocus inputmode="numeric" placeholder="请输入手机号" /></label>
+              <label class="c1-field code-field"><span>短信验证码</span><input inputmode="numeric" placeholder="6 位验证码" /><button type="button">获取验证码</button></label>
+              <label class="agreement"><input type="checkbox" /> <span>我已阅读并同意《用户协议》和《隐私政策》</span></label>
+              <button class="c1-primary" type="button">登录 / 注册 <i class="van-icon van-icon-arrow"></i></button>
+            </form>
+          </section>
+
+          <section class="c1-products" aria-labelledby="c1-products-title">
+            <div class="section-heading"><div><span>HOT PICKS</span><h2 id="c1-products-title">本周编辑精选</h2></div><a href="#">再看更多 <i class="van-icon van-icon-arrow"></i></a></div>
+            <div class="product-pair">
+              <article class="c1-product product-tall">
+                <div class="product-photo"><img src="../../mall-storefront/public/assets/sneaker.jpg" alt="轻量城市跑鞋" /><span>本周热销</span></div>
+                <div class="product-copy"><small>穿搭 · 城市轻跑</small><h3>轻量城市跑鞋</h3><div><strong>¥499 起</strong><a href="#">查看详情 ↗</a></div></div>
+              </article>
+              <article class="c1-product">
+                <div class="product-photo"><img src="../../mall-storefront/public/assets/camera.jpg" alt="便携无反相机" /><span>编辑选择</span></div>
+                <div class="product-copy"><small>数码 · 行摄记录</small><h3>便携无反相机</h3><div><strong>¥3,499 起</strong><a href="#">查看详情 ↗</a></div></div>
+              </article>
+            </div>
+          </section>
+        </div>
+      </main>
+    </section>
+
+    <section class="variant variant-c2" data-variant="c2" hidden>
+      <header class="c2-header">
+        <div class="c2-topline">
+          <a class="brand c2-brand" href="#" aria-label="日常商店首页"><b>日</b><span><strong>日常商店</strong><small>DAILY STORE</small></span></a>
+          <label class="c2-search"><i class="van-icon van-icon-search"></i><input placeholder="搜搜今天想要的" /></label>
+          <div class="header-tools">
+            <button type="button" aria-label="个人中心" title="个人中心"><i class="van-icon van-icon-user-o"></i></button>
+            <button type="button" aria-label="购物袋" title="购物袋"><i class="van-icon van-icon-bag-o"></i><em>4</em></button>
+          </div>
+        </div>
+        <nav aria-label="主导航">
+          <a class="active" href="#"><i class="van-icon van-icon-home-o"></i><span><strong>首页</strong><small>HOME</small></span></a>
+          <a href="#"><i class="van-icon van-icon-apps-o"></i><span><strong>逛商品</strong><small>SHOP</small></span></a>
+          <a href="#"><i class="van-icon van-icon-orders-o"></i><span><strong>看订单</strong><small>ORDERS</small></span></a>
+          <a href="#"><i class="van-icon van-icon-user-o"></i><span><strong>我的</strong><small>ME</small></span></a>
+        </nav>
+      </header>
+
+      <main class="c2-main">
+        <section class="c2-intro">
+          <div><span>HELLO AGAIN!</span><h1>欢迎回来呀，<br />今天想逛点什么？</h1><p>把日常过得有趣一点，也不需要太费力。</p></div>
+          <aside><b>每周二</b><strong>准时上新</strong><small>NEW THINGS EVERY WEEK</small></aside>
+        </section>
+
+        <div class="c2-workspace">
+          <section class="c2-login" aria-labelledby="c2-login-title">
+            <span class="tape-label">会员入口</span>
+            <h2 id="c2-login-title">手机号快捷登录</h2>
+            <p>未注册号码验证后会自动创建账号</p>
+            <form>
+              <label class="c2-field"><i class="van-icon van-icon-phone-o"></i><span><small>手机号</small><input data-autofocus inputmode="numeric" placeholder="请输入手机号" /></span></label>
+              <label class="c2-field"><i class="van-icon van-icon-shield-o"></i><span><small>短信验证码</small><input inputmode="numeric" placeholder="6 位验证码" /></span><button type="button">获取验证码</button></label>
+              <label class="agreement"><input type="checkbox" /> <span>同意《用户协议》和《隐私政策》</span></label>
+              <button class="c2-primary" type="button"><i class="van-icon van-icon-smile-o"></i> 登录 / 注册</button>
+            </form>
+          </section>
+
+          <section class="c2-products" aria-labelledby="c2-products-title">
+            <div class="section-heading"><div><span>大家正在买</span><h2 id="c2-products-title">今日人气好物</h2></div><a href="#">全部看看 <i class="van-icon van-icon-arrow"></i></a></div>
+            <div class="c2-grid">
+              <article class="c2-product coral-card">
+                <div class="product-photo"><img src="../../mall-storefront/public/assets/lamp.jpg" alt="暖光阅读台灯" /><span><i class="van-icon van-icon-fire-o"></i> 人气上升</span></div>
+                <div class="product-copy"><small>家居 · 光线研究所</small><h3>暖光阅读台灯</h3><strong>¥269 起</strong></div>
+              </article>
+              <article class="c2-product yellow-card">
+                <div class="product-photo"><img src="../../mall-storefront/public/assets/coffee.jpg" alt="手冲咖啡套装" /><span><i class="van-icon van-icon-star-o"></i> 店员推荐</span></div>
+                <div class="product-copy"><small>咖啡 · 山口咖啡</small><h3>手冲咖啡套装</h3><strong>¥188 起</strong></div>
+              </article>
+            </div>
+          </section>
+        </div>
+      </main>
+    </section>
+
+    <section class="variant variant-c3" data-variant="c3" hidden>
+      <header class="c3-header">
+        <a class="brand c3-brand" href="#" aria-label="日常商店首页"><b>DS</b><span><strong>日常商店</strong><small>DAILY STORE / 2026</small></span></a>
+        <nav aria-label="主导航">
+          <a class="active" href="#"><small>01</small><span>首页</span></a>
+          <a href="#"><small>02</small><span>商品</span></a>
+          <a href="#"><small>03</small><span>订单</span></a>
+          <a href="#"><small>04</small><span>我的</span></a>
+        </nav>
+        <div class="header-tools">
+          <button type="button" aria-label="搜索" title="搜索"><i class="van-icon van-icon-search"></i></button>
+          <button type="button" aria-label="购物袋" title="购物袋"><i class="van-icon van-icon-bag-o"></i><em>4</em></button>
+        </div>
+      </header>
+
+      <main class="c3-main">
+        <section class="c3-intro">
+          <div><span>DAILY DROP / 07</span><h1>回来就好。<br />继续挑你的装备。</h1></div>
+          <p>城市通勤、轻运动与日常器物<br /><b>满 199 元免运费</b></p>
+        </section>
+
+        <div class="c3-workspace">
+          <section class="c3-feature" aria-labelledby="c3-product-title">
+            <div class="c3-photo"><img src="../../mall-storefront/public/assets/backpack.jpg" alt="城市通勤双肩包" /><span><b>NO.08</b> 本周主推</span><em>95 人已选</em></div>
+            <div class="c3-product-copy"><div><small>URBAN GEAR / 出行</small><h2 id="c3-product-title">城市通勤双肩包</h2></div><strong>¥359<small> 起</small></strong><a href="#">查看装备 <i class="van-icon van-icon-arrow"></i></a></div>
+          </section>
+
+          <section class="c3-login" aria-labelledby="c3-login-title">
+            <div class="panel-heading"><span>MEMBER PASS</span><b>SECURE LOGIN</b></div>
+            <h2 id="c3-login-title">会员通行证</h2>
+            <p>短信验证后继续你的订单与收藏</p>
+            <form>
+              <label class="c3-field"><small>01 / 手机号</small><input data-autofocus inputmode="numeric" placeholder="请输入手机号" /></label>
+              <label class="c3-field"><small>02 / 短信验证码</small><span><input inputmode="numeric" placeholder="6 位验证码" /><button type="button">获取验证码</button></span></label>
+              <label class="agreement"><input type="checkbox" /> <span>同意用户协议与隐私政策</span></label>
+              <button class="c3-primary" type="button">进入商店 <i class="van-icon van-icon-arrow"></i></button>
+            </form>
+          </section>
+        </div>
+      </main>
+    </section>
+  </div>
+
+  <div class="prototype-switcher" data-prototype-only role="group" aria-label="风格方案切换">
+    <button id="previous-variant" type="button" aria-label="上一个方案" title="上一个方案">←</button>
+    <div><small>STYLE PROTOTYPE</small><strong id="variant-label">C1 · 复古波普杂志</strong></div>
+    <button id="next-variant" type="button" aria-label="下一个方案" title="下一个方案">→</button>
+  </div>
+
+  <script src="./app.js"></script>
+</body>
+</html>

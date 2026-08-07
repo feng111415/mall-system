@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>V0.5 首页内容运营静态模型</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <main class="prototype-shell">
+    <div class="model-topbar">
+      <div class="brand-mark"><span>日</span><strong>日常商城</strong><small>V0.5 CONTENT MODEL</small></div>
+      <div class="model-tabs" role="tablist" aria-label="预览视图">
+        <button class="model-tab active" data-screen="storefront">商城首页</button>
+        <button class="model-tab" data-screen="admin">运营后台</button>
+      </div>
+      <div class="model-state"><span class="state-dot"></span>静态模型 · 不连接真实数据</div>
+    </div>
+
+    <section id="storefront-screen" class="screen active-screen">
+      <div class="storefront-head">
+        <div class="store-logo"><span>日</span><b>日常商城</b><em>DAILY STORE</em></div>
+        <nav><a class="active" href="#">01　首页</a><a href="#">02　全部商品</a><a href="#">03　我的订单</a><a href="#">04　个人中心</a></nav>
+        <div class="head-actions"><span>⌕</span><span>▱<i>4</i></span></div>
+      </div>
+      <div class="storefront-content">
+        <section class="hero-c">
+          <div class="hero-copy"><span class="eyebrow">NEW DROP</span><h1>今天，也要<br />挑点喜欢的。</h1><p>好看、好用，还能让普通一天有一点新鲜。</p><button>开始逛逛　✦</button></div>
+          <div class="hero-collage"><span class="new-count">本周上新<strong>08</strong>件</span><img class="hero-shoe" src="http://localhost:5174/assets/sneaker.jpg" alt="城市运动鞋" /><img class="hero-headphones" src="http://localhost:5174/assets/headphones.jpg" alt="静音头戴耳机" /></div>
+        </section>
+        <section class="ticker"><b>FREE SHIPPING</b><span>满 199 元免运费</span><b>NEW ARRIVALS</b><span>每周二上新</span><b>EASY RETURN</b><span>7 天轻松退换</span></section>
+        <section class="recommend-section"><div class="section-title"><div><small>HOT PICKS</small><h2>大家正在买</h2></div><a href="#">再看更多　→</a></div><div class="product-grid"><article class="product-card"><div class="product-image"><label>本周热销</label><img src="http://localhost:5174/assets/lamp.jpg" alt="暖光阅读台灯" /></div><div class="product-copy"><small>家居 · 光线研究所</small><b>暖光阅读台灯</b><strong>¥269 <i>起</i></strong></div></article><article class="product-card"><div class="product-image"><label class="mint">精选</label><img src="http://localhost:5174/assets/camera.jpg" alt="便携无反相机" /></div><div class="product-copy"><small>数码 · 行摄记录</small><b>便携无反相机</b><strong>¥3,499 <i>起</i></strong></div></article><article class="product-card"><div class="product-image"><label>精选</label><img src="http://localhost:5174/assets/backpack.jpg" alt="城市通勤双肩包" /></div><div class="product-copy"><small>出行 · 城市步履</small><b>城市通勤双肩包</b><strong>¥359 <i>起</i></strong></div></article><article class="product-card"><div class="product-image"><label class="mint">精选</label><img src="http://localhost:5174/assets/coffee.jpg" alt="手冲咖啡套装" /></div><div class="product-copy"><small>咖啡 · 山口咖啡</small><b>手冲咖啡套装</b><strong>¥188 <i>起</i></strong></div></article></div></section>
+      </div>
+    </section>
+
+    <section id="admin-screen" class="screen">
+      <div class="admin-frame">
+        <aside class="admin-side"><div class="admin-logo"><span>R</span><b>若依运营后台</b></div><div class="side-group"><small>商城运营</small><a href="#">运营工作台</a><a class="selected" href="#">页面内容</a><a href="#">商品与库存</a><a href="#">订单运营</a></div><div class="side-group"><small>系统</small><a href="#">操作审计</a><a href="#">权限职责</a></div></aside>
+        <div class="admin-main"><header class="admin-header"><div><span class="crumb">商城运营 / 页面内容</span><h1>首页内容运营</h1></div><div class="admin-user"><span class="avatar">O</span><span>运营主管</span><button class="icon-button">⋮</button></div></header><div class="admin-body"><div class="screen-switcher"><span>预览页面</span><button class="selected">桌面端</button><button>移动端</button><span class="spacer"></span><button class="outline">保存草稿</button><button class="primary">发布排期</button></div><div id="admin-variant" class="admin-variant"></div></div></div>
+      </div>
+    </section>
+  </main>
+  <div class="variant-switcher" aria-label="运营后台模型切换"><button id="variant-prev" title="上一个模型">←</button><span id="variant-label">A · 预览工作台</span><button id="variant-next" title="下一个模型">→</button></div>
+  <script src="./prototype.js"></script>
+</body>
+</html>

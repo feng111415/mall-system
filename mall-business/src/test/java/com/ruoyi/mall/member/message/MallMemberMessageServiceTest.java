@@ -91,6 +91,19 @@ class MallMemberMessageServiceTest
     }
 
     @Test
+    void allowsAccountPrivacyActionPath()
+    {
+        when(mapper.insert(any())).thenReturn(1);
+
+        service.publish(7L, "ACCOUNT", "登录手机号已更换", "手机号更换成功", "安全提醒",
+                "ACCOUNT", 7L, null, "/account/privacy");
+
+        org.mockito.ArgumentCaptor<MallMemberMessage> captor = org.mockito.ArgumentCaptor.forClass(MallMemberMessage.class);
+        verify(mapper).insert(captor.capture());
+        assertEquals("/account/privacy", captor.getValue().getActionPath());
+    }
+
+    @Test
     void markAllReadWithoutCategoryMarksEveryBusinessConversation()
     {
         when(mapper.markAllRead(7L, null)).thenReturn(4);

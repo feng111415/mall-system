@@ -26,7 +26,7 @@ import com.ruoyi.mall.application.port.RefundPort;
 import com.ruoyi.mall.application.port.MemberMessagePort;
 
 @Service
-public class MallItemAfterSaleService
+public class MallItemAfterSaleService implements com.ruoyi.mall.application.port.MemberAfterSaleStatePort
 {
     private static final long AFTER_SALE_DAYS = 7L;
     private final MallItemAfterSaleMapper mapper;
@@ -116,6 +116,13 @@ public class MallItemAfterSaleService
     public MallItemAfterSale detail(Long memberId, Long afterSaleId)
     {
         requireMember(memberId); MallItemAfterSale value = mapper.selectMemberById(afterSaleId, memberId); if (value == null) throw new ServiceException("售后单不存在"); value.setItems(mapper.selectItems(afterSaleId)); return value;
+    }
+
+    @Override
+    public int countInProgressAfterSales(Long memberId)
+    {
+        requireMember(memberId);
+        return mapper.countInProgressByMember(memberId);
     }
 
     @Transactional(rollbackFor = Exception.class)

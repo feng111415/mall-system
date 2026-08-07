@@ -115,7 +115,8 @@ public class MallMemberMessageService implements MemberMessagePort
     {
         if (StringUtils.isBlank(value)) return true;
         String path = value.trim();
-        return path.matches("^/(orders|after-sales|account)(/\\d+)?(/logistics)?$")
+        return (path.matches("^/(orders|after-sales)(/\\d+)?(/logistics)?$")
+                || path.matches("^/account(/privacy)?$"))
                 && !path.contains("//") && !path.contains("..") && !path.contains("?") && !path.contains("#");
     }
 

@@ -7,6 +7,8 @@ import com.ruoyi.mall.aftersale.item.domain.MallItemAfterSaleItem;
 
 public interface MallItemAfterSaleMapper
 {
+    int countInProgressByMember(@Param("memberId") Long memberId);
+
     MallItemAfterSale selectById(@Param("afterSaleId") Long afterSaleId);
     MallItemAfterSale selectByIdForUpdate(@Param("afterSaleId") Long afterSaleId);
     MallItemAfterSale selectMemberById(@Param("afterSaleId") Long afterSaleId, @Param("memberId") Long memberId);
