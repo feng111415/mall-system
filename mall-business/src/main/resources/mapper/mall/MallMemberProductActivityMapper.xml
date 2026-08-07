@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.mall.member.activity.mapper.MallMemberProductActivityMapper">
+    <resultMap id="ActivityItem" type="com.ruoyi.mall.member.activity.domain.MallMemberProductActivityItem">
+        <id property="spuId" column="spu_id"/><result property="productName" column="product_name"/>
+        <result property="subtitle" column="subtitle"/><result property="mainImage" column="main_image"/>
+        <result property="price" column="price"/><result property="publishStatus" column="publish_status"/>
+        <result property="available" column="available"/><result property="favoriteTime" column="favorite_time"/>
+        <result property="lastViewTime" column="last_view_time"/><result property="viewCount" column="view_count"/>
+    </resultMap>
+    <resultMap id="ActivitySummary" type="com.ruoyi.mall.member.activity.domain.MallMemberProductActivitySummary">
+        <result property="favoriteCount" column="favorite_count"/><result property="historyCount" column="history_count"/>
+    </resultMap>
+
+    <select id="selectProductSnapshot" resultMap="ActivityItem">
+        select spu_id,product_name,subtitle,main_image,price_min price,publish_status,
+               case when del_flag='0' and publish_status='1' then 1 else 0 end available
+        from mall_spu where spu_id=#{spuId}
+    </select>
+    <select id="selectSummary" resultMap="ActivitySummary">
+        select (select count(1) from mall_member_favorite where member_id=#{memberId}) favorite_count,
+               (select count(1) from mall_member_browse_history where member_id=#{memberId}) history_count
+    </select>
+    <sql id="favoriteViewColumns">
+        f.spu_id,
+        case when p.spu_id is not null and p.del_flag='0' and p.publish_status='1' then p.product_name else f.product_name_snapshot end product_name,
+        case when p.spu_id is not null and p.del_flag='0' and p.publish_status='1' then p.subtitle else f.subtitle_snapshot end subtitle,
+        case when p.spu_id is not null and p.del_flag='0' and p.publish_status='1' then p.main_image else f.product_image_snapshot end main_image,
+        case when p.spu_id is not null and p.del_flag='0' and p.publish_status='1' then p.price_min else f.price_snapshot end price,
+        p.publish_status,
+        case when p.spu_id is not null and p.del_flag='0' and p.publish_status='1' then 1 else 0 end available,
+        f.create_time favorite_time,null last_view_time,null view_count
+    </sql>
+    <sql id="historyViewColumns">
+        h.spu_id,
+        case when p.spu_id is not null and p.del_flag='0' and p.publish_status='1' then p.product_name else h.product_name_snapshot end product_name,
+        case when p.spu_id is not null and p.del_flag='0' and p.publish_status='1' then p.subtitle else h.subtitle_snapshot end subtitle,
+        case when p.spu_id is not null and p.del_flag='0' and p.publish_status='1' then p.main_image else h.product_image_snapshot end main_image,
+        case when p.spu_id is not null and p.del_flag='0' and p.publish_status='1' then p.price_min else h.price_snapshot end price,
+        p.publish_status,
+        case when p.spu_id is not null and p.del_flag='0' and p.publish_status='1' then 1 else 0 end available,
+        null favorite_time,h.last_view_time,h.view_count
+    </sql>
+    <select id="selectFavorites" resultMap="ActivityItem">
+        select <include refid="favoriteViewColumns"/> from mall_member_favorite f
+        left join mall_spu p on p.spu_id=f.spu_id where f.member_id=#{memberId}
+        order by f.create_time desc,f.favorite_id desc
+    </select>
+    <select id="selectHistory" resultMap="ActivityItem">
+        select <include refid="historyViewColumns"/> from mall_member_browse_history h
+        left join mall_spu p on p.spu_id=h.spu_id where h.member_id=#{memberId}
+        order by h.last_view_time desc,h.history_id desc limit 200
+    </select>
+    <select id="countFavorite" resultType="int">
+        select count(1) from mall_member_favorite where member_id=#{memberId} and spu_id=#{spuId}
+    </select>
+    <insert id="upsertFavorite">
+        insert into mall_member_favorite(member_id,spu_id,product_name_snapshot,subtitle_snapshot,product_image_snapshot,price_snapshot,create_time)
+        values(#{memberId},#{item.spuId},#{item.productName},#{item.subtitle},#{item.mainImage},#{item.price},now())
+        on duplicate key update product_name_snapshot=#{item.productName},subtitle_snapshot=#{item.subtitle},
+            product_image_snapshot=#{item.mainImage},price_snapshot=#{item.price}
+    </insert>
+    <delete id="deleteFavorite">delete from mall_member_favorite where member_id=#{memberId} and spu_id=#{spuId}</delete>
+    <insert id="upsertHistory">
+        insert into mall_member_browse_history(member_id,spu_id,product_name_snapshot,subtitle_snapshot,product_image_snapshot,price_snapshot,first_view_time,last_view_time,view_count)
+        values(#{memberId},#{item.spuId},#{item.productName},#{item.subtitle},#{item.mainImage},#{item.price},now(),now(),1)
+        on duplicate key update product_name_snapshot=#{item.productName},subtitle_snapshot=#{item.subtitle},
+            product_image_snapshot=#{item.mainImage},price_snapshot=#{item.price},last_view_time=now(),view_count=view_count+1
+    </insert>
+    <delete id="deleteHistory">delete from mall_member_browse_history where member_id=#{memberId} and spu_id=#{spuId}</delete>
+    <delete id="deleteHistoryBatch">
+        delete from mall_member_browse_history where member_id=#{memberId} and spu_id in
+        <foreach collection="spuIds" item="spuId" open="(" separator="," close=")">#{spuId}</foreach>
+    </delete>
+    <delete id="clearHistory">delete from mall_member_browse_history where member_id=#{memberId}</delete>
+</mapper>

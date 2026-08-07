@@ -905,6 +905,12 @@ h1, h2, h3, .primary-button, .add-button, .order-secondary-action, .avatar-uploa
 .account-shortcuts-c strong, .account-shortcuts-c small { display: block; }
 .account-shortcuts-c small { margin-top: 5px; color: var(--muted); }
 .account-shortcuts-c strong { display: flex; align-items: center; gap: 6px; }
+.detail-title-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; }
+.detail-title-row h1 { min-width: 0; }
+.detail-favorite-button { display: inline-flex; min-width: 92px; min-height: 40px; flex: 0 0 auto; align-items: center; justify-content: center; gap: 6px; margin-top: 14px; border: 2px solid var(--ink); border-radius: 8px; padding: 8px 12px; background: var(--paper); color: var(--ink); font-size: 12px; font-weight: 800; transition: transform .18s ease, box-shadow .18s ease, background .18s ease; }
+.detail-favorite-button:hover:not(:disabled) { box-shadow: 3px 3px 0 var(--ink); transform: translate(-1px, -1px); }
+.detail-favorite-button.active { background: var(--yellow); color: var(--red); }
+.detail-favorite-button:disabled { opacity: .55; cursor: not-allowed; }
 .shortcut-badge { display: inline-flex; min-width: 18px; height: 18px; align-items: center; justify-content: center; border-radius: 9px; padding: 0 5px; background: var(--red); color: #fff; font-size: 10px; line-height: 1; }
 .account-sections { max-width: none; grid-template-columns: minmax(280px, .7fr) minmax(0, 1.3fr); gap: 24px; padding-top: 0; }
 .account-section { border: 2px solid var(--ink); border-radius: 8px; padding: 22px; background: var(--paper); box-shadow: 5px 5px 0 rgb(32 32 42 / 13%); }
@@ -947,6 +953,7 @@ h1, h2, h3, .primary-button, .add-button, .order-secondary-action, .avatar-uploa
   .account-hero-c { align-items: flex-start; flex-direction: column; }
   .account-overview { width: 100%; }
   .account-shortcuts-c { grid-template-columns: 1fr; }
+  .detail-favorite-button:hover:not(:disabled) { box-shadow: none; transform: none; }
   .session-section { grid-column: 1; }
   .sort-control.open .sort-sheet-backdrop { position: fixed; z-index: 80; inset: 0; display: block; border: 0; background: rgb(32 32 42 / 45%); }
   .sort-control.open .sort-menu { position: fixed; z-index: 90; top: auto; right: 0; bottom: 0; left: 0; display: grid; width: auto; border-radius: 14px 14px 0 0; box-shadow: 0 -7px 0 rgb(32 32 42 / 18%); }
@@ -976,6 +983,9 @@ h1, h2, h3, .primary-button, .add-button, .order-secondary-action, .avatar-uploa
   .ticker-item { flex: 0 0 100%; min-height: 48px; scroll-snap-align: start; justify-content: center; gap: 10px; padding: 0 8px; }
   .section-heading { align-items: flex-start; gap: 12px; flex-direction: column; }
   .section-heading h2 { font-size: 27px; }
+  .detail-title-row { gap: 10px; }
+  .detail-title-row h1 { font-size: 30px; }
+  .detail-favorite-button { min-width: 76px; min-height: 38px; padding: 7px 9px; }
   .product-image { aspect-ratio: 1 / 1.15; }
   .product-info { padding: 11px 10px 0; }
   .product-info h3 { font-size: 14px; }

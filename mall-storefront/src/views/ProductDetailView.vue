@@ -1,8 +1,10 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
+import { Icon as VanIcon } from 'vant'
 import { useRoute, useRouter } from 'vue-router'
 import { getProduct, getProducts } from '../api/catalog'
 import { getProductReviews } from '../api/review'
+import { addFavorite, getFavoriteState, recordBrowseHistory, removeFavorite } from '../api/activity'
 import { useCartStore } from '../stores/cart'
 import { useNoticeStore } from '../stores/notice'
 import StoreProductCard from '../components/StoreProductCard.vue'
@@ -21,6 +23,8 @@ const relatedLoading = ref(false)
 const reviewLoading = ref(false)
 const reviewView = ref({ summary: {}, reviews: [] })
 const busy = ref(false)
+const favoriteBusy = ref(false)
+const favorited = ref(false)
 const message = ref('')
 
 const availableStock = computed(() => Number(selected.value?.availableStock || 0))
@@ -81,10 +85,44 @@ async function loadProduct() {
     await loadRelated()
     await loadReviews()
     rememberProduct(product.value)
+    loadMemberActivity()
   } catch (error) {
     message.value = error.response?.data?.msg || '商品信息读取失败，请确认后端与数据库已启动'
   } finally {
     loading.value = false
+  }
+}
+
+async function loadMemberActivity() {
+  favorited.value = false
+  if (!sessionStorage.getItem('mall-user-token') || !product.value?.spuId) return
+  const spuId = product.value.spuId
+  const [stateResult] = await Promise.allSettled([
+    getFavoriteState(spuId),
+    recordBrowseHistory(spuId)
+  ])
+  if (stateResult.status === 'fulfilled' && product.value?.spuId === spuId) {
+    favorited.value = Boolean(stateResult.value.data.data?.favorited)
+  }
+}
+
+async function toggleFavorite() {
+  if (!sessionStorage.getItem('mall-user-token')) {
+    notice.show('登录后才能收藏商品')
+    router.push('/account')
+    return
+  }
+  if (favoriteBusy.value || !product.value?.spuId) return
+  favoriteBusy.value = true
+  try {
+    if (favorited.value) await removeFavorite(product.value.spuId)
+    else await addFavorite(product.value.spuId)
+    favorited.value = !favorited.value
+    notice.show(favorited.value ? '已加入收藏' : '已取消收藏')
+  } catch (error) {
+    notice.show(error.response?.data?.msg || '收藏操作失败，请稍后重试', 'error')
+  } finally {
+    favoriteBusy.value = false
   }
 }
 
@@ -148,7 +186,7 @@ onMounted(loadProduct)
         </div>
         <div class="detail-copy">
           <span class="section-kicker">{{ product.categoryName }} <template v-if="product.brandName">· {{ product.brandName }}</template></span>
-          <h1>{{ product.productName }}</h1>
+          <div class="detail-title-row"><h1>{{ product.productName }}</h1><button class="detail-favorite-button" :class="{ active: favorited }" type="button" :disabled="favoriteBusy" :aria-pressed="favorited" @click="toggleFavorite"><VanIcon :name="favorited ? 'like' : 'like-o'" />{{ favoriteBusy ? '处理中' : favorited ? '已收藏' : '收藏' }}</button></div>
           <p class="detail-subtitle">{{ product.subtitle }}</p>
           <div class="detail-price-row"><strong class="detail-price">¥{{ price }}</strong><del v-if="selected?.marketPrice && selected.marketPrice > selected.price">¥{{ Number(selected.marketPrice).toLocaleString() }}</del></div>
           <div class="detail-option"><div class="detail-option-heading"><span>选择规格</span><small>{{ selected?.skuName || '请选择' }}</small></div><div class="sku-list"><button v-for="sku in product.skuList" :key="sku.skuId" :class="{ active: selected?.skuId === sku.skuId, unavailable: Number(sku.availableStock) <= 0 }" :disabled="sku.status !== '1'" type="button" @click="selectSku(sku)">{{ sku.skuName || sku.skuCode }}<small v-if="Number(sku.availableStock) <= 0">售罄</small></button></div></div>

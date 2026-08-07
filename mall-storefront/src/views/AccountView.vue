@@ -24,6 +24,7 @@ import {
 } from '../api/member'
 import { getOrders } from '../api/order'
 import { getCart } from '../api/cart'
+import { getActivitySummary } from '../api/activity'
 import { useCartStore } from '../stores/cart'
 import { useNoticeStore } from '../stores/notice'
 import { useMessageStore } from '../stores/message'
@@ -44,6 +45,7 @@ const member = ref(null)
 const addresses = ref([])
 const orderCount = ref(0)
 const cartCount = ref(0)
+const activitySummary = ref({ favoriteCount: 0, historyCount: 0 })
 const profileLoading = ref(false)
 const profileEditing = ref(false)
 const nicknameDraft = ref('')
@@ -103,9 +105,10 @@ onUnmounted(() => {
 async function loadProfile() {
   profileLoading.value = true
   try {
-    const [profileResponse, addressResponse, orderResponse, cartResponse, presetResponse, sessionResponse] = await Promise.all([
+    const [profileResponse, addressResponse, orderResponse, cartResponse, presetResponse, sessionResponse, activityResponse] = await Promise.all([
       getProfile(), getAddresses(), getOrders({ limit: 50 }), getCart(),
-      getAvatarPresets().catch(() => ({ data: { data: [] } })), getMemberSessions()
+      getAvatarPresets().catch(() => ({ data: { data: [] } })), getMemberSessions(),
+      getActivitySummary().catch(() => ({ data: { data: { favoriteCount: 0, historyCount: 0 } } }))
     ])
     member.value = profileResponse.data.data
     nicknameDraft.value = member.value.nickname
@@ -114,6 +117,7 @@ async function loadProfile() {
     cartCount.value = (cartResponse.data.data?.items || []).length
     avatarPresets.value = presetResponse.data.data || []
     sessionOverview.value = sessionResponse.data.data || sessionOverview.value
+    activitySummary.value = activityResponse.data.data || activitySummary.value
   } catch {
     sessionStorage.removeItem('mall-user-token')
   } finally {
@@ -638,6 +642,7 @@ async function confirmAvatarCrop() {
 
       <nav class="account-shortcuts-c" aria-label="个人中心快捷入口">
         <router-link to="/orders"><VanIcon name="orders-o" /><span><strong>我的订单</strong><small>查看交易和物流进度</small></span><VanIcon name="arrow" /></router-link>
+        <router-link to="/activity"><VanIcon name="like-o" /><span><strong>收藏与足迹</strong><small>{{ activitySummary.favoriteCount }} 件收藏 · {{ activitySummary.historyCount }} 条足迹</small></span><VanIcon name="arrow" /></router-link>
         <a href="#address-book"><VanIcon name="location-o" /><span><strong>地址簿</strong><small>{{ addresses.length }} 个常用地址</small></span><VanIcon name="arrow" /></a>
         <a href="#account-security"><VanIcon name="shield-o" /><span><strong>安全中心</strong><small>管理登录设备</small></span><VanIcon name="arrow" /></a>
         <router-link to="/messages"><VanIcon name="chat-o" /><span><strong>消息中心 <b v-if="messageStore.unreadCount" class="shortcut-badge">{{ messageStore.unreadCount > 99 ? '99+' : messageStore.unreadCount }}</b></strong><small>订单、物流和账户动态</small></span><VanIcon name="arrow" /></router-link>
