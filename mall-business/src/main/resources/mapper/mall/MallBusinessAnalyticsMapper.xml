@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.mall.analytics.mapper.MallBusinessAnalyticsMapper">
+  <resultMap id="Trend" type="com.ruoyi.mall.analytics.domain.MallAnalyticsTrendPoint">
+    <result property="date" column="date_label"/><result property="amount" column="amount"/><result property="orderCount" column="order_count"/>
+  </resultMap>
+  <resultMap id="Ranking" type="com.ruoyi.mall.analytics.domain.MallAnalyticsRanking">
+    <result property="label" column="label"/><result property="quantity" column="quantity"/><result property="amount" column="amount"/>
+  </resultMap>
+  <select id="countOrders" resultType="long">select count(1) from mall_order where create_time &gt;= #{from} and create_time &lt; #{to}</select>
+  <select id="sumSales" resultType="java.math.BigDecimal">select coalesce(sum(payable_amount),0) from mall_order where payment_status='PAID' and pay_time &gt;= #{from} and pay_time &lt; #{to}</select>
+  <select id="countPaidMembers" resultType="long">select count(distinct member_id) from mall_order where payment_status='PAID' and pay_time &gt;= #{from} and pay_time &lt; #{to}</select>
+  <select id="countRepeatMembers" resultType="long">select count(1) from (select member_id from mall_order where payment_status='PAID' and pay_time &gt;= #{from} and pay_time &lt; #{to} group by member_id having count(1) &gt; 1) t</select>
+  <select id="countPendingShipment" resultType="long">select count(1) from mall_order where status='PENDING_SHIPMENT'</select>
+  <select id="countInTransitShipments" resultType="long">select count(1) from mall_logistics_shipment where status='IN_TRANSIT'</select>
+  <select id="countDeliveredShipments" resultType="long">select count(1) from mall_logistics_shipment where status='DELIVERED' and delivered_time &gt;= #{from} and delivered_time &lt; #{to}</select>
+  <select id="countLowStockSkus" resultType="long">select count(1) from mall_sku k left join mall_stock s on s.sku_id=k.sku_id where k.del_flag='0' and k.status='1' and coalesce(s.available_quantity,k.available_stock,0) &lt;= coalesce(s.warning_threshold,0)</select>
+  <select id="sumAvailableStock" resultType="long">select coalesce(sum(coalesce(s.available_quantity,k.available_stock,0)),0) from mall_sku k left join mall_stock s on s.sku_id=k.sku_id where k.del_flag='0' and k.status='1'</select>
+  <select id="countAfterSalePending" resultType="long">select count(1) from mall_item_after_sale where status in ('PENDING_REVIEW','RETURN_SHIPPED','REFUNDING')</select>
+  <select id="countAfterSales" resultType="long">select count(1) from mall_item_after_sale where create_time &gt;= #{from} and create_time &lt; #{to}</select>
+  <select id="sumRefunds" resultType="java.math.BigDecimal">select coalesce(sum(refund_amount + shipping_refund_amount),0) from mall_item_after_sale where status='SUCCESS' and refund_time &gt;= #{from} and refund_time &lt; #{to}</select>
+  <select id="countOpenFinancialAnomalies" resultType="long">
+    select (select count(1) from mall_reconciliation_diff where status='OPEN')
+         + (select count(1) from mall_reconciliation_alert where status='OPEN')
+         + (select count(1) from mall_compensation_task where status in ('PENDING','FAILED','MANUAL_REQUIRED'))
+  </select>
+  <select id="selectSalesTrend" resultMap="Trend">select date_format(pay_time,'%Y-%m-%d') date_label, coalesce(sum(payable_amount),0) amount, count(1) order_count from mall_order where payment_status='PAID' and pay_time &gt;= #{from} and pay_time &lt; #{to} group by date_format(pay_time,'%Y-%m-%d') order by date_label</select>
+  <select id="selectProductRanking" resultMap="Ranking">select oi.product_name label, sum(oi.quantity) quantity, coalesce(sum(oi.line_amount),0) amount from mall_order_item oi join mall_order o on o.order_id=oi.order_id where o.payment_status='PAID' and o.pay_time &gt;= #{from} and o.pay_time &lt; #{to} group by oi.product_name order by amount desc limit #{limit}</select>
+</mapper>
