@@ -1,5 +1,5 @@
 <template>
-  <div v-if="!item.hidden">
+  <div v-if="!item.hidden && !hideForMallOperations" :class="itemClasses">
     <template v-if="hasOneShowingChild(item.children,item) && (!onlyOneChild.children||onlyOneChild.noShowingChildren)&&!item.alwaysShow">
       <app-link v-if="onlyOneChild.meta" :to="resolvePath(onlyOneChild.path, onlyOneChild.query)">
         <el-menu-item :index="resolvePath(onlyOneChild.path)" :class="{'submenu-title-noDropdown':!isNest}">
@@ -30,6 +30,7 @@ import { isExternal } from '@/utils/validate'
 import Item from './Item'
 import AppLink from './Link'
 import FixiOSBug from './FixiOSBug'
+import { operationsRoleKeys } from '@/views/mall/operations/roles'
 
 export default {
   name: 'SidebarItem',
@@ -53,6 +54,25 @@ export default {
   data() {
     this.onlyOneChild = null
     return {}
+  },
+  computed: {
+    currentRoles() {
+      return this.$store.getters.roles || []
+    },
+    isMallOperationsUser() {
+      return this.currentRoles.includes('admin') || this.currentRoles.some(role => operationsRoleKeys.includes(role))
+    },
+    hideForMallOperations() {
+      return Boolean(this.item.hideForMallOperations && this.isMallOperationsUser)
+    },
+    itemClasses() {
+      const normalized = String(this.basePath || '').replace(/\\/g, '/')
+      return {
+        'mall-workbench-menu': normalized === '/mall/overview',
+        'mall-workbench-home': normalized === '/mall/overview/home',
+        'mall-workbench-action': normalized === '/mall/overview/analytics' || normalized === '/mall/overview/responsibilities'
+      }
+    }
   },
   methods: {
     hasOneShowingChild(children = [], parent) {

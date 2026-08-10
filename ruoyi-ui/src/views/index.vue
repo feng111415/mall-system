@@ -1135,6 +1135,9 @@ import { operationsRoleKeys } from '@/views/mall/operations/roles'
 export default {
   name: "Index",
   components: { MallOperationsHome },
+  created() {
+    if (this.hasOperationsHomepage) this.$router.replace('/mall/overview/home')
+  },
   data() {
     return {
       // 版本号

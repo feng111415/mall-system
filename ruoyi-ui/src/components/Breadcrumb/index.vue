@@ -46,7 +46,7 @@ export default {
         matched = router.matched.filter(item => item.meta && item.meta.title)
       }
       // 判断是否为首页
-      if (!this.isDashboard(matched[0])) {
+      if (!this.isDashboard(matched[0]) && !router.path.startsWith('/mall/')) {
         matched = [{ path: "/index", meta: { title: "首页" } }].concat(matched)
       }
       this.levelList = matched.filter(item => item.meta && item.meta.title && item.meta.breadcrumb !== false)

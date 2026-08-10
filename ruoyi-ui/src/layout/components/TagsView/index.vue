@@ -68,6 +68,7 @@
 <script>
 import ScrollPane from './ScrollPane'
 import path from 'path'
+import { operationsRoleKeys } from '@/views/mall/operations/roles'
 
 export default {
   components: { ScrollPane },
@@ -99,6 +100,10 @@ export default {
     },
     tagsViewStyle() {
       return this.$store.state.settings.tagsViewStyle
+    },
+    isMallOperationsUser() {
+      const roles = this.$store.getters.roles || []
+      return roles.includes('admin') || roles.some(role => operationsRoleKeys.includes(role))
     },
     selectedDropdownTag() {
       return this.visitedViews.find(v => this.isActive(v)) || {}
@@ -190,6 +195,7 @@ export default {
     filterAffixTags(routes, basePath = '/') {
       let tags = []
       routes.forEach(route => {
+        if (route.hideForMallOperations && this.isMallOperationsUser) return
         if (route.meta && route.meta.affix) {
           const tagPath = path.resolve(basePath, route.path)
           tags.push({

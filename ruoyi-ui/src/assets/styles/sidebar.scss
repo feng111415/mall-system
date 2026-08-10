@@ -70,6 +70,59 @@
       width: 100% !important;
     }
 
+    .mall-workbench-menu {
+      margin: 8px 10px 10px;
+      overflow: hidden;
+      border: 1px solid rgba(122, 159, 204, 0.28);
+      border-radius: 6px;
+
+      > .el-submenu > .el-submenu__title {
+        height: 68px !important;
+        padding-top: 11px !important;
+        line-height: 22px !important;
+        background: rgba(43, 91, 143, 0.42) !important;
+
+        > span {
+          display: inline-block;
+          padding-bottom: 18px;
+          font-weight: 600;
+        }
+
+        &::after {
+          content: '今日任务与异常聚合';
+          position: absolute;
+          left: 50px;
+          bottom: 9px;
+          color: #8fa9c7;
+          font-size: 10px;
+          line-height: 14px;
+        }
+      }
+
+      > .el-submenu > .el-menu {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        background: #142238 !important;
+      }
+
+      .mall-workbench-home {
+        grid-column: 1 / -1;
+      }
+
+      .mall-workbench-home .el-menu-item,
+      .mall-workbench-action .el-menu-item {
+        min-width: 0 !important;
+        height: 40px !important;
+        padding: 0 10px !important;
+        line-height: 40px !important;
+        text-align: center;
+      }
+
+      .mall-workbench-action + .mall-workbench-action {
+        border-left: 1px solid rgba(122, 159, 204, 0.24);
+      }
+    }
+
     .el-menu-item, .el-submenu__title {
       overflow: hidden !important;
       text-overflow: ellipsis !important;
@@ -219,6 +272,23 @@
           .svg-icon {
             margin-left: 20px;
           }
+        }
+      }
+    }
+
+    .mall-workbench-menu {
+      margin: 0;
+      overflow: visible;
+      border: 0;
+      border-radius: 0;
+
+      > .el-submenu > .el-submenu__title {
+        height: 44px !important;
+        padding-top: 0 !important;
+        line-height: 44px !important;
+
+        &::after {
+          display: none;
         }
       }
     }

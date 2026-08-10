@@ -2,7 +2,7 @@
   <div class="mall-operations-home">
     <header class="home-heading">
       <div>
-        <p class="eyebrow">MALL OPERATIONS · V0.4</p>
+        <p class="eyebrow">MALL OPERATIONS · V0.5</p>
         <h1>{{ isAdmin ? '商城运营岗位总览' : activeRole.name + '工作台' }}</h1>
         <p>{{ activeRole.objective }}</p>
       </div>
@@ -24,7 +24,7 @@
       </div>
       <div class="summary-section change">
         <h2><i class="el-icon-refresh" /> 最新权限同步</h2>
-        <el-tag size="mini" type="primary" effect="plain">V0.4 模块 4</el-tag>
+        <el-tag size="mini" type="primary" effect="plain">V0.5 菜单重组</el-tag>
         <p>{{ activeRole.latestChange }}</p>
       </div>
       <div class="summary-section boundary">
@@ -120,7 +120,7 @@ export default {
       return String(metric.count || 0)
     },
     goFeature (path) { this.$router.push(path) },
-    goResponsibilities () { this.$router.push('/mall/operations-roles') },
+    goResponsibilities () { this.$router.push('/mall/overview/responsibilities') },
     featureIcon (name) {
       if (name.includes('物流')) return 'el-icon-truck'
       if (name.includes('订单')) return 'el-icon-s-order'
