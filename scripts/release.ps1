@@ -18,5 +18,21 @@ New-Item -ItemType Directory -Force -Path $outputPath | Out-Null
 & (Join-Path $PSScriptRoot 'build-mall-admin.ps1')
 Copy-Item (Join-Path $projectRoot 'mall-storefront\dist') (Join-Path $outputPath 'mall-storefront') -Recurse
 Copy-Item (Join-Path $projectRoot 'mall-admin\dist') (Join-Path $outputPath 'mall-admin') -Recurse
+
+$databasePath = Join-Path $outputPath 'database'
+$migrationPath = Join-Path $databasePath 'migrations'
+New-Item -ItemType Directory -Force -Path $migrationPath | Out-Null
+Import-Module (Join-Path $PSScriptRoot 'MallMigration.psm1') -Force
+$migrationCatalog = @(Get-MallMigrationCatalog -MigrationRoot (Join-Path $projectRoot 'sql'))
+foreach ($migration in $migrationCatalog) {
+    Copy-Item -LiteralPath $migration.Path -Destination $migrationPath
+}
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'MallMigration.psm1') -Destination $databasePath
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'invoke-db-migrations.ps1') -Destination $databasePath
+$migrationCatalog |
+    Select-Object VersionText, Script, Checksum |
+    ConvertTo-Json |
+    Set-Content -LiteralPath (Join-Path $databasePath 'migration-manifest.json') -Encoding UTF8
+
 git -C $projectRoot tag $Version
 Write-Host "已生成发布包：$outputPath"
