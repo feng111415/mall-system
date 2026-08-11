@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
+import com.ruoyi.common.constant.HttpStatus;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.mall.order.domain.MallOrder;
 import com.ruoyi.mall.order.domain.MallOrderStatus;
@@ -48,7 +49,7 @@ public class MallOrderQueryService implements com.ruoyi.mall.application.port.Me
         requireMember(memberId);
         if (orderId == null || orderId <= 0) throw new ServiceException("订单参数无效");
         MallOrder order = mapper.selectMemberOrder(orderId, memberId);
-        if (order == null) throw new ServiceException("订单不存在");
+        if (order == null) throw new ServiceException("订单不存在", HttpStatus.NOT_FOUND);
         order.setItems(mapper.selectMemberOrderItems(orderId, memberId));
         order.setOperations(mapper.selectMemberOrderOperations(orderId, memberId));
         if (couponService != null) order.setCoupon(couponService.orderCoupon(memberId, orderId));

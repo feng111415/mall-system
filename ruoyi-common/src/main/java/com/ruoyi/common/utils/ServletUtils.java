@@ -15,6 +15,7 @@ import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import com.ruoyi.common.constant.Constants;
+import com.ruoyi.common.constant.HttpStatus;
 import com.ruoyi.common.core.text.Convert;
 
 /**
@@ -138,9 +139,17 @@ public class ServletUtils
      */
     public static void renderString(HttpServletResponse response, String string)
     {
+        renderString(response, HttpStatus.SUCCESS, string);
+    }
+
+    /**
+     * 将 JSON 字符串和 HTTP 状态码一起渲染到客户端。
+     */
+    public static void renderString(HttpServletResponse response, int status, String string)
+    {
         try
         {
-            response.setStatus(200);
+            response.setStatus(status);
             response.setContentType("application/json");
             response.setCharacterEncoding("utf-8");
             response.getWriter().print(string);

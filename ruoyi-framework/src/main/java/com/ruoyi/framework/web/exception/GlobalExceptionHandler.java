@@ -6,10 +6,15 @@ import org.slf4j.LoggerFactory;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.BindException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingPathVariableException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.NoHandlerFoundException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import com.ruoyi.common.constant.HttpStatus;
 import com.ruoyi.common.core.domain.AjaxResult;
@@ -49,7 +54,26 @@ public class GlobalExceptionHandler
     {
         String requestURI = request.getRequestURI();
         log.error("请求地址'{}',不支持'{}'请求", requestURI, e.getMethod());
-        return AjaxResult.error(e.getMessage());
+        return AjaxResult.error(HttpStatus.BAD_METHOD, e.getMessage());
+    }
+
+    /**
+     * 不支持的媒体类型。
+     */
+    @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+    public AjaxResult handleHttpMediaTypeNotSupported(HttpMediaTypeNotSupportedException e)
+    {
+        return AjaxResult.error(HttpStatus.UNSUPPORTED_TYPE, "请求内容类型不受支持");
+    }
+
+    /**
+     * 路由或静态资源不存在。
+     */
+    @ExceptionHandler({ NoHandlerFoundException.class, NoResourceFoundException.class })
+    public AjaxResult handleNotFoundException(Exception e, HttpServletRequest request)
+    {
+        log.debug("请求资源不存在: {}", request.getRequestURI());
+        return AjaxResult.error(HttpStatus.NOT_FOUND, "请求资源不存在");
     }
 
     /**
@@ -60,7 +84,9 @@ public class GlobalExceptionHandler
     {
         log.error(e.getMessage(), e);
         Integer code = e.getCode();
-        return StringUtils.isNotNull(code) ? AjaxResult.error(code, e.getMessage()) : AjaxResult.error(e.getMessage());
+        return StringUtils.isNotNull(code)
+                ? AjaxResult.error(code, e.getMessage())
+                : AjaxResult.error(HttpStatus.BAD_REQUEST, e.getMessage());
     }
 
     /**
@@ -71,7 +97,8 @@ public class GlobalExceptionHandler
     {
         String requestURI = request.getRequestURI();
         log.error("请求路径中缺少必需的路径变量'{}',发生系统异常.", requestURI, e);
-        return AjaxResult.error(String.format("请求路径中缺少必需的路径变量[%s]", e.getVariableName()));
+        return AjaxResult.error(HttpStatus.BAD_REQUEST,
+                String.format("请求路径中缺少必需的路径变量[%s]", e.getVariableName()));
     }
 
     /**
@@ -87,7 +114,17 @@ public class GlobalExceptionHandler
             value = EscapeUtil.clean(value);
         }
         log.error("请求参数类型不匹配'{}',发生系统异常.", requestURI, e);
-        return AjaxResult.error(String.format("请求参数类型不匹配，参数[%s]要求类型为：'%s'，但输入值为：'%s'", e.getName(), e.getRequiredType().getName(), value));
+        return AjaxResult.error(HttpStatus.BAD_REQUEST,
+                String.format("请求参数类型不匹配，参数[%s]要求类型为：'%s'，但输入值为：'%s'", e.getName(), e.getRequiredType().getName(), value));
+    }
+
+    /**
+     * 缺少请求参数或请求体格式错误。
+     */
+    @ExceptionHandler({ MissingServletRequestParameterException.class, HttpMessageNotReadableException.class })
+    public AjaxResult handleMalformedRequest(Exception e)
+    {
+        return AjaxResult.error(HttpStatus.BAD_REQUEST, "请求参数格式不正确");
     }
 
     /**
@@ -98,7 +135,7 @@ public class GlobalExceptionHandler
     {
         String requestURI = request.getRequestURI();
         log.error("请求地址'{}',发生未知异常.", requestURI, e);
-        return AjaxResult.error(e.getMessage());
+        return AjaxResult.error(HttpStatus.ERROR, "服务器内部错误");
     }
 
     /**
@@ -109,7 +146,7 @@ public class GlobalExceptionHandler
     {
         String requestURI = request.getRequestURI();
         log.error("请求地址'{}',发生系统异常.", requestURI, e);
-        return AjaxResult.error(e.getMessage());
+        return AjaxResult.error(HttpStatus.ERROR, "服务器内部错误");
     }
 
     /**
@@ -120,7 +157,7 @@ public class GlobalExceptionHandler
     {
         log.error(e.getMessage(), e);
         String message = e.getAllErrors().get(0).getDefaultMessage();
-        return AjaxResult.error(message);
+        return AjaxResult.error(HttpStatus.BAD_REQUEST, message);
     }
 
     /**
@@ -131,7 +168,7 @@ public class GlobalExceptionHandler
     {
         log.error(e.getMessage(), e);
         String message = e.getBindingResult().getFieldError().getDefaultMessage();
-        return AjaxResult.error(message);
+        return AjaxResult.error(HttpStatus.BAD_REQUEST, message);
     }
 
     /**

@@ -3,16 +3,41 @@ $api = 'http://127.0.0.1:8080/api/mall'
 $web = 'http://127.0.0.1:5174'
 $n = 0
 $deviceId = [guid]::NewGuid().ToString('N')
-$deviceHeaders = @{ 'X-Mall-Device-Id' = $deviceId; 'User-Agent' = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Edge/E2E' }
+$deviceHeaders = @{ 'X-Mall-Device-Id' = $deviceId; 'X-Forwarded-For' = "198.51.100.$(Get-Random -Minimum 1 -Maximum 200)"; 'User-Agent' = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Edge/E2E' }
 function Pass([string]$name, [string]$detail = '') { $script:n++; if ($detail) { Write-Host ("PASS {0}. {1} - {2}" -f $script:n, $name, $detail) -ForegroundColor Green } else { Write-Host ("PASS {0}. {1}" -f $script:n, $name) -ForegroundColor Green } }
 function Api([string]$method, [string]$url, [hashtable]$headers = @{}, $body = $null) {
-  $p = @{ Method = $method; Uri = $url; Headers = $headers; UseBasicParsing = $true }
-  if ($null -ne $body) { $p.ContentType = 'application/json'; $p.Body = ($body | ConvertTo-Json -Depth 10 -Compress) }
-  try { return Invoke-RestMethod @p } catch { $r = $_.Exception.Response; $detail = if ($r) { (New-Object IO.StreamReader($r.GetResponseStream())).ReadToEnd() } else { $_.Exception.Message }; throw "$method $url failed: $detail" }
+  $request = [Net.HttpWebRequest]::Create($url)
+  $request.Method = $method
+  $request.ContentType = 'application/json'
+  foreach ($header in $headers.GetEnumerator()) {
+    if ($header.Key -eq 'User-Agent') { $request.UserAgent = [string]$header.Value }
+    elseif ($header.Key -eq 'Accept') { $request.Accept = [string]$header.Value }
+    else { $request.Headers[$header.Key] = [string]$header.Value }
+  }
+  if ($null -ne $body) {
+    $payload = [Text.Encoding]::UTF8.GetBytes(($body | ConvertTo-Json -Depth 10 -Compress))
+    $request.ContentLength = $payload.Length
+    $stream = $request.GetRequestStream()
+    try { $stream.Write($payload, 0, $payload.Length) } finally { $stream.Dispose() }
+  }
+  try { $response = $request.GetResponse() }
+  catch [Net.WebException] {
+    if ($_.Exception.Response) { $response = $_.Exception.Response } else { throw "$method $url failed: $($_.Exception.Message)" }
+  }
+  $reader = New-Object IO.StreamReader($response.GetResponseStream())
+  try { $content = $reader.ReadToEnd() } finally { $reader.Dispose(); $response.Dispose() }
+  try { return $content | ConvertFrom-Json } catch { throw "$method $url returned invalid JSON: $content" }
 }
 foreach ($route in @('/', '/catalog', '/account', '/cart', '/checkout', '/orders')) { $page = Invoke-WebRequest -UseBasicParsing -Uri ($web + $route); if ($page.StatusCode -ne 200) { throw "storefront route $route returned $($page.StatusCode)" } }
 Pass 'storefront routes' '6 routes returned HTTP 200'
 $health = Api 'GET' "$api/health"; if ($health.code -ne 200 -or $health.data.status -ne 'UP') { throw 'health check failed' }; Pass 'backend health'
+$challengeDeviceId = [guid]::NewGuid().ToString('N')
+$challengeHeaders = @{ 'X-Mall-Device-Id' = $challengeDeviceId; 'X-Forwarded-For' = "198.51.100.$(Get-Random -Minimum 201 -Maximum 254)" }
+$challenge = Api 'POST' "$api/member/sms-challenge" $challengeHeaders @{ phone = '13800138000' }
+if ($challenge.code -ne 200 -or $challenge.data.PSObject.Properties.Name -contains 'targetX' -or
+    -not $challenge.data.sceneImage.StartsWith('data:image/png;base64,') -or
+    -not $challenge.data.pieceImage.StartsWith('data:image/png;base64,')) { throw 'SMS challenge exposed its answer or omitted raster images' }
+Pass 'captcha challenge secrecy' 'answer stays server-side and scene is rasterized'
 $unauthCart = Api 'GET' "$api/cart"; if ($unauthCart.code -ne 401) { throw 'anonymous cart access was not rejected' }; Pass 'anonymous access guard' 'cart requires login'
 $categories = Api 'GET' "$api/catalog/categories"; $products = Api 'GET' "$api/catalog/products"
 if ($categories.code -ne 200 -or @($categories.data).Count -eq 0) { throw 'category list is empty' }; if ($products.code -ne 200 -or @($products.data).Count -eq 0) { throw 'product list is empty' }
@@ -66,7 +91,7 @@ if ($payment.code -ne 200 -or [string]::IsNullOrWhiteSpace($paymentNo) -or
 }
 Pass 'payment creation state' "payment=$paymentNo, order=PAYING"
 $otherDeviceId = [guid]::NewGuid().ToString('N')
-$otherHeaders = @{ 'X-Mall-Device-Id' = $otherDeviceId; 'User-Agent' = $deviceHeaders['User-Agent'] }
+$otherHeaders = @{ 'X-Mall-Device-Id' = $otherDeviceId; 'X-Forwarded-For' = "203.0.113.$(Get-Random -Minimum 1 -Maximum 254)"; 'User-Agent' = $deviceHeaders['User-Agent'] }
 $otherPhone = '138' + (Get-Random -Minimum 10000000 -Maximum 99999999); Api 'POST' "$api/member/sms-code" $otherHeaders @{ phone = $otherPhone } | Out-Null
 $otherLogin = Api 'POST' "$api/member/login" $otherHeaders @{ phone = $otherPhone; code = '123456'; agreed = $true; userAgreementVersion = '1.0'; privacyPolicyVersion = '1.0'; deviceId = $otherDeviceId }
 $otherAuth = @{ 'X-Mall-Authorization' = "Bearer $($otherLogin.data.token)"; 'X-Mall-Device-Id' = $otherDeviceId; 'User-Agent' = $otherHeaders['User-Agent'] }; $otherPayments = Api 'GET' "$api/orders/$orderId/payments" $otherAuth

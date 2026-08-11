@@ -1,16 +1,26 @@
 package com.ruoyi.mall.member.service;
 
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.Polygon;
+import java.awt.RenderingHints;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.Base64;
 import java.util.Date;
 import java.util.HexFormat;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import javax.imageio.ImageIO;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import com.ruoyi.common.exception.ServiceException;
@@ -30,6 +40,14 @@ public class MallMemberCaptchaService
     private static final int DEVICE_WINDOW_LIMIT = 5;
     private static final int DAILY_PHONE_RISK_LIMIT = 3;
     private static final int DAILY_IP_RISK_LIMIT = 15;
+    private static final int POSITION_SCALE = 10;
+    private static final int PIECE_START_POSITION = 120;
+    private static final int MIN_TARGET_POSITION = 180;
+    private static final int MAX_TARGET_POSITION = 820;
+    private static final int VERIFY_TOLERANCE = 10;
+    private static final int SCENE_WIDTH = 320;
+    private static final int SCENE_HEIGHT = 188;
+    private static final int GAP_SIZE = 50;
     private static final String WINDOW_PREFIX = "mall_member:sms:risk:";
     private final SecureRandom secureRandom = new SecureRandom();
     private final MallMemberAuthMapper authMapper;
@@ -56,7 +74,8 @@ public class MallMemberCaptchaService
     public Map<String, Object> createChallenge(String phone, String requestIp, String deviceIdentifier)
     {
         String challengeKey = randomHex(32);
-        int targetPosition = 55 + secureRandom.nextInt(26);
+        int targetPosition = MIN_TARGET_POSITION
+                + secureRandom.nextInt(MAX_TARGET_POSITION - MIN_TARGET_POSITION + 1);
         MallCaptchaChallenge challenge = new MallCaptchaChallenge();
         challenge.setChallengeKey(challengeKey);
         challenge.setPhone(phone);
@@ -68,10 +87,13 @@ public class MallMemberCaptchaService
         challenge.setExpireTime(new Date(System.currentTimeMillis() + CHALLENGE_VALID_MILLIS));
         authMapper.insertCaptchaChallenge(challenge);
 
+        ChallengeScene scene = createChallengeScene(targetPosition);
         Map<String, Object> response = new LinkedHashMap<>();
         response.put("challengeId", challengeKey);
-        response.put("pieceX", 12);
-        response.put("targetX", targetPosition);
+        response.put("pieceX", PIECE_START_POSITION);
+        response.put("positionScale", POSITION_SCALE);
+        response.put("sceneImage", scene.backgroundImage());
+        response.put("pieceImage", scene.pieceImage());
         response.put("expiresIn", CHALLENGE_VALID_MILLIS / 1000);
         return response;
     }
@@ -94,9 +116,7 @@ public class MallMemberCaptchaService
         {
             throw new ServiceException("验证失败次数过多，请重新获取");
         }
-        String expected = hash(challengeKey + ":" + position);
-        if (!MessageDigest.isEqual(expected.getBytes(StandardCharsets.US_ASCII),
-                challenge.getAnswerHash().getBytes(StandardCharsets.US_ASCII)))
+        if (!matchesAnswer(challengeKey, position, challenge.getAnswerHash()))
         {
             int attempt = challenge.getVerifyAttempts() == null ? 1 : challenge.getVerifyAttempts() + 1;
             authMapper.incrementCaptchaAttempts(challenge.getChallengeId());
@@ -138,6 +158,95 @@ public class MallMemberCaptchaService
         byte[] value = new byte[bytes];
         secureRandom.nextBytes(value);
         return HexFormat.of().formatHex(value);
+    }
+
+    private boolean matchesAnswer(String challengeKey, int position, String answerHash)
+    {
+        for (int offset = -VERIFY_TOLERANCE; offset <= VERIFY_TOLERANCE; offset++)
+        {
+            int candidate = position + offset;
+            if (candidate < 0 || candidate > 100 * POSITION_SCALE) continue;
+            String expected = hash(challengeKey + ":" + candidate);
+            if (MessageDigest.isEqual(expected.getBytes(StandardCharsets.US_ASCII),
+                    answerHash.getBytes(StandardCharsets.US_ASCII))) return true;
+        }
+        return false;
+    }
+
+    private ChallengeScene createChallengeScene(int targetPosition)
+    {
+        BufferedImage image = new BufferedImage(SCENE_WIDTH, SCENE_HEIGHT, BufferedImage.TYPE_INT_RGB);
+        Graphics2D graphics = image.createGraphics();
+        try
+        {
+            graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            graphics.setColor(new Color(247, 164, 140));
+            graphics.fillRect(0, 0, SCENE_WIDTH, SCENE_HEIGHT);
+
+            graphics.setColor(new Color(255, 255, 255, 92));
+            for (int x = 0; x < SCENE_WIDTH; x += 42) graphics.drawLine(x, 0, x, SCENE_HEIGHT);
+            for (int y = 0; y < SCENE_HEIGHT; y += 42) graphics.drawLine(0, y, SCENE_WIDTH, y);
+
+            graphics.setColor(new Color(255, 209, 81));
+            graphics.fillOval(SCENE_WIDTH - 72, 22, 44, 44);
+            graphics.setColor(new Color(245, 93, 72));
+            graphics.fillPolygon(new Polygon(
+                    new int[] { 26, 138, 186, 221, 276 },
+                    new int[] { SCENE_HEIGHT, 54, 118, 82, SCENE_HEIGHT }, 5));
+
+            graphics.setColor(new Color(32, 32, 42, 36));
+            for (int i = 0; i < 42; i++)
+            {
+                int size = 3 + secureRandom.nextInt(12);
+                graphics.fillOval(secureRandom.nextInt(SCENE_WIDTH - size),
+                        secureRandom.nextInt(SCENE_HEIGHT - size), size, size);
+            }
+
+            int centerX = (int) Math.round((targetPosition / (double) POSITION_SCALE / 100D) * SCENE_WIDTH);
+            int gapX = Math.max(0, Math.min(SCENE_WIDTH - GAP_SIZE, centerX - GAP_SIZE / 2));
+            int gapY = SCENE_HEIGHT - GAP_SIZE;
+            BufferedImage piece = new BufferedImage(GAP_SIZE, GAP_SIZE, BufferedImage.TYPE_INT_RGB);
+            Graphics2D pieceGraphics = piece.createGraphics();
+            try
+            {
+                pieceGraphics.drawImage(image, 0, 0, GAP_SIZE, GAP_SIZE,
+                        gapX, gapY, gapX + GAP_SIZE, gapY + GAP_SIZE, null);
+            }
+            finally
+            {
+                pieceGraphics.dispose();
+            }
+
+            graphics.setColor(new Color(32, 32, 42, 148));
+            graphics.fillRect(gapX, gapY, GAP_SIZE, GAP_SIZE);
+            graphics.setColor(new Color(255, 248, 234, 210));
+            graphics.setStroke(new BasicStroke(2F, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER,
+                    10F, new float[] { 6F, 4F }, 0F));
+            graphics.drawRect(gapX + 1, gapY + 1, GAP_SIZE - 2, GAP_SIZE - 2);
+
+            return new ChallengeScene(encodePng(image), encodePng(piece));
+        }
+        finally
+        {
+            graphics.dispose();
+        }
+    }
+
+    private String encodePng(BufferedImage image)
+    {
+        try (ByteArrayOutputStream output = new ByteArrayOutputStream())
+        {
+            if (!ImageIO.write(image, "png", output)) throw new IOException("PNG writer unavailable");
+            return "data:image/png;base64," + Base64.getEncoder().encodeToString(output.toByteArray());
+        }
+        catch (IOException exception)
+        {
+            throw new ServiceException("安全验证图片生成失败，请稍后重试");
+        }
+    }
+
+    private record ChallengeScene(String backgroundImage, String pieceImage)
+    {
     }
 
     private String hash(String value)

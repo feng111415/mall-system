@@ -12,7 +12,7 @@ public class MallCaptchaVerifyRequest
 
     @NotNull(message = "请完成拼图")
     @Min(value = 0, message = "验证位置无效")
-    @Max(value = 100, message = "验证位置无效")
+    @Max(value = 1000, message = "验证位置无效")
     private Integer position;
 
     public String getChallengeId() { return challengeId; }

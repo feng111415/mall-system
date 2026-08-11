@@ -67,7 +67,8 @@ const smsChallengeLoading = ref(false)
 const smsChallengeVerifying = ref(false)
 const smsChallengeError = ref('')
 const smsChallenge = ref(null)
-const smsChallengePosition = ref(12)
+const smsChallengePosition = ref(120)
+const smsChallengePercent = computed(() => smsChallengePosition.value / (smsChallenge.value?.positionScale || 10))
 const cropOpen = ref(false)
 const cropImageUrl = ref('')
 const cropZoom = ref(1)
@@ -168,7 +169,7 @@ async function openSmsChallenge() {
   try {
     const response = await createSmsChallenge(phone.value)
     smsChallenge.value = response.data.data
-    smsChallengePosition.value = smsChallenge.value?.pieceX ?? 12
+    smsChallengePosition.value = smsChallenge.value?.pieceX ?? 120
     smsChallengeOpen.value = true
   } catch (error) {
     smsChallengeError.value = error.response?.data?.msg || '安全验证加载失败，请稍后重试'
@@ -854,13 +855,11 @@ async function confirmAvatarCrop() {
           <button class="icon-button" type="button" aria-label="关闭安全验证" title="关闭" @click="closeSmsChallenge"><VanIcon name="cross" /></button>
         </div>
         <p class="sms-challenge-note">拖动下方拼图块到缺口位置，验证通过后继续发送短信。</p>
-        <div class="sms-challenge-scene">
-          <span class="sms-challenge-grid"></span><span class="sms-challenge-sun"></span><span class="sms-challenge-mountain"></span>
-          <span class="sms-challenge-gap" :style="{ left: `${smsChallenge?.targetX || 70}%` }" aria-hidden="true"></span>
-          <span class="sms-challenge-piece" :style="{ left: `${smsChallengePosition}%` }" aria-hidden="true"></span>
+        <div class="sms-challenge-scene" :style="{ backgroundImage: `url(${smsChallenge?.sceneImage || ''})` }">
+          <span class="sms-challenge-piece" :style="{ left: `${smsChallengePercent}%`, backgroundImage: `url(${smsChallenge?.pieceImage || ''})` }" aria-hidden="true"></span>
         </div>
-        <div class="sms-challenge-track" :style="{ '--challenge-position': smsChallengePosition }">
-          <input v-model.number="smsChallengePosition" type="range" min="0" max="100" step="1" aria-label="拼图位置" />
+        <div class="sms-challenge-track" :style="{ '--challenge-position': smsChallengePercent }">
+          <input v-model.number="smsChallengePosition" type="range" min="0" max="1000" step="1" aria-label="拼图位置" />
           <span>向右拖动完成拼图</span>
         </div>
         <p v-if="smsChallengeError" class="sms-challenge-error" role="alert">{{ smsChallengeError }}</p>

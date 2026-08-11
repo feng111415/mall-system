@@ -1,7 +1,9 @@
 package com.ruoyi.mall.member;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -52,12 +54,15 @@ class MallMemberCaptchaServiceTest
         ArgumentCaptor<MallCaptchaChallenge> captor = ArgumentCaptor.forClass(MallCaptchaChallenge.class);
         verify(authMapper).insertCaptchaChallenge(captor.capture());
         MallCaptchaChallenge challenge = captor.getValue();
+        assertFalse(created.containsKey("targetX"));
+        assertTrue(((String) created.get("sceneImage")).startsWith("data:image/png;base64,"));
+        assertTrue(((String) created.get("pieceImage")).startsWith("data:image/png;base64,"));
         challenge.setChallengeId(7L);
         when(authMapper.selectCaptchaChallenge((String) created.get("challengeId"))).thenReturn(challenge);
         when(authMapper.verifyCaptchaChallenge(eq(7L), anyString(), any())).thenReturn(1);
 
         Map<String, Object> verified = service.verifyChallenge((String) created.get("challengeId"),
-                (Integer) created.get("targetX"), "127.0.0.1", "device-a");
+                findAnswer(challenge), "127.0.0.1", "device-a");
 
         assertEquals(120L, ((Number) verified.get("expiresIn")).longValue());
         verify(authMapper).verifyCaptchaChallenge(eq(7L), anyString(), any());
@@ -71,6 +76,23 @@ class MallMemberCaptchaServiceTest
         when(authMapper.selectCaptchaChallenge(key)).thenReturn(challenge);
         assertThrows(ServiceException.class, () -> service.verifyChallenge(key, 10, "127.0.0.1", "device-a"));
         verify(authMapper).incrementCaptchaAttempts(7L);
+    }
+
+    @Test
+    void acceptsSmallDragRoundingDifference()
+    {
+        Map<String, Object> created = service.createChallenge("13800138000", "127.0.0.1", "device-a");
+        ArgumentCaptor<MallCaptchaChallenge> captor = ArgumentCaptor.forClass(MallCaptchaChallenge.class);
+        verify(authMapper).insertCaptchaChallenge(captor.capture());
+        MallCaptchaChallenge challenge = captor.getValue();
+        challenge.setChallengeId(8L);
+        when(authMapper.selectCaptchaChallenge((String) created.get("challengeId"))).thenReturn(challenge);
+        when(authMapper.verifyCaptchaChallenge(eq(8L), anyString(), any())).thenReturn(1);
+
+        service.verifyChallenge((String) created.get("challengeId"),
+                findAnswer(challenge) + 10, "127.0.0.1", "device-a");
+
+        verify(authMapper).verifyCaptchaChallenge(eq(8L), anyString(), any());
     }
 
     @Test
@@ -108,5 +130,15 @@ class MallMemberCaptchaServiceTest
         {
             throw new IllegalStateException(exception);
         }
+    }
+
+    private int findAnswer(MallCaptchaChallenge challenge)
+    {
+        for (int position = 0; position <= 1000; position++)
+        {
+            if (hash(challenge.getChallengeKey() + ":" + position).equals(challenge.getAnswerHash()))
+                return position;
+        }
+        throw new IllegalStateException("challenge answer was not in the supported range");
     }
 }

@@ -212,7 +212,7 @@ Set-Location C:\Users\Administrator\Desktop\RuoYiWork\tools\redis
 Set-Location C:\Users\Administrator\Desktop\RuoYiWork\RuoYi-Vue-master
 $env:RUOYI_DATASOURCE_URL='jdbc:mysql://127.0.0.1:3306/mall_migration_test_20260728?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai'
 $env:RUOYI_DATASOURCE_USERNAME='root'
-$env:RUOYI_DATASOURCE_PASSWORD='julietren76'
+$env:RUOYI_DATASOURCE_PASSWORD='<从安全凭据存储注入>'
 $env:MALL_SMS_MOCK_CODE='123456'
 java -Xms256m -Xmx1024m -jar ruoyi-admin\target\ruoyi-admin.jar --server.port=8080
 ```
@@ -676,7 +676,7 @@ V0.4 模块 5 已完成实现与回归，运营后台仍建立在若依现有“
 5. 重打包并常驻启动 8080，启动 8081 和 5174；执行 Edge `1440x900`、`390x844` 实地页面检查、交互检查、控制台和失败请求检查。
 6. 更新两份进度文档为最终结果，复核 diff 后提交并推送 `dev`。
 
-运行状态说明：本轮为真实链路临时启动的 8080 Java 任务会随 PowerShell 任务结束，不保证当前仍在运行；5174/8081 也应在明天开工时重新检查端口。开发验证码仍为 `123456`，MySQL 密码为 `julietren76`。
+运行状态说明：本轮为真实链路临时启动的 8080 Java 任务会随 PowerShell 任务结束，不保证当前仍在运行；5174/8081 也应在明天开工时重新检查端口。开发验证码仍为 `123456`，MySQL 凭据通过安全环境变量注入，不写入交接文档。
 # 暂停前复核（2026-08-06 17:21）
 
 - 串行复跑 `MallMemberAccountQueryServiceTest`、`MallMemberAccountLifecycleServiceTest`：6 项全部通过。
@@ -713,7 +713,7 @@ V0.4 模块 5 已完成实现与回归，运营后台仍建立在若依现有“
 - 当前工作区仅保留用户已有未跟踪目录 `ai-web/`，禁止修改、暂存或提交；`dev` 比 `origin/dev` 领先 7 个提交，尚未推送。
 - 最新后端 JAR 已重新打包并启动，`8080` 健康检查为 `UP`；若依后台 `8081`、商城端 `5174` 也在监听。
 - 下周从 V0.5 模块 7“经营分析与全局验收”开始：先确认经营分析指标、权限边界和静态页面需求，再按迁移、后端、若依端、商城端真实链路、Edge 桌面/移动端检查和独立提交执行。
-- 保留当前测试库 `mall_migration_test_20260728` 的 V2.24.0 升级状态；开发验证码为 `123456`，MySQL 密码为 `julietren76`。
+- 保留当前测试库 `mall_migration_test_20260728` 的 V2.24.0 升级状态；开发验证码为 `123456`，MySQL 凭据通过安全环境变量注入。
 
 ## 44. 2026-08-10 完成记录：V0.5 模块 7 经营分析与全局验收
 
@@ -743,3 +743,19 @@ V0.4 模块 5 已完成实现与回归，运营后台仍建立在若依现有“
 - 若依生产构建通过；`mall-business` 全量测试 `196` 项通过；测试库完成升级、回滚、重复升级并保持 V2.25.2 状态。
 - 运营主管真实登录调用 `/getRouters` 返回 C 菜单树；Edge 正式页面桌面 `1440x900`、移动 `390x844` 均通过，工作台卡片、中文菜单、默认跳转、横向溢出、控制台错误和失败请求检查通过。
 - C 方案静态模型和临时检查脚本已删除，`ai-web/` 仍未修改、未暂存。
+
+## 47. 2026-08-10 完成记录：HTTP 错误状态码统一
+
+- 修复发布验收中的 P1：旧有 `AjaxResult.code` 为 `400-599` 时同步写入真实 HTTP 状态码；成功和业务警告继续保持 HTTP 200，JSON `code/msg` 契约不变。
+- `GlobalExceptionHandler` 已统一越权 `403`、参数 `400`、方法 `405`、媒体类型 `415`、路由资源 `404` 和未知异常 `500`；认证失败入口现在直接返回 `401`；不存在订单详情明确返回 `404`。
+- 新增 `HttpStatusResponseBodyAdvice` 和 `HttpStatusResponseContractTest`，若依后台测试共 `7` 项通过；商城业务全量测试 `197` 项通过。
+- 新 JAR 已在安全环境变量注入下启动于 `8080`。真实接口验证结果：匿名/失效商城令牌 `401`、若依岗位越权 `403`、不存在订单 `404`、Swagger/Druid 诊断路径 `404`、不支持方法 `405`、健康接口 `200`。
+- 修正 `scripts/mall-storefront-e2e.ps1` 的非 2xx 响应读取逻辑；商城用户端真实 E2E `18/18` 通过。Edge 桌面 `1366x900`、移动 `390x844` 页面无失败请求、页面错误和横向溢出。
+- 验收报告已更新为 HTTP 状态码 P1 已修复；剩余发布整改为迁移重复执行幂等性和前端依赖漏洞。受保护未知商城 API 匿名访问仍会先由认证过滤器返回 `401`，属于安全层优先行为，暂不作为本次阻断项。
+- 本次未提交 Git；`ai-web/` 未修改、未暂存。后端当前运行 PID 约为 `29640`，商城端 `5174`、若依端 `8081` 保持原运行状态。
+
+明天从这里继续：
+
+1. 处理迁移版本历史/重复升级幂等性，补充全量迁移回归验证。
+2. 复核并制定商城端、若依端 high/critical 依赖升级或构建隔离方案。
+3. 完成头像专项和设备上限自动化安全测试后，再进行最终发布签署和 Git 推送。

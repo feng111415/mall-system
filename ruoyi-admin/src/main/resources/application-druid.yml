@@ -6,9 +6,9 @@ spring:
         druid:
             # 主库数据源
             master:
-                url: ${RUOYI_DATASOURCE_URL:jdbc:mysql://127.0.0.1:3306/ry-vue?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai}
-                username: ${RUOYI_DATASOURCE_USERNAME:root}
-                password: ${RUOYI_DATASOURCE_PASSWORD:123456}
+                url: ${RUOYI_DATASOURCE_URL}
+                username: ${RUOYI_DATASOURCE_USERNAME}
+                password: ${RUOYI_DATASOURCE_PASSWORD}
             # 从库数据源
             slave:
                 # 从数据源开关/默认关闭
@@ -42,13 +42,13 @@ spring:
             webStatFilter: 
                 enabled: true
             statViewServlet:
-                enabled: true
+                enabled: ${RUOYI_DRUID_STAT_ENABLED:false}
                 # 设置白名单，不填则允许所有访问
                 allow:
                 url-pattern: /druid/*
                 # 控制台管理用户名和密码
-                login-username: ruoyi
-                login-password: 123456
+                login-username: ${RUOYI_DRUID_USERNAME:}
+                login-password: ${RUOYI_DRUID_PASSWORD:}
             filter:
                 stat:
                     enabled: true
@@ -58,4 +58,4 @@ spring:
                     merge-sql: true
                 wall:
                     config:
-                        multi-statement-allow: true
+                        multi-statement-allow: ${RUOYI_MYBATIS_MULTI_STATEMENT_ALLOW:false}
