@@ -3,11 +3,13 @@ package com.ruoyi.mall.member;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import com.ruoyi.mall.member.service.MallMemberSessionPolicy;
 import com.ruoyi.mall.member.service.MallMemberSessionPolicy.LoginDecision;
 import com.ruoyi.mall.member.service.MallMemberSessionPolicy.OnlineSession;
+import com.ruoyi.common.exception.ServiceException;
 
 class MallMemberSessionPolicyTest
 {
@@ -76,5 +78,24 @@ class MallMemberSessionPolicyTest
 
         assertFalse(decision.primaryMobile());
         assertEquals(List.of(42L), decision.replacedSessionIds());
+    }
+
+    @Test
+    void secondMobileDoesNotReplaceTheOnlyPrimaryMobile()
+    {
+        List<OnlineSession> online = List.of(
+                new OnlineSession(51L, "primary", "MOBILE", true));
+
+        LoginDecision decision = policy.decideLogin("new-mobile", "MOBILE", false, online);
+
+        assertFalse(decision.primaryMobile());
+        assertEquals(List.of(), decision.replacedSessionIds());
+    }
+
+    @Test
+    void unknownDeviceTypeIsRejected()
+    {
+        assertThrows(ServiceException.class,
+                () -> policy.decideLogin("unknown", "TABLET", false, List.of()));
     }
 }

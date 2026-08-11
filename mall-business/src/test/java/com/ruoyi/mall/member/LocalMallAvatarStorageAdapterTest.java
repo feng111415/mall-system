@@ -81,6 +81,32 @@ class LocalMallAvatarStorageAdapterTest
         assertEquals("头像图片不能超过 5MB", exception.getMessage());
     }
 
+    @Test
+    void rejectsImagesOutsideDimensionAndPixelLimits() throws Exception
+    {
+        LocalMallAvatarStorageAdapter adapter = new LocalMallAvatarStorageAdapter(profileRoot.toString());
+        MockMultipartFile tooSmall = new MockMultipartFile(
+                "file", "small.png", "image/png", imageBytes(63, 64, "png"));
+        MockMultipartFile tooWide = new MockMultipartFile(
+                "file", "wide.png", "image/png", imageBytes(8193, 64, "png"));
+
+        assertThrows(ServiceException.class, () -> adapter.store(7L, tooSmall));
+        assertThrows(ServiceException.class, () -> adapter.store(7L, tooWide));
+    }
+
+    @Test
+    void deleteOwnedCannotDeleteAnotherMembersFile() throws Exception
+    {
+        Path otherMemberFile = profileRoot.resolve("mall/avatar/8/0123456789abcdef0123456789abcdef.png");
+        Files.createDirectories(otherMemberFile.getParent());
+        Files.write(otherMemberFile, new byte[] { 1, 2, 3 });
+        LocalMallAvatarStorageAdapter adapter = new LocalMallAvatarStorageAdapter(profileRoot.toString());
+
+        adapter.deleteOwned(7L, "/profile/mall/avatar/7/../8/0123456789abcdef0123456789abcdef.png");
+
+        assertTrue(Files.exists(otherMemberFile));
+    }
+
     private byte[] pngWithTrailingMarker(int width, int height, String marker) throws Exception
     {
         BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
