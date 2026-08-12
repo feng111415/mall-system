@@ -831,5 +831,6 @@ V0.4 模块 5 已完成实现与回归，运营后台仍建立在若依现有“
 - 已建立 5 项自定义 TabBar（首页、分类、购物车、消息、我的）和订单占位路由；首页按 B 方案落地订单快捷状态、高频服务入口、运营推荐与商品列表，使用独立本地素材和 Lucide 图标。
 - 已建立 `config/env.ts`、`utils/request.ts` 和 `services/mallApi.ts`：按 develop/trial/release 隔离 API 地址，统一注入 `X-Mall-Authorization` 与 `X-Mall-Device-Id`，处理 HTTP/业务错误和 401 登录态清理；体验版、正式版未配置 HTTPS 域名时拒绝请求。
 - 基础验收 `npm.cmd test` 通过：请求适配层覆盖成功、鉴权、设备标识、401 清理与网络失败；6 个页面、18 个本地素材引用校验通过；TypeScript `strict` 检查通过；真实 `GET http://localhost:8080/api/mall/homepage` 返回 HTTP 200、`code=200`。
-- 本机未发现微信开发者工具 CLI，`project.config.json` 暂用 `touristappid`，所以官方模拟器和真机验收尚未执行。取得微信开发者工具与 AppID/测试号后导入 `mall-miniprogram/`，再补做真机网络、触控、安全区和返回行为验收。
+- 本机已发现并启动微信开发者工具：`D:\微信开发者工具\微信web开发者工具\微信开发者工具.exe`，CLI 为同目录 `cli.bat`；项目 `mall-miniprogram/` 已由官方工具打开，窗口标题为 `mall-miniprogram - 微信开发者工具 Stable v2.01.2510290`。官方模拟器实地验收通过：B 方案首页正常显示，中文字体、搜索栏、订单快捷入口、四项服务、主视觉商品图和五项 TabBar 均已加载，无空白页；点击区域和页面初始化未发现小程序代码编译错误。日志中的 `touristappid`、`access_token missing` 属于未登录开发者工具/游客 AppID 的平台能力警告，不是业务代码错误。
+- `project.config.json` 继续暂用 `touristappid`；真机网络、触控、安全区和返回行为仍需正式 AppID/测试号及开发者工具登录条件，取得后再补验，不能以模拟器结果替代真机签署。
 - 下一步在同一 V0.6 模块内完成第一条真实纵向链路：短信登录（含风险拼图）→ 首页真实会员摘要/商品 → 商品详情 → 加购 → 结算 → 下单 → 订单详情；平台微信授权、微信支付和订阅消息需在对应切片前单独确认。

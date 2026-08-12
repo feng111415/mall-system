@@ -56,6 +56,9 @@ nbdist/
 mall-storefront/.vite/
 mall-admin/.vite/
 
+# WeChat Developer Tools machine-local project settings
+mall-miniprogram/project.private.config.json
+
 ######################################################################
 # Local deployment output
 
