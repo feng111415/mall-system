@@ -801,3 +801,11 @@ V0.4 模块 5 已完成实现与回归，运营后台仍建立在若依现有“
 - 自动化验证：`ruoyi-admin + mall-business` 全量测试通过（当前 201 项商城测试及 7 项若依配置/HTTP 测试）；迁移执行器测试通过；商城端和 `mall-admin` 的 `npm audit` 均为 0，生产构建均通过；发布/回滚 PowerShell 脚本语法检查通过。
 - 真实环境复验尚未完成：当前机器 Redis `28555` 未运行，`RUOYI_TOKEN_SECRET`、数据库 URL/账号/密码和 `RUOYI_CORS_ALLOWED_ORIGINS` 均未注入，因此没有启动新 JAR，也没有虚报 HTTPS、响应头、完整 E2E、五岗位、Edge、备份恢复或回滚通过。
 - 当前模块仍未验收关闭，未进入 V0.6；下一步必须先注入预发布凭据并启动 Redis `28555`，再连续完成真实安全复验和发布候选冻结，最后等待用户审批。
+
+## 52. 2026-08-12 进展记录：Redis 已就绪，预发布凭据仍阻断
+
+- 已使用本机 `D:\360Downloads\redis-server.exe` 启动隔离 Redis 实例，监听 `127.0.0.1:28555`，未修改系统 Redis 配置。
+- 新 JAR 在缺少 `RUOYI_TOKEN_SECRET`、数据库 URL/账号/密码等必需环境变量时 6 秒内退出，启动保护有效；没有使用默认值或从日志提取密码绕过。
+- 本机 MySQL `3306` 可达，但当前会话、用户级和机器级环境变量均未注入 `RUOYI_TOKEN_SECRET`、`RUOYI_DATASOURCE_URL`、`RUOYI_DATASOURCE_USERNAME`、`RUOYI_DATASOURCE_PASSWORD`、`RUOYI_CORS_ALLOWED_ORIGINS`。
+- 因此真实后端尚未启动，HTTPS/安全响应头实测、文件上传、日志、完整 E2E、五岗位权限、Edge 桌面/移动端、备份恢复和生产替换回滚仍不能签署通过。
+- 当前模块仍未验收关闭；下一步只需由预发布环境注入上述变量并确认测试库权限，随后继续真实复验，不进入 V0.6。
