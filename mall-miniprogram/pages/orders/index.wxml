@@ -1,0 +1,1 @@
+<view class="placeholder"><text class="title">订单</text><text>当前筛选：{{status || '全部'}}</text><text>订单查询将在首条纵向链路中接入真实接口。</text></view>

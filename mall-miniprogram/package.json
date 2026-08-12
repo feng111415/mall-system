@@ -1,0 +1,16 @@
+{
+  "name": "mall-miniprogram",
+  "version": "0.6.0",
+  "private": true,
+  "description": "拾光小店原生微信小程序",
+  "scripts": {
+    "validate": "node scripts/validate.js",
+    "typecheck": "tsc --noEmit",
+    "test": "node scripts/request.test.js && node scripts/validate.js && npm run typecheck"
+  },
+  "devDependencies": {
+    "lucide-static": "0.468.0",
+    "miniprogram-api-typings": "4.0.7",
+    "typescript": "5.9.3"
+  }
+}

@@ -1,0 +1,15 @@
+<view class="page">
+  <view style="height: {{statusBarHeight}}px;"></view>
+  <view class="topbar"><view class="brand"><text class="mark">拾</text><view><text class="brand-name">拾光小店</text><text class="brand-subtitle">把喜欢装进口袋里</text></view></view></view>
+  <view class="search"><image class="search-icon" src="/assets/icons/search.svg" /><input placeholder="搜索好物、品类或灵感" confirm-type="search" /><text class="search-action">搜索</text></view>
+
+  <state-view loading="{{loading}}" error="{{error}}" bind:retry="handleRetry" />
+  <block wx:if="{{!loading && !error}}">
+    <view class="welcome"><view><text class="welcome-title">下午好，今天想买什么？</text><text class="welcome-subtitle">待收货 1 件，优惠券 3 张即将到期</text></view><image class="avatar" src="/assets/avatar-sunny.svg" mode="aspectFill" /></view>
+    <view class="order-strip"><view class="section-head"><text>我的订单</text><text class="link" bindtap="openOrders">全部订单 →</text></view><view class="orders"><view class="order" data-status="UNPAID" bindtap="openOrders"><image class="order-icon" src="/assets/icons/wallet-cards.svg" /><text>待付款</text></view><view class="order" data-status="PAID" bindtap="openOrders"><image class="order-icon" src="/assets/icons/package-check.svg" /><text>待发货</text></view><view class="order" data-status="SHIPPED" bindtap="openOrders"><text class="order-badge">1</text><image class="order-icon" src="/assets/icons/truck.svg" /><text>待收货</text></view><view class="order" data-status="COMPLETED" bindtap="openOrders"><image class="order-icon" src="/assets/icons/messages-square.svg" /><text>待评价</text></view></view></view>
+    <view class="service-grid"><view wx:for="{{services}}" wx:key="title" class="service {{item.color}}" data-title="{{item.title}}" bindtap="openService"><view class="service-icon"><image src="{{item.icon}}" /></view><view><text class="service-title">{{item.title}}</text><text class="service-subtitle">{{item.subtitle}}</text></view></view></view>
+    <view class="offer"><view class="offer-copy"><text class="offer-kicker">限时推荐</text><text class="offer-title">通勤装备<br />一站配齐</text><button>去选购</button></view><image src="/assets/backpack.jpg" mode="aspectFill" /></view>
+    <view class="section-head product-head"><view><text class="kicker">FOR YOU</text><text class="product-title">猜你喜欢</text></view><text class="link">换一批</text></view>
+    <view class="product-list"><view class="product"><image src="/assets/watch.jpg" mode="aspectFill" /><view><text class="product-name">轻量智能手表</text><text class="product-subtitle">全天健康与消息提醒</text><text class="price">¥459</text></view><button><image src="/assets/icons/plus.svg" /></button></view><view class="product"><image src="/assets/lamp.jpg" mode="aspectFill" /><view><text class="product-name">柔光桌面台灯</text><text class="product-subtitle">阅读、办公都更舒适</text><text class="price">¥189</text></view><button><image src="/assets/icons/plus.svg" /></button></view></view>
+  </block>
+</view>

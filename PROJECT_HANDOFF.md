@@ -824,3 +824,12 @@ V0.4 模块 5 已完成实现与回归，运营后台仍建立在若依现有“
 - 已创建并推送注解标签 `v0.5.1`，标签固定指向 `48f6d47`；候选包仍位于本地 `release/v0.5.1/`，回滚包完整性校验通过。
 - `ai-web/` 和 `mall-storefront/test-results/` 未提交。标签创建后不再移动；本条记录作为标签后的运维记录单独提交到 `dev`。
 - 下一模块为 V0.6 小程序 B 方案基础工程。开始前先确认小程序技术栈、微信开发者工具/AppID 条件和第一条纵向链路边界，再建立工程，不修改现有商城业务后端契约。
+
+## 55. 2026-08-12 V0.6 小程序 B 方案基础工程
+
+- 用户已审批 B“高频任务优先首页”，并确认采用独立 `mall-miniprogram/` 原生微信小程序工程，技术栈为 WXML、WXSS、TypeScript；不把条件编译代码混入 `mall-storefront/`。
+- 已建立 5 项自定义 TabBar（首页、分类、购物车、消息、我的）和订单占位路由；首页按 B 方案落地订单快捷状态、高频服务入口、运营推荐与商品列表，使用独立本地素材和 Lucide 图标。
+- 已建立 `config/env.ts`、`utils/request.ts` 和 `services/mallApi.ts`：按 develop/trial/release 隔离 API 地址，统一注入 `X-Mall-Authorization` 与 `X-Mall-Device-Id`，处理 HTTP/业务错误和 401 登录态清理；体验版、正式版未配置 HTTPS 域名时拒绝请求。
+- 基础验收 `npm.cmd test` 通过：请求适配层覆盖成功、鉴权、设备标识、401 清理与网络失败；6 个页面、18 个本地素材引用校验通过；TypeScript `strict` 检查通过；真实 `GET http://localhost:8080/api/mall/homepage` 返回 HTTP 200、`code=200`。
+- 本机未发现微信开发者工具 CLI，`project.config.json` 暂用 `touristappid`，所以官方模拟器和真机验收尚未执行。取得微信开发者工具与 AppID/测试号后导入 `mall-miniprogram/`，再补做真机网络、触控、安全区和返回行为验收。
+- 下一步在同一 V0.6 模块内完成第一条真实纵向链路：短信登录（含风险拼图）→ 首页真实会员摘要/商品 → 商品详情 → 加购 → 结算 → 下单 → 订单详情；平台微信授权、微信支付和订阅消息需在对应切片前单独确认。

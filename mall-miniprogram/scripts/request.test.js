@@ -1,0 +1,61 @@
+const assert = require('assert')
+const fs = require('fs')
+const path = require('path')
+const vm = require('vm')
+const ts = require('typescript')
+
+const storage = new Map()
+let requestHandler
+global.wx = {
+  getStorageSync: key => storage.get(key) || '',
+  setStorageSync: (key, value) => storage.set(key, value),
+  removeStorageSync: key => storage.delete(key),
+  getAccountInfoSync: () => ({ miniProgram: { envVersion: 'develop' } }),
+  request: options => requestHandler(options)
+}
+
+function loadTypeScriptModule(file, dependencies = {}) {
+  const source = ts.transpileModule(fs.readFileSync(path.join(__dirname, file), 'utf8'), {
+    compilerOptions: { target: ts.ScriptTarget.ES2020, module: ts.ModuleKind.CommonJS }
+  }).outputText
+  const module = { exports: {} }
+  vm.runInNewContext(source, {
+    require: name => dependencies[name] || require(name),
+    module,
+    exports: module.exports,
+    wx,
+    Promise,
+    Error
+  }, { filename: file })
+  return module.exports
+}
+
+const env = loadTypeScriptModule('../config/env.ts')
+const { request } = loadTypeScriptModule('../utils/request.ts', { '../config/env': env })
+
+async function run() {
+  env.setToken('0123456789abcdef0123456789abcdef')
+  requestHandler = options => options.success({ statusCode: 200, data: { code: 200, data: { ok: true } } })
+  const result = await request({ url: '/api/mall/health' })
+  assert.deepStrictEqual(result, { ok: true })
+
+  let captured
+  requestHandler = options => { captured = options; options.success({ statusCode: 200, data: { code: 200, data: [] } }) }
+  await request({ url: '/api/mall/orders' })
+  assert.strictEqual(captured.header['X-Mall-Authorization'], 'Bearer 0123456789abcdef0123456789abcdef')
+  assert.match(captured.header['X-Mall-Device-Id'], /^mp-/)
+  assert.strictEqual(captured.url, 'http://localhost:8080/api/mall/orders')
+
+  requestHandler = options => options.success({ statusCode: 200, data: { code: 401, msg: '请先登录' } })
+  await assert.rejects(() => request({ url: '/api/mall/cart' }), /请先登录/)
+  assert.strictEqual(env.getToken(), '')
+
+  requestHandler = options => options.fail({ errMsg: 'request:fail timeout' })
+  await assert.rejects(() => request({ url: '/api/mall/homepage' }), /timeout/)
+  console.log('请求适配层测试通过：成功、鉴权、设备标识、401 清理和网络失败。')
+}
+
+run().catch(error => {
+  console.error(error)
+  process.exit(1)
+})

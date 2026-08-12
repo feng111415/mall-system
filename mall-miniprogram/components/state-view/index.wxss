@@ -1,0 +1,19 @@
+.state {
+  display: flex;
+  min-height: 120px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: #77737d;
+  font-size: 13px;
+}
+
+.state button {
+  border: 2px solid #20202a;
+  border-radius: 6px;
+  padding: 8px 14px;
+  background: #ffd84d;
+  color: #20202a;
+  font-size: 12px;
+}
