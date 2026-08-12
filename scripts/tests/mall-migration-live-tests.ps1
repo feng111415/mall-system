@@ -14,9 +14,17 @@ if ([string]::IsNullOrWhiteSpace($env:RUOYI_DATASOURCE_PASSWORD)) {
 
 $projectRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 $fixtureRoot = Join-Path ([IO.Path]::GetTempPath()) ('mall-migration-live-' + [guid]::NewGuid().ToString('N'))
-$probeScript = Join-Path $fixtureRoot 'V2.25.3__migration_runner_probe.sql'
-$failedScript = Join-Path $fixtureRoot 'V2.25.4__migration_runner_failure_probe.sql'
 $runner = Join-Path $projectRoot 'scripts\invoke-db-migrations.ps1'
+$migrationModule = Join-Path $projectRoot 'scripts\MallMigration.psm1'
+Import-Module $migrationModule -Force
+$catalog = @(Get-MallMigrationCatalog -MigrationRoot (Join-Path $projectRoot 'sql'))
+$latestVersion = $catalog[-1].Version
+$probeVersion = [version]::new($latestVersion.Major, $latestVersion.Minor, $latestVersion.Build + 1)
+$failedVersion = [version]::new($probeVersion.Major, $probeVersion.Minor, $probeVersion.Build + 1)
+$probeVersionText = $probeVersion.ToString()
+$failedVersionText = $failedVersion.ToString()
+$probeScript = Join-Path $fixtureRoot "V$probeVersionText`__migration_runner_probe.sql"
+$failedScript = Join-Path $fixtureRoot "V$failedVersionText`__migration_runner_failure_probe.sql"
 $packagedDatabase = Join-Path $fixtureRoot 'packaged\database'
 $packagedMigrations = Join-Path $packagedDatabase 'migrations'
 $testLockOwner = 'mall-migration-live-test-holder'
@@ -66,14 +74,14 @@ try {
     & $runner -Database $Database -MigrationRoot $fixtureRoot
     & $runner -Database $Database -MigrationRoot $fixtureRoot
 
-    $probeState = Invoke-TestMySql @'
+    $probeState = Invoke-TestMySql @"
 select concat(
   (select count(*) from information_schema.tables
    where table_schema=database() and table_name='mall_migration_runner_probe'),
   ',',
-  (select count(*) from mall_schema_history where version='2.25.3' and success=1)
+  (select count(*) from mall_schema_history where version='$probeVersionText' and success=1)
 );
-'@
+"@
     if ($probeState -ne '1,1') {
         throw "Probe migration did not settle exactly once: $probeState"
     }
@@ -103,17 +111,17 @@ select concat(
     if (-not $failedMigrationRejected) {
         throw 'Invalid migration SQL was not rejected.'
     }
-    $failedState = Invoke-TestMySql "select count(*) from mall_schema_history where version='2.25.4' and success=0;"
+    $failedState = Invoke-TestMySql "select count(*) from mall_schema_history where version='$failedVersionText' and success=0;"
     if ($failedState -ne '1') {
         throw "Failed migration history was not retained: $failedState"
     }
 
     Write-Host 'PASS: packaged path, concurrent lock, replay, checksum drift, and failed history checks'
 } finally {
-    Invoke-TestMySql @'
+    Invoke-TestMySql @"
 drop table if exists mall_migration_runner_probe;
-delete from mall_schema_history where version in ('2.25.3', '2.25.4');
-'@ | Out-Null
+delete from mall_schema_history where version in ('$probeVersionText', '$failedVersionText');
+"@ | Out-Null
     Invoke-TestMySql "delete from mall_schema_lock where lock_name='mall-schema-migration:$Database' and owner_id='$testLockOwner';" | Out-Null
 
     $resolvedFixture = (Resolve-Path -LiteralPath $fixtureRoot -ErrorAction SilentlyContinue).Path

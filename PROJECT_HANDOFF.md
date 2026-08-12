@@ -809,3 +809,11 @@ V0.4 模块 5 已完成实现与回归，运营后台仍建立在若依现有“
 - 本机 MySQL `3306` 可达，但当前会话、用户级和机器级环境变量均未注入 `RUOYI_TOKEN_SECRET`、`RUOYI_DATASOURCE_URL`、`RUOYI_DATASOURCE_USERNAME`、`RUOYI_DATASOURCE_PASSWORD`、`RUOYI_CORS_ALLOWED_ORIGINS`。
 - 因此真实后端尚未启动，HTTPS/安全响应头实测、文件上传、日志、完整 E2E、五岗位权限、Edge 桌面/移动端、备份恢复和生产替换回滚仍不能签署通过。
 - 当前模块仍未验收关闭；下一步只需由预发布环境注入上述变量并确认测试库权限，随后继续真实复验，不进入 V0.6。
+
+## 53. 2026-08-12 完成记录：V0.1-V0.5 发布候选复验与候选包
+
+- Edge 发布视觉复验已完成：商城用户端桌面/移动端 6 页、若依正式后台桌面/移动端 4 页，共 10/10 通过；页面无空白、横向溢出、控制台错误或失败请求。
+- 发布候选已生成：`release/v0.5.1/`，包含 `ruoyi-admin.jar`、`mall-storefront/`、正式若依 `ruoyi-ui/`、`database/migration-manifest.json` 及迁移执行器；`scripts/rollback.ps1 -Version v0.5.1` 完整性校验通过。
+- 候选 JAR 在清除 `DEBUG`/`TRACE` 后，以环境变量注入 JWT、数据库连接和 CORS 白名单启动；Redis 使用隔离实例 `127.0.0.1:28555`，`/api/mall/health` 返回 HTTP 200、商城模块状态 `UP`。
+- 本轮代码、迁移、上传安全、RBAC、E2E、备份恢复、应用回滚和 Edge 复验均已完成；`ai-web/` 与测试截图目录仍未纳入提交范围。
+- 当前处于“发布候选待审批”状态，尚未创建 Git 标签、尚未推送本轮提交，也未进入 V0.6。下一步先检查并提交本轮 `dev` 改动，待用户批准发布候选后再执行远端推送/打标签；V0.6 小程序按既定 B 方案另起模块。

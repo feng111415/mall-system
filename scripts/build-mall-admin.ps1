@@ -1,23 +1,15 @@
-param(
-    [ValidateSet('development', 'production')]
-    [string]$Mode = 'production'
-)
-
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
-$frontendRoot = Join-Path $projectRoot 'mall-admin'
+$frontendRoot = Join-Path $projectRoot 'ruoyi-ui'
 
 if (-not (Test-Path (Join-Path $frontendRoot 'package.json'))) {
-    throw "未找到 mall-admin/package.json"
+    throw 'ruoyi-ui/package.json was not found'
 }
 
 Push-Location $frontendRoot
 try {
-    if ($Mode -eq 'development') {
-        cmd /c npm run build -- --mode development
-    } else {
-        cmd /c npm run build
-    }
+    cmd /c npm run build:prod
+    if ($LASTEXITCODE -ne 0) { throw 'RuoYi admin frontend build failed' }
 } finally {
     Pop-Location
 }
