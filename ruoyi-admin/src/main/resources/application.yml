@@ -10,6 +10,9 @@ ruoyi:
   profile: D:/ruoyi/uploadPath
   # 获取ip地址开关
   addressEnabled: false
+  cors:
+    # 生产必须通过 RUOYI_CORS_ALLOWED_ORIGINS 注入逗号分隔的明确来源
+    allowed-origins: ${RUOYI_CORS_ALLOWED_ORIGINS:http://localhost:5174,http://localhost:8081}
   # 验证码类型 math 数字计算 char 字符验证
   captchaType: math
 

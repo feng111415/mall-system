@@ -88,9 +88,20 @@ public class SecurityConfig
         return httpSecurity
             // CSRF禁用，因为不使用session
             .csrf(csrf -> csrf.disable())
-            // 禁用HTTP响应标头
+            // 统一安全响应标头；HSTS 仅在 HTTPS 请求上由 Spring Security 写入
             .headers((headersCustomizer) -> {
-                headersCustomizer.cacheControl(cache -> cache.disable()).frameOptions(options -> options.sameOrigin());
+                headersCustomizer
+                    .cacheControl(cache -> cache.disable())
+                    .frameOptions(options -> options.sameOrigin())
+                    .contentSecurityPolicy(csp -> csp.policyDirectives(
+                            "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; "
+                                    + "img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; "
+                                    + "object-src 'none'; base-uri 'self'; frame-ancestors 'self'"))
+                    .referrerPolicy(referrer -> referrer.policy(
+                            org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter.ReferrerPolicy.NO_REFERRER))
+                    .httpStrictTransportSecurity(hsts -> hsts.includeSubDomains(true).preload(false)
+                            .maxAgeInSeconds(31536000))
+                    .permissionsPolicy(permissions -> permissions.policy("geolocation=(), microphone=(), camera=()"));
             })
             // 认证失败处理类
             .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))

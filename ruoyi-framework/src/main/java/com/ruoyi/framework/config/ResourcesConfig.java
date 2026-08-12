@@ -1,7 +1,11 @@
 package com.ruoyi.framework.config;
 
 import java.util.concurrent.TimeUnit;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.CacheControl;
@@ -25,6 +29,10 @@ public class ResourcesConfig implements WebMvcConfigurer
 {
     @Autowired
     private RepeatSubmitInterceptor repeatSubmitInterceptor;
+
+    /** 生产环境必须通过 RUOYI_CORS_ALLOWED_ORIGINS 注入明确的前端来源。 */
+    @Value("${ruoyi.cors.allowed-origins:http://localhost:5174,http://localhost:8081}")
+    private String allowedOrigins;
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry)
@@ -56,7 +64,15 @@ public class ResourcesConfig implements WebMvcConfigurer
     {
         CorsConfiguration config = new CorsConfiguration();
         // 设置访问源地址
-        config.addAllowedOriginPattern("*");
+        List<String> origins = Arrays.stream(allowedOrigins.split(","))
+                .map(String::trim)
+                .filter(origin -> !origin.isEmpty())
+                .collect(Collectors.toList());
+        if (origins.isEmpty())
+        {
+            throw new IllegalStateException("RUOYI_CORS_ALLOWED_ORIGINS 不能为空");
+        }
+        origins.forEach(config::addAllowedOrigin);
         // 设置访问源请求头
         config.addAllowedHeader("*");
         // 设置访问源请求方法

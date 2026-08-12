@@ -14,8 +14,21 @@ if (Test-Path $outputPath) {
 }
 
 New-Item -ItemType Directory -Force -Path $outputPath | Out-Null
+Push-Location $projectRoot
+try {
+    cmd /c "mvn.cmd -pl ruoyi-admin -am -DskipTests package"
+    if ($LASTEXITCODE -ne 0) {
+        throw "后端 JAR 构建失败"
+    }
+} finally {
+    Pop-Location
+}
 & (Join-Path $PSScriptRoot 'build-mall-storefront.ps1')
 & (Join-Path $PSScriptRoot 'build-mall-admin.ps1')
+if (-not (Test-Path (Join-Path $projectRoot 'ruoyi-admin\target\ruoyi-admin.jar'))) {
+    throw "未找到后端 JAR：ruoyi-admin\target\ruoyi-admin.jar"
+}
+Copy-Item (Join-Path $projectRoot 'ruoyi-admin\target\ruoyi-admin.jar') (Join-Path $outputPath 'ruoyi-admin.jar')
 Copy-Item (Join-Path $projectRoot 'mall-storefront\dist') (Join-Path $outputPath 'mall-storefront') -Recurse
 Copy-Item (Join-Path $projectRoot 'mall-admin\dist') (Join-Path $outputPath 'mall-admin') -Recurse
 
