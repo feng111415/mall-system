@@ -1,1 +1,19 @@
-<view class="placeholder"><text class="title">购物车</text><text>购物车将在首页链路接入真实会员数据。</text></view>
+<view class="page">
+  <view style="height: {{statusBarHeight}}px;"></view>
+  <view class="heading"><view><text class="kicker">YOUR PICKS</text><text class="title">购物车</text></view><text>{{totalCount}} 件</text></view>
+  <state-view loading="{{loading}}" error="{{error}}" bind:retry="handleRetry" />
+  <view wx:if="{{!loading && !loggedIn}}" class="empty"><text class="empty-title">登录后查看购物车</text><text>购物车会跟随会员账号保存。</text><button bindtap="goLogin">去登录</button></view>
+  <view wx:elif="{{!loading && !error && loggedIn && !items.length}}" class="empty"><text class="empty-title">购物车还是空的</text><text>去挑几件喜欢的东西。</text><button bindtap="goCatalog">去逛逛</button></view>
+  <block wx:elif="{{!loading && !error && loggedIn && items.length}}">
+    <view class="cart-list">
+      <view wx:for="{{items}}" wx:key="skuId" class="cart-item {{!item.valid ? 'invalid' : ''}} {{item.stockShortage ? 'shortage' : ''}}">
+        <button class="check {{item.selected ? 'checked' : ''}}" data-id="{{item.skuId}}" data-selected="{{item.selected}}" bindtap="toggleSelected" disabled="{{!item.valid || item.stockShortage || busySkuId}}">{{item.selected ? '✓' : ''}}</button>
+        <image class="item-image" src="{{item.displayImage}}" mode="aspectFill" />
+        <view class="item-copy"><text class="status">{{item.statusLabel}}</text><text class="item-name">{{item.productName || '商品已下架'}}</text><text class="sku-name">{{item.skuName || item.skuCode}}</text><text class="unit-price">¥{{item.displayPrice}}</text></view>
+        <view class="item-actions"><view class="quantity"><button data-id="{{item.skuId}}" data-delta="-1" bindtap="changeQuantity" disabled="{{!item.valid || item.stockShortage || item.quantity <= 1 || busySkuId}}">−</button><text>{{item.quantity}}</text><button data-id="{{item.skuId}}" data-delta="1" bindtap="changeQuantity" disabled="{{!item.valid || item.stockShortage || item.quantity >= item.availableStock || busySkuId}}">＋</button></view><text class="line-price">¥{{item.displayLineAmount}}</text><button class="remove" data-id="{{item.skuId}}" bindtap="removeItem" disabled="{{busySkuId}}">删除</button></view>
+      </view>
+    </view>
+    <view wx:if="{{feedback}}" class="feedback">{{feedback}}</view>
+    <view class="summary"><view><text>已选 {{selectedCount}} 件</text><text class="summary-price">¥{{totalPrice}}</text></view><button class="primary" disabled="{{!canCheckout}}">结算下一切片开放</button></view>
+  </block>
+</view>

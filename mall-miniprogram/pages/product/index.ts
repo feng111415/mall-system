@@ -1,5 +1,6 @@
 const mallApi = require('../../services/mallApi')
 const productUtils = require('../../utils/product')
+const env = require('../../config/env')
 
 Page({
   data: {
@@ -10,7 +11,11 @@ Page({
     product: null as Record<string, any> | null,
     reviews: { summary: { reviewCount: 0, averageRating: '0.0', fiveStarCount: 0, fourStarCount: 0 }, reviews: [] as Array<Record<string, any>> },
     selectedImage: '',
-    selectedSkuId: 0
+    selectedSkuId: 0,
+    quantity: 1,
+    busy: false,
+    feedback: '',
+    feedbackSuccess: false
   },
 
   onLoad(query: Record<string, string>) {
@@ -55,7 +60,7 @@ Page({
   selectSku(event: WechatMiniprogram.BaseEvent) {
     const skuId = Number(event.currentTarget.dataset.id || 0)
     const sku = this.data.product?.skus?.find((item: Record<string, any>) => Number(item.skuId) === skuId)
-    if (!sku || !sku.selectable) return
+    if (!sku || !sku.selectable || sku.soldOut) return
     this.setData({
       selectedSkuId: skuId,
       selectedImage: sku.displayImage,
@@ -68,6 +73,32 @@ Page({
   selectImage(event: WechatMiniprogram.BaseEvent) {
     const image = String(event.currentTarget.dataset.image || '')
     if (image) this.setData({ selectedImage: image })
+  },
+
+  changeQuantity(event: WechatMiniprogram.BaseEvent) {
+    if (this.data.busy || this.data.product?.selectedSku?.soldOut) return
+    const delta = Number(event.currentTarget.dataset.delta || 0)
+    const stock = Number(this.data.product?.selectedSku?.availableStock || 0)
+    const quantity = Math.max(1, Math.min(stock || 1, this.data.quantity + delta))
+    this.setData({ quantity })
+  },
+
+  async addToCart() {
+    const sku = this.data.product?.selectedSku
+    if (!sku || sku.soldOut || this.data.busy) return
+    if (!env.getToken()) {
+      wx.switchTab({ url: '/pages/profile/index' })
+      return
+    }
+    this.setData({ busy: true, feedback: '', feedbackSuccess: false })
+    try {
+      await mallApi.addCartItem(Number(sku.skuId), this.data.quantity)
+      this.setData({ feedback: `${sku.skuName} × ${this.data.quantity} 已加入购物车`, feedbackSuccess: true })
+    } catch (error) {
+      this.setData({ feedback: error instanceof Error ? error.message : '加入购物车失败，请稍后重试', feedbackSuccess: false })
+    } finally {
+      this.setData({ busy: false })
+    }
   },
 
   goBack() {

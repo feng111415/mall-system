@@ -134,4 +134,31 @@ function normalizeReviews(value: Record<string, any> | null | undefined) {
   }
 }
 
-module.exports = { normalizeProductDetail, normalizeReviews, normalizeSku, localProductImage, detailText, formatPrice }
+function normalizeCart(value: Record<string, any> | null | undefined) {
+  const items = ((value?.items || []) as Array<Record<string, any>>).map(item => {
+    const quantity = Math.max(1, Number(item.quantity || 1))
+    const availableStock = Math.max(0, Number(item.availableStock || 0))
+    const valid = item.valid !== false
+    const stockShortage = item.stockShortage === true || availableStock < quantity
+    return {
+      ...item,
+      quantity,
+      availableStock,
+      valid,
+      stockShortage,
+      selected: item.selectedFlag === '1',
+      displayImage: localProductImage(item.productImage),
+      displayPrice: formatPrice(item.price),
+      displayLineAmount: formatPrice(item.lineAmount),
+      statusLabel: !valid ? '商品已失效' : stockShortage ? `库存不足，仅剩 ${availableStock} 件` : availableStock <= 3 ? `库存紧张，仅剩 ${availableStock} 件` : '现货可售'
+    }
+  })
+  return {
+    items,
+    totalCount: Math.max(0, Number(value?.totalCount || 0)),
+    totalPrice: formatPrice(value?.totalPrice),
+    canCheckout: Boolean(value?.canCheckout)
+  }
+}
+
+module.exports = { normalizeProductDetail, normalizeReviews, normalizeSku, normalizeCart, localProductImage, detailText, formatPrice }

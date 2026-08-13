@@ -70,7 +70,34 @@ const mallApi = {
     return request<Record<string, unknown>>({ url: `/api/mall/reviews/products/${spuId}`, data: params })
   },
   getCart() {
-    return request({ url: '/api/mall/cart' })
+    return request<Record<string, any>>({ url: '/api/mall/cart' })
+  },
+  addCartItem(skuId: number, quantity = 1) {
+    return request<Record<string, any>>({
+      url: '/api/mall/cart/items',
+      method: 'POST',
+      data: { skuId, quantity }
+    })
+  },
+  updateCartQuantity(skuId: number, quantity: number) {
+    return request<Record<string, any>>({
+      url: `/api/mall/cart/items/${skuId}`,
+      method: 'PUT',
+      data: { quantity }
+    })
+  },
+  updateCartSelected(skuId: number, selected: boolean) {
+    return request<Record<string, any>>({
+      url: `/api/mall/cart/items/${skuId}/selected`,
+      method: 'PUT',
+      data: { selected }
+    })
+  },
+  removeCartItem(skuId: number) {
+    return request<Record<string, any>>({
+      url: `/api/mall/cart/items/${skuId}`,
+      method: 'DELETE'
+    })
   },
   getMessages(params?: Record<string, string | number>) {
     return request({ url: '/api/mall/member/messages', data: params })

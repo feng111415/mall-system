@@ -9,16 +9,24 @@ const source = ts.transpileModule(fs.readFileSync(path.join(__dirname, '../utils
 }).outputText
 const moduleValue = { exports: {} }
 vm.runInNewContext(source, { module: moduleValue, exports: moduleValue.exports, require }, { filename: 'utils/product.ts' })
-const { normalizeProductDetail, normalizeReviews, detailText } = moduleValue.exports
+const { normalizeProductDetail, normalizeReviews, normalizeCart, detailText } = moduleValue.exports
 
 const appConfig = JSON.parse(fs.readFileSync(path.join(__dirname, '../app.json'), 'utf8'))
 const productPage = fs.readFileSync(path.join(__dirname, '../pages/product/index.ts'), 'utf8')
 const productMarkup = fs.readFileSync(path.join(__dirname, '../pages/product/index.wxml'), 'utf8')
+const cartPage = fs.readFileSync(path.join(__dirname, '../pages/cart/index.ts'), 'utf8')
+const cartMarkup = fs.readFileSync(path.join(__dirname, '../pages/cart/index.wxml'), 'utf8')
 assert.ok(appConfig.pages.includes('pages/product/index'))
+assert.match(cartPage, /mallApi\.getCart\(\)/)
+assert.match(cartPage, /updateCartQuantity/)
+assert.match(cartPage, /updateCartSelected/)
+assert.match(cartPage, /removeCartItem/)
+assert.match(cartMarkup, /结算下一切片开放/)
 assert.match(productPage, /wx\.navigateBack\(\)/)
 assert.match(productPage, /selectedSkuId/)
-assert.match(productMarkup, /加购在下一切片开放/)
-assert.doesNotMatch(productPage, /addToCart|createOrder|checkout/)
+assert.match(productMarkup, /加入购物车/)
+assert.match(productPage, /addToCart/)
+assert.doesNotMatch(productPage, /createOrder|checkout/)
 
 const detail = normalizeProductDetail({
   spuId: 1,
@@ -52,5 +60,17 @@ assert.strictEqual(reviews.summary.averageRating, '4.8')
 assert.strictEqual(reviews.reviews[0].reviewerName, '匿名用户')
 assert.strictEqual(reviews.reviews[0].stars, '★★★★★')
 assert.strictEqual(reviews.reviews[0].displayDate, '2026-08-01')
+
+const cart = normalizeCart({
+  items: [
+    { skuId: 2, quantity: 2, selectedFlag: '1', productName: '跑鞋', productImage: '/assets/sneaker.jpg', price: 299, availableStock: 16, valid: true, stockShortage: false, lineAmount: 598 },
+    { skuId: 3, quantity: 4, selectedFlag: '0', productName: '失效商品', productImage: '/profile/untrusted.jpg', price: 9, availableStock: 0, valid: false, stockShortage: false, lineAmount: 36 }
+  ], totalCount: 6, totalPrice: 598, canCheckout: true
+})
+assert.strictEqual(cart.items[0].selected, true)
+assert.strictEqual(cart.items[0].displayLineAmount, '598')
+assert.strictEqual(cart.items[1].statusLabel, '商品已失效')
+assert.strictEqual(cart.items[1].displayImage, '/assets/backpack.jpg')
+assert.strictEqual(cart.canCheckout, true)
 
 console.log('商品详情组装测试通过：SKU 默认选择、实时库存、价格、图片回退、详情清洗和评价摘要。')
