@@ -1,6 +1,7 @@
 const mallApi = require('../../services/mallApi')
 const env = require('../../config/env')
 const auth = require('../../utils/auth')
+const memberCenter = require('../../utils/memberCenter')
 
 interface SmsChallenge {
   challengeId: string
@@ -30,7 +31,8 @@ Page({
     challenge: null as SmsChallenge | null,
     challengePosition: 120,
     challengePercent: 12,
-    statusBarHeight: 20
+    statusBarHeight: 20,
+    couponCount: 0
   },
 
   onLoad() {
@@ -48,6 +50,7 @@ Page({
 
   onShow() {
     if (this.getTabBar) this.getTabBar().setData({ selected: 4 })
+    if (env.getToken()) this.loadCouponCount()
     const cooldown = auth.readSmsCooldown()
     if (cooldown && cooldown.expiresAt > Date.now()) {
       this.setData({ phone: cooldown.phone, seconds: auth.getCooldownSeconds(cooldown) })
@@ -180,6 +183,7 @@ Page({
       })
       const app = getApp<IAppOption>()
       app.globalData.member = result.member
+      this.loadCouponCount()
     } catch (error) {
       this.setData({ error: error instanceof Error ? error.message : '登录失败，请检查验证码', feedbackSuccess: false })
     } finally {
@@ -192,12 +196,19 @@ Page({
     try {
       const member = await mallApi.getProfile()
       this.setData({ loggedIn: true, member, avatarLetter: (member.nickname || '拾').slice(0, 1) })
+      this.loadCouponCount()
     } catch (error) {
       env.clearToken()
       this.setData({ loggedIn: false, member: null, error: error instanceof Error ? error.message : '登录状态已失效，请重新登录', feedbackSuccess: false })
     } finally {
       this.setData({ loading: false })
     }
+  },
+  async loadCouponCount() {
+    try {
+      const coupons = await mallApi.getCoupons()
+      this.setData({ couponCount: memberCenter.availableCouponCount(coupons || []) })
+    } catch (_) { this.setData({ couponCount: 0 }) }
   },
 
   async logout() {
@@ -206,9 +217,11 @@ Page({
     env.clearToken()
     const app = getApp<IAppOption>()
     app.globalData.member = null
-    this.setData({ loggedIn: false, member: null, avatarLetter: '拾', code: '', error: '已退出登录', feedbackSuccess: true })
+    this.setData({ loggedIn: false, member: null, avatarLetter: '拾', code: '', couponCount: 0, error: '已退出登录', feedbackSuccess: true })
     this.setData({ loading: false })
   },
   openOrders() { wx.navigateTo({ url: '/pages/orders/index' }) },
-  openAfterSales() { wx.navigateTo({ url: '/pages/after-sales/index' }) }
+  openAfterSales() { wx.navigateTo({ url: '/pages/after-sales/index' }) },
+  openCoupons() { wx.navigateTo({ url: '/pages/coupons/index' }) },
+  openMessages() { wx.switchTab({ url: '/pages/messages/index' }) }
 })

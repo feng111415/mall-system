@@ -1,0 +1,17 @@
+<view class="page">
+  <view style="height: {{statusBarHeight}}px;"></view>
+  <view class="topbar"><button class="back" bindtap="goBack">←</button><text>优惠券</text><text></text></view>
+  <state-view loading="{{loading}}" error="{{error}}" bind:retry="handleRetry" />
+  <view wx:if="{{!loading && !loggedIn}}" class="empty"><text class="empty-title">登录后管理优惠券</text><text>优惠券归属于会员账号，结算时由服务端校验可用范围。</text><button bindtap="goLogin">去登录</button></view>
+  <block wx:elif="{{!loading && !error}}">
+    <view class="tabs"><button class="{{tab === 'mine' ? 'active' : ''}}" data-value="mine" bindtap="changeTab">我的优惠券 · {{coupons.length}}</button><button class="{{tab === 'claimable' ? 'active' : ''}}" data-value="claimable" bindtap="changeTab">可领取 · {{claimable.length}}</button></view>
+    <text wx:if="{{feedback}}" class="feedback">{{feedback}}</text>
+    <view wx:if="{{tab === 'mine' && coupons.length}}" class="coupon-list">
+      <view wx:for="{{coupons}}" wx:key="memberCouponId" class="coupon {{item.usable ? '' : 'inactive'}}"><view class="coupon-value"><text class="amount">¥{{item.displayDiscount}}</text><text>满 ¥{{item.displayThreshold}} 可用</text></view><view class="coupon-main"><view><text class="coupon-name">{{item.couponName}}</text><text class="coupon-scope">{{item.scopeLabel}}</text></view><text class="coupon-time">有效期至 {{item.displayValidTo}}</text></view><text class="coupon-status">{{item.statusLabel}}</text></view>
+    </view>
+    <view wx:elif="{{tab === 'claimable' && claimable.length}}" class="coupon-list">
+      <view wx:for="{{claimable}}" wx:key="couponId" class="coupon claimable"><view class="coupon-value"><text class="amount">¥{{item.displayDiscount}}</text><text>满 ¥{{item.displayThreshold}} 可用</text></view><view class="coupon-main"><view><text class="coupon-name">{{item.couponName}}</text><text class="coupon-scope">{{item.scopeLabel}} · 剩余 {{item.remainingQuantity}} 张</text></view><text class="coupon-time">有效期至 {{item.displayValidTo}}</text></view><button class="claim" data-id="{{item.couponId}}" loading="{{busyId === item.couponId}}" disabled="{{busyId > 0}}" catchtap="claim">领取</button></view>
+    </view>
+    <view wx:else class="empty"><text class="empty-title">{{tab === 'mine' ? '暂无优惠券' : '暂无可领取优惠券'}}</text><text>{{tab === 'mine' ? '领取后的优惠券会显示在这里。' : '运营发布新券后会出现在这里。'}}</text></view>
+  </block>
+</view>

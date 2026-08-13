@@ -122,6 +122,30 @@ const mallApi = {
   getMessages(params?: Record<string, string | number>) {
     return request({ url: '/api/mall/member/messages', data: params })
   },
+  getMessageSummary() {
+    return request<Array<Record<string, any>>>({ url: '/api/mall/member/messages/summary' })
+  },
+  getMessage(messageId: number) {
+    return request<Record<string, any>>({ url: `/api/mall/member/messages/${messageId}` })
+  },
+  markMessageRead(messageId: number) {
+    return request<Record<string, any>>({ url: `/api/mall/member/messages/${messageId}/read`, method: 'POST' })
+  },
+  markAllMessagesRead(category?: string) {
+    return request<number>({
+      url: `/api/mall/member/messages/read-all${category ? `?category=${encodeURIComponent(category)}` : ''}`,
+      method: 'POST'
+    })
+  },
+  getCoupons() {
+    return request<Array<Record<string, any>>>({ url: '/api/mall/coupons' })
+  },
+  getClaimableCoupons() {
+    return request<Array<Record<string, any>>>({ url: '/api/mall/coupons/claimable' })
+  },
+  claimCoupon(couponId: number) {
+    return request<Record<string, any>>({ url: `/api/mall/coupons/${couponId}/claim`, method: 'POST' })
+  },
   getProfile() {
     return request<MallMemberProfile>({ url: '/api/mall/member/profile' })
   },

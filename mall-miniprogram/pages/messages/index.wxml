@@ -1,1 +1,13 @@
-<view class="placeholder"><text class="title">消息</text><text>消息中心将在登录态接通后加载聚合消息。</text></view>
+<view class="page">
+  <view style="height: {{statusBarHeight}}px;"></view>
+  <view class="header"><view><text class="kicker">MEMBER NOTICE</text><text class="title">消息</text></view><button wx:if="{{loggedIn && messages.length}}" class="read-all" loading="{{busy}}" disabled="{{busy}}" bindtap="markAllRead">全部已读</button></view>
+  <state-view loading="{{loading}}" error="{{error}}" bind:retry="handleRetry" />
+  <view wx:if="{{!loading && !loggedIn}}" class="empty"><text class="empty-title">登录后查看消息</text><text>订单、物流、售后和账户安全提醒只对当前会员可见。</text><button bindtap="goLogin">去登录</button></view>
+  <block wx:elif="{{!loading && !error}}">
+    <scroll-view scroll-x class="category-scroll"><view class="categories"><button class="category {{!category ? 'active' : ''}}" data-category="" bindtap="chooseCategory"><text>全部消息</text><text>{{totalMessageCount}} 条</text></button><button wx:for="{{summaries}}" wx:key="category" class="category {{category === item.category ? 'active' : ''}}" data-category="{{item.category}}" bindtap="chooseCategory"><text>{{item.label}}</text><text>{{item.unreadCount ? item.unreadCount + ' 未读' : item.totalCount + ' 条'}}</text></button></view></scroll-view>
+    <text wx:if="{{feedback}}" class="feedback">{{feedback}}</text>
+    <view wx:if="{{messages.length}}" class="message-list"><view wx:for="{{messages}}" wx:key="messageId" class="message {{item.unread ? 'unread' : ''}}" data-id="{{item.messageId}}" bindtap="openMessage"><view class="message-head"><view class="message-title-wrap"><text wx:if="{{item.unread}}" class="dot"></text><text class="message-title">{{item.title}}</text></view><text class="message-time">{{item.displayTime}}</text></view><text class="message-summary">{{item.summary || item.content}}</text><view class="message-foot"><text>{{item.businessNo || '系统通知'}}</text><text>查看详情 →</text></view></view></view>
+    <view wx:else class="empty"><text class="empty-title">暂无{{categoryLabel}}</text><text>相关业务状态变化后，消息会显示在这里。</text></view>
+  </block>
+  <view wx:if="{{detail}}" class="mask" bindtap="closeDetail"><view class="detail-sheet" catchtap="noop"><view class="sheet-head"><view><text class="kicker">{{detail.displayTime}}</text><text class="sheet-title">{{detail.title}}</text></view><button class="close" bindtap="closeDetail">×</button></view><text class="detail-content">{{detail.content || detail.summary}}</text><text wx:if="{{detail.businessNo}}" class="business-no">业务编号：{{detail.businessNo}}</text><button wx:if="{{detailAction}}" class="action" bindtap="openAction">查看相关业务</button></view></view>
+</view>
