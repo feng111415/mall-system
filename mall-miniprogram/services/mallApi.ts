@@ -99,6 +99,26 @@ const mallApi = {
       method: 'DELETE'
     })
   },
+  getCheckoutPreview(memberCouponId?: number) {
+    return request<Record<string, any>>({
+      url: '/api/mall/checkout/preview',
+      data: memberCouponId ? { memberCouponId } : undefined
+    })
+  },
+  createOrder(data: { idempotencyKey: string; addressId: number; memberCouponId?: number; remark?: string }) {
+    return request<Record<string, any>>({
+      url: '/api/mall/orders',
+      method: 'POST',
+      data
+    })
+  },
+  addAddress(data: Record<string, unknown>) {
+    return request<Record<string, any>>({
+      url: '/api/mall/member/addresses',
+      method: 'POST',
+      data
+    })
+  },
   getMessages(params?: Record<string, string | number>) {
     return request({ url: '/api/mall/member/messages', data: params })
   },

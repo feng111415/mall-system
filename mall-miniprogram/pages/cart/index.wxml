@@ -14,6 +14,6 @@
       </view>
     </view>
     <view wx:if="{{feedback}}" class="feedback">{{feedback}}</view>
-    <view class="summary"><view><text>已选 {{selectedCount}} 件</text><text class="summary-price">¥{{totalPrice}}</text></view><button class="primary" disabled="{{!canCheckout}}">结算下一切片开放</button></view>
+    <view class="summary"><view><text>已选 {{selectedCount}} 件</text><text class="summary-price">¥{{totalPrice}}</text></view><button class="primary" bindtap="openCheckout" disabled="{{!canCheckout || busySkuId}}">去结算</button></view>
   </block>
 </view>

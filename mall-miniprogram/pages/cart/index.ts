@@ -93,6 +93,9 @@ Page({
 
   goLogin() { wx.switchTab({ url: '/pages/profile/index' }) },
   goCatalog() { wx.switchTab({ url: '/pages/catalog/index' }) },
+  openCheckout() {
+    if (this.data.canCheckout && !this.data.busySkuId) wx.navigateTo({ url: '/pages/checkout/index' })
+  },
   handleRetry() { this.loadCart() },
   noop() {}
 })
