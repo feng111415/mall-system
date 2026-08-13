@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="Berry preset avatar">
+  <rect width="256" height="256" fill="#b75d69"/>
+  <circle cx="128" cy="132" r="74" fill="#ffe9dc"/>
+  <path d="M65 94c15-42 42-62 63-62s48 20 63 62c-17-11-37-18-63-18s-46 7-63 18z" fill="#4a3440"/>
+  <circle cx="101" cy="126" r="7" fill="#4a3440"/><circle cx="155" cy="126" r="7" fill="#4a3440"/>
+  <path d="M105 156c14 9 32 9 46 0" fill="none" stroke="#4a3440" stroke-width="8" stroke-linecap="round"/>
+  <circle cx="77" cy="142" r="10" fill="#ef9b91"/><circle cx="179" cy="142" r="10" fill="#ef9b91"/>
+</svg>

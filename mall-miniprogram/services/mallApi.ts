@@ -36,12 +36,29 @@ interface LoginResponse {
   member: MallMemberProfile
 }
 
+interface MallHomeResponse {
+  hero?: Record<string, unknown>
+  tickerItems?: Array<Record<string, unknown>>
+  recommendation?: Record<string, unknown>
+  recommendationSpuIds?: number[]
+}
+
+interface MallProductResponse {
+  spuId: number
+  productName: string
+  subtitle?: string
+  mainImage?: string
+  priceMin?: number
+  priceMax?: number
+  salesCount?: number
+}
+
 const mallApi = {
   getHome() {
-    return request({ url: '/api/mall/homepage' })
+    return request<MallHomeResponse>({ url: '/api/mall/homepage' })
   },
   getCatalog(params?: Record<string, string | number>) {
-    return request({ url: '/api/mall/catalog/products', data: params })
+    return request<MallProductResponse[]>({ url: '/api/mall/catalog/products', data: params })
   },
   getCart() {
     return request({ url: '/api/mall/cart' })
@@ -53,7 +70,10 @@ const mallApi = {
     return request<MallMemberProfile>({ url: '/api/mall/member/profile' })
   },
   getOrders(params?: Record<string, string | number>) {
-    return request({ url: '/api/mall/orders', data: params })
+    return request<Array<Record<string, unknown>>>({ url: '/api/mall/orders', data: params })
+  },
+  getProductActivitySummary() {
+    return request<Record<string, number>>({ url: '/api/mall/member/product-activity/summary' })
   },
   sendSmsCode(phone: string, challengeTicket = '') {
     return request<SmsCodeResponse>({

@@ -8,6 +8,16 @@ interface MallMemberProfile {
   lastLoginTime?: string
 }
 
+interface MallHomeProduct {
+  spuId: number
+  productName: string
+  subtitle?: string
+  displayImage: string
+  displayPrice: string
+  salesCount?: number
+  badge?: string
+}
+
 interface IAppOption {
   globalData: {
     config: Record<string, unknown>

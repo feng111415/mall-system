@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="Sunny preset avatar">
+  <rect width="256" height="256" fill="#f4c95d"/>
+  <g fill="#fff8e8">
+    <circle cx="128" cy="128" r="65"/>
+    <circle cx="128" cy="45" r="18"/><circle cx="128" cy="211" r="18"/>
+    <circle cx="45" cy="128" r="18"/><circle cx="211" cy="128" r="18"/>
+    <circle cx="69" cy="69" r="18"/><circle cx="187" cy="69" r="18"/>
+    <circle cx="69" cy="187" r="18"/><circle cx="187" cy="187" r="18"/>
+  </g>
+  <circle cx="104" cy="119" r="7" fill="#4a4130"/><circle cx="152" cy="119" r="7" fill="#4a4130"/>
+  <path d="M104 147c16 15 32 15 48 0" fill="none" stroke="#4a4130" stroke-width="8" stroke-linecap="round"/>
+</svg>

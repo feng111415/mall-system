@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="Graphite preset avatar">
+  <rect width="256" height="256" fill="#454a4d"/>
+  <rect x="52" y="52" width="152" height="152" rx="40" fill="#e8ebe7"/>
+  <path d="M77 109h102" stroke="#454a4d" stroke-width="12" stroke-linecap="round"/>
+  <circle cx="101" cy="126" r="7" fill="#454a4d"/><circle cx="155" cy="126" r="7" fill="#454a4d"/>
+  <path d="M103 157h50" stroke="#454a4d" stroke-width="8" stroke-linecap="round"/>
+  <path d="M83 70l22-27M173 70l-22-27" stroke="#e8ebe7" stroke-width="12" stroke-linecap="round"/>
+</svg>

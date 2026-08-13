@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="Sky preset avatar">
+  <rect width="256" height="256" fill="#80bfd3"/>
+  <path d="M43 145c0-24 20-44 44-44 10-27 36-46 67-46 40 0 72 32 72 72 0 4 0 8-1 12 17 7 28 23 28 42H43c-22 0-40-16-40-36s18-36 40-36z" fill="#f8fbf7" transform="translate(0 10)"/>
+  <circle cx="103" cy="144" r="7" fill="#344b52"/><circle cx="153" cy="144" r="7" fill="#344b52"/>
+  <path d="M105 169c14 10 32 10 46 0" fill="none" stroke="#344b52" stroke-width="8" stroke-linecap="round"/>
+</svg>
