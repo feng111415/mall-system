@@ -16,7 +16,7 @@
   <block wx:else>
     <view class="member-card"><view class="member-main"><image class="avatar" wx:if="{{member.avatar}}" src="{{member.avatar}}" mode="aspectFill" /><view wx:else class="avatar avatar-fallback">{{avatarLetter}}</view><view><text class="member-name">{{member.nickname || '拾光会员'}}</text><text class="member-phone">{{member.maskedPhone}}</text></view></view><text class="member-tag">普通会员</text></view>
     <view class="quick-grid"><view class="quick-item"><text class="quick-number">0</text><text>优惠券</text></view><view class="quick-item"><text class="quick-number">0</text><text>收藏</text></view><view class="quick-item"><text class="quick-number">0</text><text>足迹</text></view></view>
-    <view class="settings"><view class="setting-row"><image src="/assets/icons/package-check.svg" /><text>我的订单</text><text class="arrow">→</text></view><view class="setting-row"><image src="/assets/icons/map-pin.svg" /><text>收货地址</text><text class="arrow">→</text></view><view class="setting-row"><image src="/assets/icons/headset.svg" /><text>售后服务</text><text class="arrow">→</text></view></view>
+    <view class="settings"><view class="setting-row" bindtap="openOrders"><image src="/assets/icons/package-check.svg" /><text>我的订单</text><text class="arrow">→</text></view><view class="setting-row"><image src="/assets/icons/map-pin.svg" /><text>收货地址</text><text class="arrow">→</text></view><view class="setting-row" bindtap="openAfterSales"><image src="/assets/icons/headset.svg" /><text>售后服务</text><text class="arrow">→</text></view></view>
     <button class="logout-button" bindtap="logout" loading="{{loading}}">退出登录</button>
     <text wx:if="{{error}}" class="feedback {{feedbackSuccess ? 'feedback-success' : ''}}">{{error}}</text>
   </block>

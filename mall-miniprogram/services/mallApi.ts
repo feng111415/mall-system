@@ -149,6 +149,22 @@ const mallApi = {
   confirmReceipt(orderId: number) {
     return request<Record<string, any>>({ url: `/api/mall/orders/${orderId}/confirm-receipt`, method: 'POST' })
   },
+  getAfterSales() {
+    return request<Array<Record<string, any>>>({ url: '/api/mall/after-sales' })
+  },
+  getAfterSale(afterSaleId: number) {
+    return request<Record<string, any>>({ url: `/api/mall/after-sales/${afterSaleId}` })
+  },
+  applyAfterSale(orderId: number, data: Record<string, unknown>) {
+    return request<Record<string, any>>({ url: `/api/mall/orders/${orderId}/after-sales`, method: 'POST', data })
+  },
+  submitReturnTracking(afterSaleId: number, companyCode: string, trackingNo: string) {
+    return request<Record<string, any>>({
+      url: `/api/mall/after-sales/${afterSaleId}/return-tracking`,
+      method: 'POST',
+      data: { companyCode, trackingNo }
+    })
+  },
   getProductActivitySummary() {
     return request<Record<string, number>>({ url: '/api/mall/member/product-activity/summary' })
   },

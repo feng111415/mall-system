@@ -1,0 +1,14 @@
+<view class="page">
+  <view style="height: {{statusBarHeight}}px;"></view>
+  <view class="topbar"><button class="back" bindtap="goBack">←</button><text>售后服务</text><text></text></view>
+  <state-view loading="{{loading}}" error="{{error}}" bind:retry="handleRetry" />
+  <view wx:if="{{!loading && !loggedIn}}" class="empty"><text class="empty-title">登录后查看售后进度</text><text>审核、退货物流和退款结果会保存在会员账号中。</text><button class="empty-button" bindtap="goLogin">去登录</button></view>
+  <view wx:elif="{{!loading && !error && afterSales.length}}" class="after-sale-list">
+    <view wx:for="{{afterSales}}" wx:key="afterSaleId" class="after-sale-card" data-id="{{item.afterSaleId}}" bindtap="openDetail">
+      <view class="card-head"><view><text class="card-type">{{item.typeLabel}}</text><text class="card-number">{{item.afterSaleNo}}</text></view><text class="status">{{item.statusLabel}}</text></view>
+      <view class="card-body"><text class="card-product">{{item.items[0].productName || '订单商品'}}{{item.items.length > 1 ? ' 等' : ''}}</text><text class="card-meta">申请退款 ¥{{item.displayRefundAmount}}</text><text class="card-meta">{{item.displayTime}}</text></view>
+      <view class="card-foot"><text wx:if="{{item.failureReason}}" class="card-message">{{item.failureReason}}</text><text wx:else class="card-message">查看处理进度</text><text>→</text></view>
+    </view>
+  </view>
+  <view wx:elif="{{!loading && !error}}" class="empty"><text class="empty-title">暂无售后记录</text><text>已发货或已完成订单可按订单项申请售后。</text><button class="empty-button" bindtap="goOrders">查看订单</button></view>
+</view>

@@ -16,6 +16,13 @@ const LOGISTICS_LABELS: Record<string, string> = {
   SHIPPED: '已发货', IN_TRANSIT: '运输中', OUT_FOR_DELIVERY: '派送中', ARRIVED: '已送达',
   DELIVERED: '已签收', EXCEPTION: '运输异常', CORRECTION: '更正说明'
 }
+const AFTER_SALE_TYPE_LABELS: Record<string, string> = { ONLY_REFUND: '仅退款', RETURN_REFUND: '退货退款' }
+const AFTER_SALE_STATUS_LABELS: Record<string, string> = {
+  PENDING_REVIEW: '等待审核', APPROVED: '审核通过', RETURN_SHIPPED: '退货已寄出',
+  REFUNDING: '退款处理中', SUCCESS: '退款成功', REJECTED: '申请未通过', FAILED: '退款失败'
+}
+const AFTER_SALE_REASON_LABELS: Record<string, string> = { OTHER: '其他原因', QUALITY: '质量问题', NOT_RECEIVED: '未收到货' }
+const ACTIVE_AFTER_SALE_STATUSES = ['PENDING_REVIEW', 'APPROVED', 'RETURN_SHIPPED', 'REFUNDING', 'SUCCESS']
 
 function parseTime(value?: string) {
   if (!value) return 0
@@ -74,6 +81,33 @@ function normalizeLogistics(shipment: Record<string, any> | null | undefined) {
   }
 }
 
+function normalizeAfterSale(value: Record<string, any>) {
+  return {
+    ...value,
+    typeLabel: AFTER_SALE_TYPE_LABELS[value.type] || value.type || '售后',
+    statusLabel: AFTER_SALE_STATUS_LABELS[value.status] || value.status || '处理中',
+    reasonLabel: AFTER_SALE_REASON_LABELS[value.reasonCode] || value.reasonCode || '-',
+    displayRefundAmount: productUtils.formatPrice(value.refundAmount),
+    displayShippingRefundAmount: productUtils.formatPrice(value.shippingRefundAmount),
+    displayTime: formatTime(value.createTime),
+    displayDeadline: formatTime(value.deadlineTime),
+    canSubmitTracking: value.type === 'RETURN_REFUND' && value.status === 'APPROVED',
+    items: (value.items || []).map((item: Record<string, any>) => ({
+      ...item,
+      displayRefundAmount: productUtils.formatPrice(item.refundAmount)
+    }))
+  }
+}
+
+function remainingAfterSaleQuantity(orderItemId: number, orderQuantity: number, afterSales: Array<Record<string, any>>) {
+  const occupied = (afterSales || [])
+    .filter(item => ACTIVE_AFTER_SALE_STATUSES.includes(item.status))
+    .flatMap(item => item.items || [])
+    .filter(item => Number(item.orderItemId) === Number(orderItemId))
+    .reduce((total, item) => total + Number(item.requestedQuantity || 0), 0)
+  return Math.max(0, Number(orderQuantity || 0) - occupied)
+}
+
 function paymentDeadline(order: Record<string, any> | null) {
   if (!order) return 0
   return parseTime(order.paymentStatus === 'PAYING' ? order.paymentResultDeadline : order.paymentCreateDeadline)
@@ -90,4 +124,4 @@ function createPaymentKey() {
   return `mp-payment-${Date.now()}-${random.slice(0, 16)}`
 }
 
-module.exports = { normalizeOrder, normalizePayments, normalizeLogistics, paymentDeadline, countdown, statusLabel, formatTime, parseTime, createPaymentKey }
+module.exports = { normalizeOrder, normalizePayments, normalizeLogistics, normalizeAfterSale, remainingAfterSaleQuantity, paymentDeadline, countdown, statusLabel, formatTime, parseTime, createPaymentKey }

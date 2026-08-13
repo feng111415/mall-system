@@ -13,6 +13,8 @@ Page({
     feedback: '',
     order: null as Record<string, any> | null,
     payments: [] as Array<Record<string, any>>,
+    afterSales: [] as Array<Record<string, any>>,
+    afterSaleError: '',
     logistics: null as Record<string, any> | null,
     logisticsLoading: false,
     logisticsError: '',
@@ -46,11 +48,32 @@ Page({
       this.setData({ order: normalizedOrder, payments: orderUtils.normalizePayments(payments), loading: false, error: '' })
       this.updateActionState()
       this.updateCountdown()
+      if ((normalizedOrder.status === 'SHIPPED' || normalizedOrder.status === 'COMPLETED') && normalizedOrder.paymentStatus === 'PAID') await this.loadAfterSales()
+      else this.setData({ afterSales: [], afterSaleError: '' })
       if (normalizedOrder.status === 'SHIPPED' || normalizedOrder.status === 'COMPLETED') await this.loadLogistics()
       else this.setData({ logistics: null, logisticsLoading: false, logisticsError: '' })
     } catch (error) {
       const message = error instanceof Error ? error.message : '订单详情读取失败'
       this.setData(background ? { actionError: `订单状态刷新失败：${message}` } : { loading: false, error: message })
+    }
+  },
+  async loadAfterSales() {
+    try {
+      const result = await mallApi.getAfterSales()
+      const afterSales = (result || [])
+        .filter((item: Record<string, any>) => Number(item.orderId) === this.data.orderId)
+        .map(orderUtils.normalizeAfterSale)
+      const order = this.data.order
+      if (order) {
+        const items = order.items.map((item: Record<string, any>) => {
+          const availableAfterSaleQuantity = orderUtils.remainingAfterSaleQuantity(item.orderItemId, item.quantity, afterSales)
+          const records = afterSales.filter((sale: Record<string, any>) => (sale.items || []).some((detail: Record<string, any>) => Number(detail.orderItemId) === Number(item.orderItemId)))
+          return { ...item, availableAfterSaleQuantity, latestAfterSale: records[0] || null }
+        })
+        this.setData({ order: { ...order, items }, afterSales, afterSaleError: '' })
+      }
+    } catch (error) {
+      this.setData({ afterSales: [], afterSaleError: error instanceof Error ? error.message : '售后记录读取失败' })
     }
   },
   async loadLogistics() {
@@ -131,6 +154,14 @@ Page({
       this.setData({ feedback: '已确认收货' })
     } catch (error) { this.setData({ receiptError: error instanceof Error ? error.message : '确认收货失败' }) }
     finally { this.setData({ busy: false }) }
+  },
+  openAfterSale(event: WechatMiniprogram.BaseEvent) {
+    const orderItemId = Number(event.currentTarget.dataset.id || 0)
+    if (orderItemId) wx.navigateTo({ url: `/pages/after-sales/detail/index?orderId=${this.data.orderId}&orderItemId=${orderItemId}` })
+  },
+  openAfterSaleDetail(event: WechatMiniprogram.BaseEvent) {
+    const afterSaleId = Number(event.currentTarget.dataset.id || 0)
+    if (afterSaleId) wx.navigateTo({ url: `/pages/after-sales/detail/index?afterSaleId=${afterSaleId}` })
   },
   goBack() { const pages = getCurrentPages(); if (pages.length > 1) wx.navigateBack(); else wx.navigateTo({ url: '/pages/orders/index' }) },
   handleRetry() { this.loadDetail() },

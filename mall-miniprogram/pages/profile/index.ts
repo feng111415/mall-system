@@ -208,5 +208,7 @@ Page({
     app.globalData.member = null
     this.setData({ loggedIn: false, member: null, avatarLetter: '拾', code: '', error: '已退出登录', feedbackSuccess: true })
     this.setData({ loading: false })
-  }
+  },
+  openOrders() { wx.navigateTo({ url: '/pages/orders/index' }) },
+  openAfterSales() { wx.navigateTo({ url: '/pages/after-sales/index' }) }
 })

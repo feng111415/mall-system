@@ -1,0 +1,49 @@
+.page { min-height: 100vh; padding: 0 16px 32px; background: #fffefa; color: #20202a; }
+.topbar { display: grid; min-height: 52px; grid-template-columns: 42px 1fr 42px; align-items: center; border-bottom: 2px solid #20202a; font-size: 15px; font-weight: 900; text-align: center; }
+.back { width: 34px !important; min-width: 0 !important; height: 34px; margin: 0 !important; border: 2px solid #20202a; border-radius: 7px; padding: 0 !important; background: #fff; font-size: 20px; }
+.item-card { display: grid; grid-template-columns: 64px minmax(0,1fr) auto; gap: 10px; align-items: center; margin-top: 14px; border: 2px solid #20202a; border-radius: 8px; padding: 11px; background: #fff; }
+.item-image { width: 64px; height: 64px; border: 2px solid #20202a; border-radius: 6px; }
+.item-name,.item-meta { display: block; }
+.item-name { font-size: 12px; font-weight: 900; }
+.item-meta { margin-top: 4px; color: #77737d; font-size: 9px; }
+.item-price { font-size: 12px; font-weight: 900; }
+.section { padding: 17px 0; border-bottom: 2px solid #20202a; }
+.section-title { display: block; margin-bottom: 10px; font-size: 13px; font-weight: 900; }
+.segments,.reason-grid { display: grid; gap: 8px; }
+.segments { grid-template-columns: repeat(2,1fr); }
+.reason-grid { grid-template-columns: repeat(3,1fr); }
+.choice { width: 100%; min-width: 0; height: 40px; margin: 0; border: 2px solid #20202a; border-radius: 6px; padding: 0 4px; background: #fff; font-size: 10px; font-weight: 900; }
+.choice.active { background: #ffd84d; }
+.stepper { display: grid; width: 132px; grid-template-columns: 40px 52px 40px; align-items: center; border: 2px solid #20202a; border-radius: 6px; overflow: hidden; text-align: center; }
+.stepper-button { width: 40px; min-width: 0; height: 38px; margin: 0; padding: 0; background: #fff; font-size: 18px; }
+.stepper-value { font-size: 13px; font-weight: 900; }
+.reason-input,.text-input { width: 100%; margin-top: 10px; border: 2px solid #20202a; border-radius: 6px; padding: 10px; background: #fff; font-size: 11px; }
+.reason-input { min-height: 80px; }
+.hint { display: block; margin-top: 7px; color: #77737d; font-size: 9px; line-height: 1.5; }
+.server-note { margin-top: 14px; border: 1px dashed #aaa5a0; padding: 10px; color: #77737d; font-size: 9px; text-align: center; }
+.feedback { display: block; margin-top: 12px; border: 1px solid #ed5b49; padding: 9px; background: #ffe2dd; color: #9f2d24; font-size: 10px; }
+.feedback.success { border-color: #287a55; background: #d6f2eb; color: #287a55; }
+.submit,.order-link { width: 100%; height: 44px; margin-top: 14px; border: 2px solid #20202a; border-radius: 6px; font-size: 12px; font-weight: 900; }
+.submit { background: #ed5b49; color: #fff; }
+.order-link { background: #ffd84d; }
+.status-card { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 14px; border: 2px solid #20202a; border-radius: 8px; padding: 15px; background: #ffd84d; }
+.status-type,.status-number { display: block; }
+.status-type { font-size: 17px; font-weight: 900; }
+.status-number { margin-top: 4px; font-size: 9px; }
+.status-label { border: 2px solid #20202a; border-radius: 99px; padding: 5px 8px; background: #fff; font-size: 9px; font-weight: 900; }
+.detail-grid { display: grid; gap: 8px; }
+.detail-row { display: flex; justify-content: space-between; gap: 10px; font-size: 10px; }
+.detail-label { color: #77737d; }
+.detail-value { text-align: right; }
+.detail-item { display: grid; grid-template-columns: minmax(0,1fr) auto auto; gap: 8px; align-items: center; padding: 10px 0; border-bottom: 1px solid #d6d1ca; font-size: 9px; }
+.detail-item-name,.detail-item-sku { display: block; }
+.detail-item-name { font-size: 11px; font-weight: 900; }
+.detail-item-sku { margin-top: 3px; color: #77737d; }
+.body-text { display: block; overflow-wrap: anywhere; color: #5f5b62; font-size: 10px; line-height: 1.55; }
+.link { color: #287a55; }
+.failure { margin-top: 12px; border: 2px solid #20202a; padding: 10px; background: #ffe2dd; color: #9f2d24; font-size: 10px; }
+.picker { display: flex; height: 42px; align-items: center; justify-content: space-between; border: 2px solid #20202a; border-radius: 6px; padding: 0 10px; background: #fff; font-size: 11px; }
+.tracking-submit { width: 100%; height: 42px; margin-top: 10px; border: 2px solid #20202a; border-radius: 6px; background: #ffd84d; font-size: 11px; font-weight: 900; }
+.tracking-result { display: grid; gap: 5px; margin-top: 12px; border: 2px solid #20202a; border-radius: 7px; padding: 11px; background: #d6f2eb; }
+.tracking-title { font-size: 11px; font-weight: 900; }
+.tracking-value { overflow-wrap: anywhere; color: #5f5b62; font-size: 9px; }

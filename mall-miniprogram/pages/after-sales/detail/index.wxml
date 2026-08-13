@@ -1,0 +1,27 @@
+<view class="page">
+  <view style="height: {{statusBarHeight}}px;"></view>
+  <view class="topbar"><button class="back" bindtap="goBack">←</button><text>{{mode === 'apply' ? '申请售后' : '售后详情'}}</text><text></text></view>
+  <state-view loading="{{loading}}" error="{{error}}" bind:retry="handleRetry" />
+  <block wx:if="{{!loading && !error && mode === 'apply' && selectedItem}}">
+    <view class="item-card"><image class="item-image" src="{{selectedItem.displayImage}}" mode="aspectFill" /><view class="item-info"><text class="item-name">{{selectedItem.productName}}</text><text class="item-meta">{{selectedItem.skuName || selectedItem.skuCode}}</text><text class="item-meta">购买 {{selectedItem.quantity}} 件，可申请 {{availableQuantity}} 件</text></view><text class="item-price">¥{{selectedItem.displayUnitPrice}}</text></view>
+    <view class="section"><text class="section-title">售后类型</text><view class="segments"><button class="choice {{type === 'ONLY_REFUND' ? 'active' : ''}}" data-value="ONLY_REFUND" bindtap="selectType">仅退款</button><button class="choice {{type === 'RETURN_REFUND' ? 'active' : ''}}" data-value="RETURN_REFUND" bindtap="selectType">退货退款</button></view></view>
+    <view class="section"><text class="section-title">申请数量</text><view class="stepper"><button class="stepper-button" bindtap="decreaseQuantity">−</button><text class="stepper-value">{{requestedQuantity}}</text><button class="stepper-button" bindtap="increaseQuantity">＋</button></view></view>
+    <view class="section"><text class="section-title">售后原因</text><view class="reason-grid"><button class="choice {{reasonCode === 'OTHER' ? 'active' : ''}}" data-value="OTHER" bindtap="selectReason">其他原因</button><button class="choice {{reasonCode === 'QUALITY' ? 'active' : ''}}" data-value="QUALITY" bindtap="selectReason">质量问题</button><button class="choice {{reasonCode === 'NOT_RECEIVED' ? 'active' : ''}}" data-value="NOT_RECEIVED" bindtap="selectReason">未收到货</button></view><textarea class="reason-input" value="{{reason}}" maxlength="255" bindinput="handleReason" placeholder="补充说明（选填）" /></view>
+    <view wx:if="{{reasonCode === 'QUALITY'}}" class="section"><text class="section-title">质量问题凭证</text><input class="text-input" value="{{evidenceUrl}}" maxlength="1000" bindinput="handleEvidence" placeholder="填写凭证图片地址" /><text class="hint">质量问题必须提供凭证，审核人员会据此核实。</text></view>
+    <view class="server-note"><text>退款金额由服务端根据订单项、申请数量与运费规则计算。</text></view>
+    <text wx:if="{{feedback}}" class="feedback">{{feedback}}</text>
+    <button class="submit" loading="{{busy}}" disabled="{{busy}}" bindtap="submitApplication">提交售后申请</button>
+  </block>
+  <block wx:if="{{!loading && !error && mode === 'detail' && afterSale}}">
+    <view class="status-card"><view class="status-main"><text class="status-type">{{afterSale.typeLabel}}</text><text class="status-number">{{afterSale.afterSaleNo}}</text></view><text class="status-label">{{afterSale.statusLabel}}</text></view>
+    <view class="section detail-grid"><view class="detail-row"><text class="detail-label">申请原因</text><text class="detail-value">{{afterSale.reasonLabel}}</text></view><view class="detail-row"><text class="detail-label">申请时间</text><text class="detail-value">{{afterSale.displayTime}}</text></view><view class="detail-row"><text class="detail-label">商品退款</text><text class="detail-value">¥{{afterSale.displayRefundAmount}}</text></view><view class="detail-row"><text class="detail-label">运费退款</text><text class="detail-value">¥{{afterSale.displayShippingRefundAmount}}</text></view><view class="detail-row"><text class="detail-label">售后截止</text><text class="detail-value">{{afterSale.displayDeadline}}</text></view></view>
+    <view class="section"><text class="section-title">售后商品</text><view wx:for="{{afterSale.items}}" wx:key="afterSaleItemId" class="detail-item"><view class="detail-item-main"><text class="detail-item-name">{{item.productName}}</text><text class="detail-item-sku">{{item.skuName}}</text></view><text>申请 {{item.requestedQuantity}} / {{item.orderQuantity}} 件</text><text>¥{{item.displayRefundAmount}}</text></view></view>
+    <view wx:if="{{afterSale.reason}}" class="section"><text class="section-title">补充说明</text><text class="body-text">{{afterSale.reason}}</text></view>
+    <view wx:if="{{afterSale.evidenceUrl}}" class="section"><text class="section-title">质量凭证</text><text class="body-text link">{{afterSale.evidenceUrl}}</text></view>
+    <view wx:if="{{afterSale.failureReason}}" class="failure">{{afterSale.failureReason}}</view>
+    <view wx:if="{{afterSale.canSubmitTracking}}" class="section tracking"><text class="section-title">填写退货物流</text><picker range="{{logisticsCompanies}}" range-key="name" value="{{companyIndex}}" bindchange="handleCompany"><view class="picker">{{companyIndex >= 0 ? logisticsCompanies[companyIndex].name : '选择物流公司'}}<text>⌄</text></view></picker><input class="text-input" value="{{trackingNo}}" maxlength="128" bindinput="handleTrackingNo" placeholder="填写退货运单号" /><button class="tracking-submit" loading="{{busy}}" disabled="{{busy}}" bindtap="submitTracking">提交退货物流</button></view>
+    <view wx:if="{{afterSale.returnTrackingNo}}" class="tracking-result"><text class="tracking-title">退货物流</text><text class="tracking-value">{{afterSale.returnCompanyCode}} · {{afterSale.returnTrackingNo}}</text></view>
+    <text wx:if="{{feedback}}" class="feedback success">{{feedback}}</text>
+    <button class="order-link" bindtap="openOrder">查看原订单</button>
+  </block>
+</view>
