@@ -124,7 +124,10 @@ Page({
     }
   },
 
-  continueShopping() { wx.switchTab({ url: '/pages/catalog/index' }) },
+  openOrderDetail() {
+    const orderId = Number(this.data.order?.orderId || 0)
+    if (orderId) wx.redirectTo({ url: `/pages/orders/detail/index?orderId=${orderId}` })
+  },
 
   goBack() {
     const pages = getCurrentPages()

@@ -128,6 +128,21 @@ const mallApi = {
   getOrders(params?: Record<string, string | number>) {
     return request<Array<Record<string, unknown>>>({ url: '/api/mall/orders', data: params })
   },
+  getOrder(orderId: number) {
+    return request<Record<string, any>>({ url: `/api/mall/orders/${orderId}` })
+  },
+  cancelOrder(orderId: number, reason?: string) {
+    return request<Record<string, any>>({ url: `/api/mall/orders/${orderId}/cancel`, method: 'POST', data: { reason } })
+  },
+  getOrderPayments(orderId: number) {
+    return request<Array<Record<string, any>>>({ url: `/api/mall/orders/${orderId}/payments` })
+  },
+  createPayment(orderId: number, idempotencyKey: string) {
+    return request<Record<string, any>>({ url: `/api/mall/orders/${orderId}/payment`, method: 'POST', data: { idempotencyKey } })
+  },
+  mockPaymentSuccess(paymentNo: string) {
+    return request<Record<string, any>>({ url: `/api/mall/payments/${paymentNo}/mock-success`, method: 'POST' })
+  },
   getProductActivitySummary() {
     return request<Record<string, number>>({ url: '/api/mall/member/product-activity/summary' })
   },

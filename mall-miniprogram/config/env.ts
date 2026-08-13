@@ -23,10 +23,14 @@ function getDeviceId() {
   return id
 }
 
+function getEnvVersion() {
+  const info = wx.getAccountInfoSync ? wx.getAccountInfoSync() : null
+  return info && info.miniProgram && info.miniProgram.envVersion || ''
+}
+
 module.exports = {
   getApiBaseUrl() {
-    const info = wx.getAccountInfoSync ? wx.getAccountInfoSync() : null
-    const envVersion = info && info.miniProgram && info.miniProgram.envVersion || 'develop'
+    const envVersion = getEnvVersion() || 'develop'
     if (envVersion === 'develop') {
       const override = wx.getStorageSync(DEVELOP_API_OVERRIDE_KEY)
       if (typeof override === 'string' && /^https:\/\/[^/]+$/.test(override)) return override
@@ -36,6 +40,7 @@ module.exports = {
     return value
   },
   getDeviceId,
+  getEnvVersion,
   setDevelopApiBaseUrl(url: string) {
     const value = (url || '').trim().replace(/\/$/, '')
     if (value && !/^https:\/\/[^/]+$/.test(value)) throw new Error('联调地址必须是 HTTPS 域名且不能包含路径')

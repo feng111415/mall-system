@@ -54,6 +54,11 @@ async function run() {
   assert.throws(() => env.setDevelopApiBaseUrl('http://insecure.example.com'), /HTTPS/)
   env.setDevelopApiBaseUrl('')
 
+  const accountInfo = wx.getAccountInfoSync
+  wx.getAccountInfoSync = undefined
+  assert.strictEqual(env.getEnvVersion(), '')
+  wx.getAccountInfoSync = accountInfo
+
   const cooldown = auth.startSmsCooldown('13900008131', 60)
   assert.strictEqual(auth.readSmsCooldown().phone, '13900008131')
   assert.ok(auth.getCooldownSeconds(cooldown) >= 59)
