@@ -12,6 +12,10 @@ const PAYMENT_ATTEMPT_LABELS: Record<string, string> = {
   CREATING: '正在创建', PAYING: '等待支付', SUCCESS: '支付成功', FAILED: '创建失败',
   CLOSED: '已超时关闭', REFUNDING: '退款处理中', REFUNDED: '已原路退款'
 }
+const LOGISTICS_LABELS: Record<string, string> = {
+  SHIPPED: '已发货', IN_TRANSIT: '运输中', OUT_FOR_DELIVERY: '派送中', ARRIVED: '已送达',
+  DELIVERED: '已签收', EXCEPTION: '运输异常', CORRECTION: '更正说明'
+}
 
 function parseTime(value?: string) {
   if (!value) return 0
@@ -51,6 +55,25 @@ function normalizePayments(payments: Array<Record<string, any>> | null | undefin
   return (payments || []).map(item => ({ ...item, statusLabel: PAYMENT_ATTEMPT_LABELS[item.status] || item.status || '处理中', displayAmount: productUtils.formatPrice(item.amount), displayTime: formatTime(item.createTime) }))
 }
 
+function normalizeLogistics(shipment: Record<string, any> | null | undefined) {
+  if (!shipment) return null
+  const nodes = (shipment.nodes || []).map((item: Record<string, any>) => ({
+    ...item,
+    statusLabel: LOGISTICS_LABELS[item.nodeStatus] || item.nodeStatus || '物流更新',
+    displayTime: formatTime(item.eventTime)
+  }))
+  const latestNode = nodes[0] || null
+  return {
+    ...shipment,
+    nodes,
+    latestNode,
+    latestStatusLabel: latestNode?.statusLabel || LOGISTICS_LABELS[shipment.status] || shipment.status || '运输中',
+    statusLabel: LOGISTICS_LABELS[shipment.status] || latestNode?.statusLabel || shipment.status || '运输中',
+    displayShippedTime: formatTime(shipment.shippedTime),
+    displayDeliveredTime: formatTime(shipment.deliveredTime)
+  }
+}
+
 function paymentDeadline(order: Record<string, any> | null) {
   if (!order) return 0
   return parseTime(order.paymentStatus === 'PAYING' ? order.paymentResultDeadline : order.paymentCreateDeadline)
@@ -67,4 +90,4 @@ function createPaymentKey() {
   return `mp-payment-${Date.now()}-${random.slice(0, 16)}`
 }
 
-module.exports = { normalizeOrder, normalizePayments, paymentDeadline, countdown, statusLabel, formatTime, parseTime, createPaymentKey }
+module.exports = { normalizeOrder, normalizePayments, normalizeLogistics, paymentDeadline, countdown, statusLabel, formatTime, parseTime, createPaymentKey }

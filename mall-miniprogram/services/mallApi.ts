@@ -143,6 +143,12 @@ const mallApi = {
   mockPaymentSuccess(paymentNo: string) {
     return request<Record<string, any>>({ url: `/api/mall/payments/${paymentNo}/mock-success`, method: 'POST' })
   },
+  getOrderLogistics(orderId: number) {
+    return request<Record<string, any>>({ url: `/api/mall/orders/${orderId}/logistics` })
+  },
+  confirmReceipt(orderId: number) {
+    return request<Record<string, any>>({ url: `/api/mall/orders/${orderId}/confirm-receipt`, method: 'POST' })
+  },
   getProductActivitySummary() {
     return request<Record<string, number>>({ url: '/api/mall/member/product-activity/summary' })
   },

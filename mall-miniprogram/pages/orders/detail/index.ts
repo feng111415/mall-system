@@ -13,9 +13,16 @@ Page({
     feedback: '',
     order: null as Record<string, any> | null,
     payments: [] as Array<Record<string, any>>,
+    logistics: null as Record<string, any> | null,
+    logisticsLoading: false,
+    logisticsError: '',
+    canConfirmReceipt: false,
+    showActions: false,
     countdown: '00:00',
     developmentMode: false,
     cancelOpen: false,
+    receiptOpen: false,
+    receiptError: '',
     cancelReason: '会员主动取消',
     paymentIdempotencyKey: ''
   },
@@ -35,12 +42,36 @@ Page({
     if (!background) this.setData({ loading: true, error: '', actionError: '' })
     try {
       const [order, payments] = await Promise.all([mallApi.getOrder(this.data.orderId), mallApi.getOrderPayments(this.data.orderId)])
-      this.setData({ order: orderUtils.normalizeOrder(order), payments: orderUtils.normalizePayments(payments), loading: false, error: '' })
+      const normalizedOrder = orderUtils.normalizeOrder(order)
+      this.setData({ order: normalizedOrder, payments: orderUtils.normalizePayments(payments), loading: false, error: '' })
+      this.updateActionState()
       this.updateCountdown()
+      if (normalizedOrder.status === 'SHIPPED' || normalizedOrder.status === 'COMPLETED') await this.loadLogistics()
+      else this.setData({ logistics: null, logisticsLoading: false, logisticsError: '' })
     } catch (error) {
       const message = error instanceof Error ? error.message : '订单详情读取失败'
       this.setData(background ? { actionError: `订单状态刷新失败：${message}` } : { loading: false, error: message })
     }
+  },
+  async loadLogistics() {
+    this.setData({ logisticsLoading: true, logisticsError: '' })
+    try {
+      const logistics = orderUtils.normalizeLogistics(await mallApi.getOrderLogistics(this.data.orderId))
+      this.setData({ logistics, logisticsLoading: false })
+      this.updateActionState()
+    } catch (error) {
+      this.setData({ logistics: null, logisticsLoading: false, logisticsError: error instanceof Error ? error.message : '物流信息读取失败' })
+      this.updateActionState()
+    }
+  },
+  updateActionState() {
+    const order = this.data.order
+    const canConfirmReceipt = Boolean(order?.status === 'SHIPPED' && this.data.logistics?.status === 'DELIVERED')
+    const showActions = Boolean(order?.canCancel
+      || (this.data.developmentMode && order?.canCreatePayment)
+      || (this.data.developmentMode && order?.canConfirmPayment && this.data.payments[0]?.status === 'PAYING')
+      || canConfirmReceipt)
+    this.setData({ canConfirmReceipt, showActions })
   },
   updateCountdown() {
     const deadline = orderUtils.paymentDeadline(this.data.order)
@@ -83,6 +114,22 @@ Page({
       await this.loadDetail()
       this.setData({ feedback: '订单已取消' })
     } catch (error) { this.setData({ actionError: error instanceof Error ? error.message : '取消订单失败' }) }
+    finally { this.setData({ busy: false }) }
+  },
+  openReceipt() {
+    if (this.data.canConfirmReceipt)
+      this.setData({ receiptOpen: true, receiptError: '', actionError: '' })
+  },
+  closeReceipt() { if (!this.data.busy) this.setData({ receiptOpen: false }) },
+  async confirmReceipt() {
+    if (!this.data.canConfirmReceipt || this.data.busy) return
+    this.setData({ busy: true, receiptError: '', actionError: '', feedback: '' })
+    try {
+      await mallApi.confirmReceipt(this.data.orderId)
+      this.setData({ receiptOpen: false })
+      await this.loadDetail()
+      this.setData({ feedback: '已确认收货' })
+    } catch (error) { this.setData({ receiptError: error instanceof Error ? error.message : '确认收货失败' }) }
     finally { this.setData({ busy: false }) }
   },
   goBack() { const pages = getCurrentPages(); if (pages.length > 1) wx.navigateBack(); else wx.navigateTo({ url: '/pages/orders/index' }) },
