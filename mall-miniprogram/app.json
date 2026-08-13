@@ -5,7 +5,8 @@
     "pages/cart/index",
     "pages/messages/index",
     "pages/profile/index",
-    "pages/orders/index"
+    "pages/orders/index",
+    "pages/product/index"
   ],
   "window": {
     "navigationBarTitleText": "拾光小店",

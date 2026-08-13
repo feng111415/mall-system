@@ -6,7 +6,7 @@
   "scripts": {
     "validate": "node scripts/validate.js",
     "typecheck": "tsc --noEmit",
-    "test": "node scripts/request.test.js && node scripts/home.test.js && node scripts/validate.js && npm run typecheck"
+    "test": "node scripts/request.test.js && node scripts/home.test.js && node scripts/product.test.js && node scripts/validate.js && npm run typecheck"
   },
   "devDependencies": {
     "lucide-static": "0.468.0",

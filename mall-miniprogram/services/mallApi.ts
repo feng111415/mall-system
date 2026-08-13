@@ -60,6 +60,15 @@ const mallApi = {
   getCatalog(params?: Record<string, string | number>) {
     return request<MallProductResponse[]>({ url: '/api/mall/catalog/products', data: params })
   },
+  getCategories() {
+    return request<Array<Record<string, unknown>>>({ url: '/api/mall/catalog/categories' })
+  },
+  getProduct(spuId: number) {
+    return request<Record<string, unknown> | null>({ url: `/api/mall/catalog/products/${spuId}` })
+  },
+  getProductReviews(spuId: number, params?: Record<string, string | number>) {
+    return request<Record<string, unknown>>({ url: `/api/mall/reviews/products/${spuId}`, data: params })
+  },
   getCart() {
     return request({ url: '/api/mall/cart' })
   },

@@ -56,5 +56,5 @@ const pageSource = fs.readFileSync(path.join(__dirname, '../pages/home/index.ts'
 const templateSource = fs.readFileSync(path.join(__dirname, '../pages/home/index.wxml'), 'utf8')
 assert.match(templateSource, /bindconfirm="openCatalog"/)
 assert.match(pageSource, /if \(!this\.data\.loggedIn\) return this\.openLogin\(\)/)
-assert.match(pageSource, /wx\.showToast\(\{ title: `商品 \$\{spuId\} 详情将在下一切片开放`/)
-console.log('首页数据组装测试通过：运营推荐顺序、销量补位、订单聚合、价格、图片回退和点击边界。')
+assert.match(pageSource, /wx\.navigateTo\(\{ url: `\/pages\/product\/index\?spuId=\$\{spuId\}`/)
+console.log('首页数据组装测试通过：运营推荐顺序、销量补位、订单聚合、价格、图片回退和详情导航。')

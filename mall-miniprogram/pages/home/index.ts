@@ -134,6 +134,6 @@ Page({
 
   openProduct(event: WechatMiniprogram.BaseEvent) {
     const spuId = Number(event.currentTarget.dataset.id || 0)
-    wx.showToast({ title: `商品 ${spuId} 详情将在下一切片开放`, icon: 'none' })
+    if (spuId > 0) wx.navigateTo({ url: `/pages/product/index?spuId=${spuId}` })
   }
 })

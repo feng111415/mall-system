@@ -1,0 +1,49 @@
+<view class="page">
+  <view style="height: {{statusBarHeight}}px;"></view>
+  <view class="topbar">
+    <button class="icon-button" aria-label="返回" bindtap="goBack">←</button>
+    <text>商品详情</text>
+    <button class="catalog-button" bindtap="openCatalog">分类</button>
+  </view>
+
+  <state-view loading="{{loading}}" error="{{error}}" bind:retry="handleRetry" />
+
+  <block wx:if="{{!loading && !error && product}}">
+    <view class="gallery">
+      <image class="main-image" src="{{selectedImage}}" mode="aspectFill" bindtap="previewImage" />
+      <scroll-view wx:if="{{product.gallery.length > 1}}" class="thumb-scroll" scroll-x enhanced show-scrollbar="{{false}}">
+        <view class="thumb-row"><button wx:for="{{product.gallery}}" wx:key="*this" class="thumb {{selectedImage === item ? 'active' : ''}}" data-image="{{item}}" bindtap="selectImage"><image src="{{item}}" mode="aspectFill" /></button></view>
+      </scroll-view>
+    </view>
+
+    <view class="product-copy">
+      <text class="kicker">{{product.categoryBrand || '日常好物'}}</text>
+      <text class="product-name">{{product.productName}}</text>
+      <text class="subtitle">{{product.subtitle}}</text>
+      <view class="price-row"><text class="price">¥{{product.displayPrice}}</text><text wx:if="{{product.displayMarketPrice}}" class="market-price">¥{{product.displayMarketPrice}}</text><text class="sales">{{product.salesText}}</text></view>
+    </view>
+
+    <view class="sku-section">
+      <view class="section-head"><text>选择规格</text><text>{{product.selectedSku.skuName || '请选择'}}</text></view>
+      <view class="sku-list"><button wx:for="{{product.skus}}" wx:key="skuId" class="sku {{selectedSkuId === item.skuId ? 'active' : ''}} {{item.soldOut ? 'soldout' : ''}}" disabled="{{!item.selectable}}" data-id="{{item.skuId}}" bindtap="selectSku"><text>{{item.skuName}}</text><text wx:if="{{item.soldOut}}">售罄</text></button></view>
+      <view class="stock {{product.selectedSku.stockTone}}"><text class="stock-dot"></text><text>{{product.selectedSku.stockLabel}}</text></view>
+    </view>
+
+    <view class="service-strip"><text>7 天无理由退换</text><text>48 小时内发出</text><text>下单时复核库存</text></view>
+
+    <view class="detail-section">
+      <text class="kicker">PRODUCT NOTES</text>
+      <text class="section-title">关于这件日常好物</text>
+      <text class="detail-text">{{product.detailText}}</text>
+    </view>
+
+    <view class="review-section">
+      <view class="section-head review-head"><view><text class="kicker">REVIEWS</text><text class="section-title">大家怎么说</text></view><text>{{reviews.summary.reviewCount}} 条评价</text></view>
+      <view class="review-summary"><text class="rating">{{reviews.summary.averageRating}}</text><view><text class="stars">★★★★★</text><text class="summary-label">综合评分</text></view><view class="star-count"><text>五星 {{reviews.summary.fiveStarCount}}</text><text>四星 {{reviews.summary.fourStarCount}}</text></view></view>
+      <view wx:if="{{reviews.reviews.length}}" class="review-list"><view wx:for="{{reviews.reviews}}" wx:key="reviewId" class="review"><view class="review-meta"><view><text>{{item.reviewerName}}</text><text class="stars">{{item.stars}}</text></view><text>{{item.displayDate}}</text></view><text class="review-content">{{item.content}}</text><text wx:if="{{item.skuName}}" class="review-sku">规格：{{item.skuName}}</text></view></view>
+      <view wx:else class="empty-review">还没有公开评价，确认收货后欢迎分享体验。</view>
+    </view>
+
+    <view class="bottom-bar"><button bindtap="openCatalog">继续逛逛</button><button class="primary" disabled="{{product.selectedSku.soldOut}}">{{product.selectedSku.soldOut ? '暂时售罄' : '加购在下一切片开放'}}</button></view>
+  </block>
+</view>
