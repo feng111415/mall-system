@@ -32,6 +32,7 @@ function loadTypeScriptModule(file, dependencies = {}) {
 
 const env = loadTypeScriptModule('../config/env.ts')
 const { request } = loadTypeScriptModule('../utils/request.ts', { '../config/env': env })
+const auth = loadTypeScriptModule('../utils/auth.ts')
 
 async function run() {
   env.setToken('0123456789abcdef0123456789abcdef')
@@ -43,8 +44,22 @@ async function run() {
   requestHandler = options => { captured = options; options.success({ statusCode: 200, data: { code: 200, data: [] } }) }
   await request({ url: '/api/mall/orders' })
   assert.strictEqual(captured.header['X-Mall-Authorization'], 'Bearer 0123456789abcdef0123456789abcdef')
-  assert.match(captured.header['X-Mall-Device-Id'], /^mp-/)
+  assert.match(captured.header['X-Mall-Device-Id'], /^[a-f0-9]{32}$/)
   assert.strictEqual(captured.url, 'http://localhost:8080/api/mall/orders')
+
+  env.setDevelopApiBaseUrl('https://mall-tunnel.example.com/')
+  requestHandler = options => { captured = options; options.success({ statusCode: 200, data: { code: 200, data: { ok: true } } }) }
+  await request({ url: '/api/mall/health' })
+  assert.strictEqual(captured.url, 'https://mall-tunnel.example.com/api/mall/health')
+  assert.throws(() => env.setDevelopApiBaseUrl('http://insecure.example.com'), /HTTPS/)
+  env.setDevelopApiBaseUrl('')
+
+  const cooldown = auth.startSmsCooldown('13900008131', 60)
+  assert.strictEqual(auth.readSmsCooldown().phone, '13900008131')
+  assert.ok(auth.getCooldownSeconds(cooldown) >= 59)
+  assert.ok(auth.getCooldownSeconds(auth.readSmsCooldown()) >= 59)
+  auth.clearSmsCooldown()
+  assert.strictEqual(auth.readSmsCooldown(), null)
 
   requestHandler = options => options.success({ statusCode: 200, data: { code: 401, msg: '请先登录' } })
   await assert.rejects(() => request({ url: '/api/mall/cart' }), /请先登录/)
@@ -52,7 +67,7 @@ async function run() {
 
   requestHandler = options => options.fail({ errMsg: 'request:fail timeout' })
   await assert.rejects(() => request({ url: '/api/mall/homepage' }), /timeout/)
-  console.log('请求适配层测试通过：成功、鉴权、设备标识、401 清理和网络失败。')
+  console.log('请求与鉴权基础测试通过：请求、设备标识、开发隧道、60 秒冷却持久化、401 和网络失败。')
 }
 
 run().catch(error => {

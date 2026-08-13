@@ -10,7 +10,10 @@ public class MallDeviceClassifier
     {
         String ua = userAgent == null ? "" : userAgent.toLowerCase(Locale.ROOT);
         boolean mobile = ua.contains("mobile") || ua.contains("android") || ua.contains("iphone")
-                || ua.contains("ipad") || ua.contains("ipod") || ua.contains("tablet");
+                || ua.contains("ipad") || ua.contains("ipod") || ua.contains("tablet")
+                || ua.contains("miniprogram") || ua.contains("micromessenger");
+        if (ua.contains("miniprogram") || ua.contains("micromessenger"))
+            return new DeviceInfo("MOBILE", "微信小程序");
         if (ua.contains("iphone")) return new DeviceInfo("MOBILE", "iPhone 浏览器");
         if (ua.contains("ipad")) return new DeviceInfo("MOBILE", "iPad 浏览器");
         if (ua.contains("android")) return new DeviceInfo("MOBILE", "Android 浏览器");

@@ -14,6 +14,8 @@ class MallDeviceClassifierTest
         assertEquals("MOBILE", classifier.classify("Mozilla/5.0 (iPhone) Mobile").type());
         assertEquals("MOBILE", classifier.classify("Mozilla/5.0 (iPad) Safari").type());
         assertEquals("MOBILE", classifier.classify("Mozilla/5.0 (Linux; Android 15) Chrome").type());
+        assertEquals("MOBILE", classifier.classify("Mozilla/5.0 MicroMessenger MiniProgram").type());
+        assertEquals("微信小程序", classifier.classify("Mozilla/5.0 MicroMessenger MiniProgram").name());
     }
 
     @Test

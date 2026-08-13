@@ -1,1 +1,25 @@
-<view class="placeholder"><text class="title">我的</text><text>登录、资料和设备安全将在后续纵向链路接入。</text></view>
+<view class="page">
+  <view style="height: {{statusBarHeight}}px;"></view>
+  <view class="header"><view><text class="kicker">MEMBER SPACE</text><text class="title">我的</text></view><image class="header-icon" src="/assets/icons/circle-user-round.svg" /></view>
+
+  <block wx:if="{{!loggedIn}}">
+    <view class="login-card">
+      <view class="login-heading"><text class="login-title">欢迎回来</text><text class="login-subtitle">用手机号登录，继续你的购物清单</text></view>
+      <view class="field"><text class="field-label">手机号</text><input type="number" maxlength="11" value="{{phone}}" bindinput="handlePhoneInput" placeholder="请输入手机号" /></view>
+      <view class="field code-field"><text class="field-label">短信验证码</text><input type="number" maxlength="6" value="{{code}}" bindinput="handleCodeInput" placeholder="6 位验证码" /><button class="code-button" disabled="{{loading || seconds > 0}}" bindtap="handleSendCode">{{seconds ? seconds + 's 后重发' : (loading ? '发送中' : '获取验证码')}}</button></view>
+      <checkbox-group class="agreement" bindchange="handleAgreementChange"><label><checkbox value="agreed" checked="{{agreed}}" color="#20202a" /><text>我已阅读并同意用户协议与隐私政策</text></label></checkbox-group>
+      <button class="primary-button" loading="{{loading}}" disabled="{{loading}}" bindtap="login">登录 / 注册</button>
+      <text wx:if="{{error}}" class="feedback {{feedbackSuccess ? 'feedback-success' : ''}}">{{error}}</text>
+    </view>
+  </block>
+
+  <block wx:else>
+    <view class="member-card"><view class="member-main"><image class="avatar" wx:if="{{member.avatar}}" src="{{member.avatar}}" mode="aspectFill" /><view wx:else class="avatar avatar-fallback">{{avatarLetter}}</view><view><text class="member-name">{{member.nickname || '拾光会员'}}</text><text class="member-phone">{{member.maskedPhone}}</text></view></view><text class="member-tag">普通会员</text></view>
+    <view class="quick-grid"><view class="quick-item"><text class="quick-number">0</text><text>优惠券</text></view><view class="quick-item"><text class="quick-number">0</text><text>收藏</text></view><view class="quick-item"><text class="quick-number">0</text><text>足迹</text></view></view>
+    <view class="settings"><view class="setting-row"><image src="/assets/icons/package-check.svg" /><text>我的订单</text><text class="arrow">→</text></view><view class="setting-row"><image src="/assets/icons/map-pin.svg" /><text>收货地址</text><text class="arrow">→</text></view><view class="setting-row"><image src="/assets/icons/headset.svg" /><text>售后服务</text><text class="arrow">→</text></view></view>
+    <button class="logout-button" bindtap="logout" loading="{{loading}}">退出登录</button>
+    <text wx:if="{{error}}" class="feedback {{feedbackSuccess ? 'feedback-success' : ''}}">{{error}}</text>
+  </block>
+
+  <view wx:if="{{challengeOpen}}" class="challenge-mask"><view class="challenge-sheet"><view class="sheet-head"><view><text class="kicker">安全验证</text><text class="sheet-title">请完成拼图</text></view><button class="close-button" bindtap="closeChallenge">×</button></view><text class="sheet-note">拖动拼图块到下方图片的缺口位置，验证通过后继续发送短信。</text><view class="scene"><image class="scene-image" src="{{challenge.sceneImage}}" mode="scaleToFill" /><image class="piece" src="{{challenge.pieceImage}}" mode="scaleToFill" style="left: {{challengePercent}}%;" /></view><view class="track"><slider min="0" max="1000" step="1" value="{{challengePosition}}" activeColor="#ed5b49" backgroundColor="#fffefa" block-color="#ffd84d" block-size="28" bindchanging="handleChallengeInput" bindchange="handleChallengeInput" /></view><text wx:if="{{challengeError}}" class="challenge-error">{{challengeError}}</text><button class="verify-button" loading="{{challengeVerifying}}" disabled="{{challengeVerifying}}" bindtap="verifyChallenge">验证并发送</button></view></view>
+</view>
