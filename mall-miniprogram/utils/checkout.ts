@@ -15,6 +15,19 @@ function normalizeAddress(address: Record<string, any>) {
   }
 }
 
+function addressPayload(address: Record<string, any>) {
+  return {
+    receiverName: String(address.receiverName || '').trim(),
+    receiverPhone: String(address.receiverPhone || '').trim(),
+    province: String(address.province || '').trim(),
+    city: String(address.city || '').trim(),
+    district: String(address.district || '').trim(),
+    detailAddress: String(address.detailAddress || '').trim(),
+    postalCode: String(address.postalCode || '').trim(),
+    isDefault: address.isDefault === true || address.isDefault === '1' ? '1' : '0'
+  }
+}
+
 function normalizeCheckout(value: Record<string, any> | null | undefined) {
   const addresses = (value?.addresses || []).map(normalizeAddress)
   const items = (value?.items || []).map((item: Record<string, any>) => ({
@@ -46,4 +59,4 @@ function normalizeCheckout(value: Record<string, any> | null | undefined) {
   }
 }
 
-module.exports = { createIdempotencyKey, normalizeAddress, normalizeCheckout }
+module.exports = { createIdempotencyKey, normalizeAddress, addressPayload, normalizeCheckout }

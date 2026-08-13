@@ -119,6 +119,22 @@ const mallApi = {
       data
     })
   },
+  getAddresses() {
+    return request<Array<Record<string, any>>>({ url: '/api/mall/member/addresses' })
+  },
+  updateAddress(addressId: number, data: Record<string, unknown>) {
+    return request<Record<string, any>>({
+      url: `/api/mall/member/addresses/${addressId}`,
+      method: 'PUT',
+      data
+    })
+  },
+  deleteAddress(addressId: number) {
+    return request<Record<string, any>>({
+      url: `/api/mall/member/addresses/${addressId}`,
+      method: 'DELETE'
+    })
+  },
   getMessages(params?: Record<string, string | number>) {
     return request({ url: '/api/mall/member/messages', data: params })
   },

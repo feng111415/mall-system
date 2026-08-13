@@ -223,5 +223,6 @@ Page({
   openOrders() { wx.navigateTo({ url: '/pages/orders/index' }) },
   openAfterSales() { wx.navigateTo({ url: '/pages/after-sales/index' }) },
   openCoupons() { wx.navigateTo({ url: '/pages/coupons/index' }) },
-  openMessages() { wx.switchTab({ url: '/pages/messages/index' }) }
+  openMessages() { wx.switchTab({ url: '/pages/messages/index' }) },
+  openAddresses() { wx.navigateTo({ url: '/pages/addresses/index' }) }
 })

@@ -15,10 +15,7 @@ Page({
     remark: '',
     order: null as Record<string, any> | null,
     idempotencyKey: '',
-    addressFormOpen: false,
-    addressSaving: false,
-    addressError: '',
-    addressForm: { receiverName: '', receiverPhone: '', region: [] as string[], regionText: '', detailAddress: '', isDefault: true }
+    addressBookOpened: false
   },
 
   onLoad() {
@@ -28,6 +25,13 @@ Page({
       idempotencyKey: checkoutUtils.createIdempotencyKey()
     })
     this.loadPreview()
+  },
+
+  onShow() {
+    if (this.data.addressBookOpened) {
+      this.setData({ addressBookOpened: false })
+      this.loadPreview()
+    }
   },
 
   async loadPreview(memberCouponId?: number) {
@@ -56,44 +60,10 @@ Page({
     this.setData({ selectedAddressId: Number(event.currentTarget.dataset.id || 0), feedback: '' })
   },
 
-  openAddressForm() { this.setData({ addressFormOpen: true, addressError: '', feedback: '' }) },
-  closeAddressForm() { if (!this.data.addressSaving) this.setData({ addressFormOpen: false }) },
-  handleAddressInput(event: WechatMiniprogram.Input) {
-    const field = String(event.currentTarget.dataset.field || '')
-    const value = String(event.detail.value || '')
-    if (field) this.setData({ [`addressForm.${field}`]: field === 'receiverPhone' ? value.replace(/\D/g, '').slice(0, 11) : value, addressError: '' })
+  openAddressForm() {
+    this.setData({ addressBookOpened: true, feedback: '' })
+    wx.navigateTo({ url: '/pages/addresses/index?from=checkout&create=1' })
   },
-  handleRegionChange(event: WechatMiniprogram.PickerChange) {
-    const region = (event.detail.value || []) as string[]
-    this.setData({ 'addressForm.region': region, 'addressForm.regionText': region.join(' / '), addressError: '' })
-  },
-  async saveAddress() {
-    const form = this.data.addressForm
-    if (!form.receiverName.trim()) return this.setData({ addressError: '请填写收货人' })
-    if (!/^1[3-9]\d{9}$/.test(form.receiverPhone)) return this.setData({ addressError: '请输入正确的中国大陆手机号' })
-    if (form.region.length < 3) return this.setData({ addressError: '请选择省市区' })
-    if (!form.detailAddress.trim()) return this.setData({ addressError: '请填写详细地址' })
-    this.setData({ addressSaving: true, addressError: '' })
-    try {
-      const address = await mallApi.addAddress({
-        receiverName: form.receiverName.trim(),
-        receiverPhone: form.receiverPhone,
-        province: form.region[0],
-        city: form.region[1],
-        district: form.region[2],
-        detailAddress: form.detailAddress.trim(),
-        isDefault: form.isDefault ? '1' : '0'
-      })
-      this.setData({ addressFormOpen: false, selectedAddressId: Number(address.addressId || 0) })
-      await this.loadPreview()
-      this.setData({ feedback: '收货地址已添加' })
-    } catch (error) {
-      this.setData({ addressError: error instanceof Error ? error.message : '地址保存失败，请稍后重试' })
-    } finally {
-      this.setData({ addressSaving: false })
-    }
-  },
-
   async chooseCoupon(event: WechatMiniprogram.BaseEvent) {
     if (this.data.order) return
     const couponId = Number(event.currentTarget.dataset.id || 0)
@@ -136,6 +106,5 @@ Page({
   },
 
   goCart() { wx.switchTab({ url: '/pages/cart/index' }) },
-  handleRetry() { this.loadPreview() },
-  noop() {}
+  handleRetry() { this.loadPreview() }
 })

@@ -1,0 +1,46 @@
+.page { min-height: 100vh; padding: 0 16px 36px; background: #fffefa; color: #20202a; }
+.topbar { display: grid; min-height: 52px; grid-template-columns: 42px 1fr 42px; align-items: center; border-bottom: 2px solid #20202a; font-size: 15px; font-weight: 900; text-align: center; }
+.back,.add { width: 34px !important; min-width: 0 !important; height: 34px; margin: 0 !important; border: 2px solid #20202a; border-radius: 7px; padding: 0 !important; background: #fff; font-size: 20px; }
+.add { justify-self: end; background: #ffd84d; }
+.address-list { display: grid; gap: 12px; padding-top: 14px; }
+.address-card { overflow: hidden; border: 2px solid #20202a; border-radius: 8px; background: #fff; box-shadow: 3px 3px 0 rgb(32 32 42 / 12%); }
+.default-card { background: #fff9dc; }
+.address-copy { padding: 15px 13px 13px; }
+.receiver { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 900; }
+.receiver text:nth-child(2) { color: #5f5b62; font-size: 10px; font-weight: 600; }
+.default-tag { border: 1px solid #20202a; border-radius: 99px; padding: 2px 5px; background: #ffd84d; font-size: 8px; }
+.address-text,.postal { display: block; margin-top: 8px; overflow-wrap: anywhere; }
+.address-text { font-size: 11px; line-height: 1.55; }
+.postal { color: #77737d; font-size: 9px; }
+.tools { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid #d6d1ca; }
+.tools.two-tools { grid-template-columns: repeat(2, 1fr); }
+.tools button { min-width: 0; height: 39px; margin: 0; border: 0; border-right: 1px solid #d6d1ca; border-radius: 0; padding: 0; background: #fff; font-size: 10px; font-weight: 800; }
+.tools button:last-child { border-right: 0; }
+.tools .danger { color: #ed5b49; }
+.feedback { display: block; margin-top: 14px; border: 2px solid #20202a; border-radius: 6px; padding: 9px; background: #d6f2eb; font-size: 10px; text-align: center; }
+.empty { display: flex; min-height: 360px; flex-direction: column; align-items: center; justify-content: center; gap: 10px; color: #77737d; font-size: 11px; text-align: center; }
+.empty-title { color: #20202a; font-size: 18px; font-weight: 900; }
+.empty button { height: 40px; margin-top: 4px; border: 2px solid #20202a; border-radius: 6px; padding: 0 18px; background: #ffd84d; font-size: 11px; font-weight: 900; }
+.mask { position: fixed; inset: 0; z-index: 60; display: flex; align-items: flex-end; background: rgb(32 32 42 / 48%); }
+.sheet,.confirm { width: 100%; border: 2px solid #20202a; border-bottom: 0; border-radius: 12px 12px 0 0; padding: 19px 16px calc(20px + env(safe-area-inset-bottom)); background: #fffefa; }
+.sheet { max-height: 83vh; overflow-y: auto; }
+.sheet-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 13px; font-size: 17px; font-weight: 900; }
+.sheet-head button { width: 32px !important; min-width: 32px !important; height: 32px; margin: 0 !important; border: 2px solid #20202a; border-radius: 50%; padding: 0 !important; background: #fff; font-size: 21px; line-height: 27px; }
+.field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+.field { margin-top: 9px; border: 2px solid #20202a; border-radius: 6px; padding: 8px 10px; background: #fff; }
+.field > text { display: block; margin-bottom: 5px; color: #77737d; font-size: 9px; }
+.field input { width: 100%; height: 27px; font-size: 12px; }
+.field textarea { width: 100%; min-height: 47px; font-size: 12px; line-height: 1.5; }
+.region { display: flex; min-height: 27px; align-items: center; justify-content: space-between; font-size: 12px; }
+.optional { font-size: 8px; }
+.default-switch { display: flex; align-items: center; justify-content: space-between; margin-top: 12px; border-block: 1px solid #d6d1ca; padding: 9px 0; font-size: 11px; font-weight: 800; }
+.default-switch switch { transform: scale(.78); transform-origin: right center; }
+.form-error { display: block; margin-top: 10px; color: #ed5b49; font-size: 10px; }
+.save { width: 100%; height: 42px; margin-top: 12px; border: 2px solid #20202a; border-radius: 6px; background: #ed5b49; color: #fff; font-size: 12px; font-weight: 900; }
+.confirm { padding-top: 23px; }
+.confirm-title,.confirm-address { display: block; }
+.confirm-title { font-size: 18px; font-weight: 900; }
+.confirm-address { margin: 10px 0 18px; color: #5f5b62; font-size: 10px; line-height: 1.55; }
+.confirm > view { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+.confirm button { min-width: 0; height: 40px; margin: 0; border: 2px solid #20202a; border-radius: 6px; background: #fff; font-size: 11px; font-weight: 900; }
+.confirm .confirm-danger { background: #ed5b49; color: #fff; }
