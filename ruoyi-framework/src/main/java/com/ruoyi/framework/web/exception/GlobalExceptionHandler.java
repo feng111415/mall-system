@@ -21,6 +21,7 @@ import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.core.text.Convert;
 import com.ruoyi.common.exception.DemoModeException;
 import com.ruoyi.common.exception.ServiceException;
+import com.ruoyi.common.exception.user.UserException;
 import com.ruoyi.common.utils.StringUtils;
 import com.ruoyi.common.utils.html.EscapeUtil;
 
@@ -130,6 +131,13 @@ public class GlobalExceptionHandler
     /**
      * 拦截未知的运行时异常
      */
+    @ExceptionHandler(UserException.class)
+    public AjaxResult handleUserException(UserException e)
+    {
+        log.warn("User input validation failed: {}", e.getMessage());
+        return AjaxResult.error(HttpStatus.BAD_REQUEST, e.getMessage());
+    }
+
     @ExceptionHandler(RuntimeException.class)
     public AjaxResult handleRuntimeException(RuntimeException e, HttpServletRequest request)
     {

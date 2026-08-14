@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.exception.ServiceException;
+import com.ruoyi.common.exception.user.UserException;
 import com.ruoyi.framework.web.exception.GlobalExceptionHandler;
 import com.ruoyi.framework.web.response.HttpStatusResponseBodyAdvice;
 import org.junit.jupiter.api.Test;
@@ -34,5 +35,25 @@ class HttpStatusResponseContractTest
 
         assertEquals(400, handler.handleServiceException(new ServiceException("参数无效"), null).get("code"));
         assertEquals(404, handler.handleServiceException(new ServiceException("订单不存在", 404), null).get("code"));
+    }
+
+    @Test
+    void userInputErrorsReturnBadRequestInsteadOfInternalServerError()
+    {
+        GlobalExceptionHandler handler = new GlobalExceptionHandler();
+        UserException error = new UserException("ignored", null)
+        {
+            private static final long serialVersionUID = 1L;
+
+            @Override
+            public String getMessage()
+            {
+                return "验证码已失效";
+            }
+        };
+
+        AjaxResult result = handler.handleUserException(error);
+        assertEquals(400, result.get("code"));
+        assertEquals("验证码已失效", result.get("msg"));
     }
 }
