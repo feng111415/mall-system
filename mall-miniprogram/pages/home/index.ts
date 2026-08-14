@@ -1,6 +1,7 @@
 const mallApi = require('../../services/mallApi')
 const env = require('../../config/env')
 const homeUtils = require('../../utils/home')
+const profileUtils = require('../../utils/profile')
 
 Page({
   data: {
@@ -96,9 +97,7 @@ Page({
   },
 
   localAvatar(avatar?: string) {
-    if (!avatar || !avatar.startsWith('/assets/avatars/')) return ''
-    const filename = avatar.split('/').pop() || ''
-    return /^avatar-(berry|coral|graphite|mint|sky|sunny)\.svg$/.test(filename) ? `/assets/avatars/${filename}` : ''
+    return profileUtils.resolveAvatarUrl(avatar, env.getApiBaseUrl())
   },
 
   timeGreeting() {

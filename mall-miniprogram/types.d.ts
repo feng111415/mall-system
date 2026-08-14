@@ -5,7 +5,15 @@ interface MallMemberProfile {
   maskedPhone: string
   nickname: string
   avatar?: string
+  nicknameChangesRemaining?: number
+  nicknameChangeWindowDays?: number
   lastLoginTime?: string
+}
+
+interface MallAvatarPreset {
+  code: string
+  name: string
+  url: string
 }
 
 interface MallHomeProduct {

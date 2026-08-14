@@ -17,6 +17,14 @@ interface RequestOptions {
   timeout?: number
 }
 
+interface UploadOptions {
+  url: string
+  filePath: string
+  name?: string
+  formData?: WechatMiniprogram.IAnyObject
+  timeout?: number
+}
+
 class MallRequestError extends Error {
   code?: number | string
   statusCode?: number
@@ -71,4 +79,58 @@ function request<T = unknown>(options: RequestOptions): Promise<T> {
   })
 }
 
-module.exports = { request }
+function upload<T = unknown>(options: UploadOptions): Promise<T> {
+  let apiBaseUrl: string
+  try {
+    apiBaseUrl = env.getApiBaseUrl()
+  } catch (error) {
+    return Promise.reject(error)
+  }
+  const token = env.getToken()
+  const header: Record<string, string> = {
+    'X-Mall-Device-Id': env.getDeviceId()
+  }
+  if (token) header['X-Mall-Authorization'] = `Bearer ${token}`
+
+  return new Promise<T>((resolve, reject) => {
+    wx.uploadFile({
+      url: `${apiBaseUrl}${options.url}`,
+      filePath: options.filePath,
+      name: options.name || 'file',
+      formData: options.formData,
+      header,
+      timeout: options.timeout || 30000,
+      success(response) {
+        let body: ApiEnvelope<T> | undefined
+        try {
+          body = JSON.parse(response.data) as ApiEnvelope<T>
+        } catch (_) {
+          body = undefined
+        }
+        if (!body) {
+          const error = new MallRequestError('上传响应格式异常，请稍后重试')
+          error.statusCode = response.statusCode
+          reject(error)
+          return
+        }
+        if (response.statusCode >= 200 && response.statusCode < 300 && (body.code === undefined || body.code === 200)) {
+          resolve(body.data !== undefined ? body.data : body as T)
+          return
+        }
+        if (response.statusCode === 401 || body?.code === 401) env.clearToken()
+        const error = new MallRequestError(body?.msg || body?.message || `上传失败（HTTP ${response.statusCode || 0}）`)
+        error.code = body?.code
+        error.statusCode = response.statusCode
+        error.body = body
+        reject(error)
+      },
+      fail(error) {
+        const wrapped = new MallRequestError(error.errMsg || '图片上传失败，请稍后重试')
+        wrapped.code = 'NETWORK_ERROR'
+        reject(wrapped)
+      }
+    })
+  })
+}
+
+module.exports = { request, upload }

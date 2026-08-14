@@ -1,0 +1,34 @@
+<view class="page">
+  <view style="height: {{statusBarHeight}}px;"></view>
+  <view class="topbar"><button class="back" bindtap="goBack">←</button><text>个人资料</text><view></view></view>
+
+  <state-view loading="{{loading}}" error="{{error}}" bind:retry="handleRetry" />
+  <block wx:if="{{!loading && !error && member}}">
+    <view class="profile-hero">
+      <image wx:if="{{avatarSrc}}" class="current-avatar" src="{{avatarSrc}}" mode="aspectFill" />
+      <view wx:else class="current-avatar avatar-fallback">{{avatarLetter}}</view>
+      <view class="hero-copy"><text class="hero-name">{{member.nickname || '拾光会员'}}</text><text class="hero-phone">{{member.maskedPhone}}</text></view>
+      <button class="album-button" loading="{{savingAvatar}}" disabled="{{savingAvatar}}" bindtap="chooseAvatarFromAlbum"><image src="/assets/icons/plus.svg" />从相册选择</button>
+    </view>
+
+    <view class="section">
+      <view class="section-head"><view><text class="section-kicker">AVATAR</text><text class="section-title">预设头像</text></view><text class="section-meta">{{presets.length}} 款</text></view>
+      <view class="preset-grid">
+        <button wx:for="{{presets}}" wx:key="code" class="preset {{selectedPresetCode === item.code ? 'selected' : ''}}" data-code="{{item.code}}" bindtap="selectPreset">
+          <image src="{{item.avatarSrc}}" mode="aspectFill" />
+          <text>{{item.name}}</text>
+        </button>
+      </view>
+      <button class="secondary-button" loading="{{savingAvatar}}" disabled="{{savingAvatar || !selectedPresetCode}}" bindtap="savePresetAvatar">使用预设头像</button>
+    </view>
+
+    <view class="section nickname-section">
+      <view class="section-head"><view><text class="section-kicker">PROFILE</text><text class="section-title">昵称</text></view><text class="section-meta">{{nickname.length}} / 20</text></view>
+      <view class="nickname-field"><input value="{{nickname}}" maxlength="20" bindinput="handleNicknameInput" placeholder="请输入昵称" /></view>
+      <view class="quota"><text>30 天内还可修改</text><text class="quota-number">{{nicknameChangesRemaining}}</text><text>次</text></view>
+      <button class="primary-button" loading="{{savingNickname}}" disabled="{{savingNickname || nicknameChangesRemaining <= 0}}" bindtap="saveNickname">保存昵称</button>
+    </view>
+
+    <text wx:if="{{feedback}}" class="feedback {{feedbackSuccess ? 'success' : ''}}">{{feedback}}</text>
+  </block>
+</view>

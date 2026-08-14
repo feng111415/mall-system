@@ -2,6 +2,7 @@ const mallApi = require('../../services/mallApi')
 const env = require('../../config/env')
 const auth = require('../../utils/auth')
 const memberCenter = require('../../utils/memberCenter')
+const profileUtils = require('../../utils/profile')
 
 interface SmsChallenge {
   challengeId: string
@@ -24,6 +25,7 @@ Page({
     seconds: 0,
     member: null as MallMemberProfile | null,
     avatarLetter: '拾',
+    avatarSrc: '',
     challengeOpen: false,
     challengeLoading: false,
     challengeVerifying: false,
@@ -53,10 +55,19 @@ Page({
   onShow() {
     if (this.getTabBar) this.getTabBar().setData({ selected: 4 })
     if (env.getToken()) {
+      const member = getApp<IAppOption>().globalData.member
+      if (member) {
+        this.setData({
+          loggedIn: true,
+          member,
+          avatarLetter: (member.nickname || '拾').slice(0, 1),
+          avatarSrc: profileUtils.resolveAvatarUrl(member.avatar, env.getApiBaseUrl())
+        })
+      }
       this.loadCouponCount()
       this.loadActivitySummary()
     } else {
-      this.setData({ couponCount: 0, favoriteCount: 0, historyCount: 0 })
+      this.setData({ loggedIn: false, member: null, avatarSrc: '', couponCount: 0, favoriteCount: 0, historyCount: 0 })
     }
     const cooldown = auth.readSmsCooldown()
     if (cooldown && cooldown.expiresAt > Date.now()) {
@@ -184,6 +195,7 @@ Page({
         loggedIn: true,
         member: result.member,
         avatarLetter: (result.member.nickname || '拾').slice(0, 1),
+        avatarSrc: profileUtils.resolveAvatarUrl(result.member.avatar, env.getApiBaseUrl()),
         code: '',
         error: result.newMember ? '账号已创建并登录' : '登录成功',
         feedbackSuccess: true
@@ -203,12 +215,17 @@ Page({
     this.setData({ loading: true, error: '' })
     try {
       const member = await mallApi.getProfile()
-      this.setData({ loggedIn: true, member, avatarLetter: (member.nickname || '拾').slice(0, 1) })
+      this.setData({
+        loggedIn: true,
+        member,
+        avatarLetter: (member.nickname || '拾').slice(0, 1),
+        avatarSrc: profileUtils.resolveAvatarUrl(member.avatar, env.getApiBaseUrl())
+      })
       this.loadCouponCount()
       this.loadActivitySummary()
     } catch (error) {
       env.clearToken()
-      this.setData({ loggedIn: false, member: null, couponCount: 0, favoriteCount: 0, historyCount: 0, error: error instanceof Error ? error.message : '登录状态已失效，请重新登录', feedbackSuccess: false })
+      this.setData({ loggedIn: false, member: null, avatarSrc: '', couponCount: 0, favoriteCount: 0, historyCount: 0, error: error instanceof Error ? error.message : '登录状态已失效，请重新登录', feedbackSuccess: false })
     } finally {
       this.setData({ loading: false })
     }
@@ -232,7 +249,7 @@ Page({
     env.clearToken()
     const app = getApp<IAppOption>()
     app.globalData.member = null
-    this.setData({ loggedIn: false, member: null, avatarLetter: '拾', code: '', couponCount: 0, favoriteCount: 0, historyCount: 0, error: '已退出登录', feedbackSuccess: true })
+    this.setData({ loggedIn: false, member: null, avatarLetter: '拾', avatarSrc: '', code: '', couponCount: 0, favoriteCount: 0, historyCount: 0, error: '已退出登录', feedbackSuccess: true })
     this.setData({ loading: false })
   },
   openOrders() { wx.navigateTo({ url: '/pages/orders/index' }) },
@@ -240,6 +257,7 @@ Page({
   openCoupons() { wx.navigateTo({ url: '/pages/coupons/index' }) },
   openMessages() { wx.switchTab({ url: '/pages/messages/index' }) },
   openAddresses() { wx.navigateTo({ url: '/pages/addresses/index' }) },
+  openProfileEditor() { wx.navigateTo({ url: '/pages/profile-edit/index' }) },
   openActivity(event: WechatMiniprogram.BaseEvent) {
     const tab = String(event.currentTarget.dataset.tab || 'favorites')
     wx.navigateTo({ url: `/pages/activity/index?tab=${tab}` })

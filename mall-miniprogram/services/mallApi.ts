@@ -7,6 +7,11 @@ type RequestOptions = {
 type MallRequest = <T = unknown>(options: RequestOptions) => Promise<T>
 
 const request = require('../utils/request').request as MallRequest
+const upload = require('../utils/request').upload as <T = unknown>(options: {
+  url: string
+  filePath: string
+  name?: string
+}) => Promise<T>
 const env = require('../config/env')
 
 interface SmsCodeResponse {
@@ -164,6 +169,30 @@ const mallApi = {
   },
   getProfile() {
     return request<MallMemberProfile>({ url: '/api/mall/member/profile' })
+  },
+  getAvatarPresets() {
+    return request<MallAvatarPreset[]>({ url: '/api/mall/member/profile/avatar-presets' })
+  },
+  updateNickname(nickname: string) {
+    return request<MallMemberProfile>({
+      url: '/api/mall/member/profile/nickname',
+      method: 'PUT',
+      data: { nickname }
+    })
+  },
+  selectPresetAvatar(presetCode: string) {
+    return request<MallMemberProfile>({
+      url: '/api/mall/member/profile/avatar/preset',
+      method: 'PUT',
+      data: { presetCode }
+    })
+  },
+  uploadAvatar(filePath: string) {
+    return upload<MallMemberProfile>({
+      url: '/api/mall/member/profile/avatar/upload',
+      filePath,
+      name: 'file'
+    })
   },
   getOrders(params?: Record<string, string | number>) {
     return request<Array<Record<string, unknown>>>({ url: '/api/mall/orders', data: params })
