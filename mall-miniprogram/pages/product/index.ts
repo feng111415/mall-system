@@ -14,6 +14,8 @@ Page({
     selectedSkuId: 0,
     quantity: 1,
     busy: false,
+    favoriteBusy: false,
+    favorited: false,
     feedback: '',
     feedbackSuccess: false
   },
@@ -49,12 +51,49 @@ Page({
         selectedSkuId: product.selectedSkuId,
         selectedImage: product.displayImage
       })
+      this.loadMemberActivity()
       wx.setNavigationBarTitle({ title: product.productName || '商品详情' })
     } catch (error) {
       this.setData({ error: error instanceof Error ? error.message : '商品详情加载失败，请稍后重试' })
     } finally {
       this.setData({ loading: false })
     }
+  },
+
+  async loadMemberActivity() {
+    if (!env.getToken() || !this.data.spuId) {
+      this.setData({ favorited: false, favoriteBusy: false })
+      return
+    }
+    const spuId = this.data.spuId
+    this.setData({ favoriteBusy: true })
+    const [stateResult] = await Promise.allSettled([
+      mallApi.getFavoriteState(spuId),
+      mallApi.recordBrowseHistory(spuId)
+    ])
+    if (this.data.spuId === spuId) {
+      this.setData({
+        favorited: stateResult.status === 'fulfilled' && Boolean(stateResult.value?.favorited),
+        favoriteBusy: false
+      })
+    }
+  },
+
+  async toggleFavorite() {
+    if (!env.getToken()) {
+      wx.switchTab({ url: '/pages/profile/index' })
+      return
+    }
+    if (this.data.favoriteBusy || !this.data.spuId) return
+    this.setData({ favoriteBusy: true, feedback: '', feedbackSuccess: false })
+    try {
+      if (this.data.favorited) await mallApi.removeFavorite(this.data.spuId)
+      else await mallApi.addFavorite(this.data.spuId)
+      const favorited = !this.data.favorited
+      this.setData({ favorited, feedback: favorited ? '已加入收藏' : '已取消收藏', feedbackSuccess: true })
+    } catch (error) {
+      this.setData({ feedback: error instanceof Error ? error.message : '收藏操作失败，请稍后重试', feedbackSuccess: false })
+    } finally { this.setData({ favoriteBusy: false }) }
   },
 
   selectSku(event: WechatMiniprogram.BaseEvent) {

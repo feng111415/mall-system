@@ -1,0 +1,31 @@
+.page { min-height: 100vh; padding: 0 16px 36px; background: #fffefa; color: #20202a; }
+.topbar { display: grid; min-height: 52px; grid-template-columns: 42px 1fr 42px; align-items: center; border-bottom: 2px solid #20202a; font-size: 15px; font-weight: 900; text-align: center; }
+.back { width: 34px !important; min-width: 0 !important; height: 34px; margin: 0 !important; border: 2px solid #20202a; border-radius: 7px; padding: 0 !important; background: #fff; font-size: 20px; }
+.tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 14px 0; }
+.tabs button { min-width: 0; height: 40px; margin: 0; border: 2px solid #20202a; border-radius: 6px; background: #fff; font-size: 11px; font-weight: 900; }
+.tabs button.active { background: #ffd84d; box-shadow: 2px 2px 0 #20202a; }
+.toolbar { display: grid; grid-template-columns: auto 1fr auto auto; align-items: center; gap: 7px; margin-bottom: 12px; border-block: 1px solid #d6d1ca; padding: 8px 0; font-size: 9px; }
+.toolbar button { min-width: 0; height: 31px; margin: 0; border: 1px solid #20202a; border-radius: 5px; padding: 0 8px; background: #fff; font-size: 9px; font-weight: 800; }
+.toolbar .delete-selected,.toolbar .clear { color: #ed5b49; }
+.product-list { display: grid; gap: 11px; }
+.product-card { position: relative; overflow: hidden; border: 2px solid #20202a; border-radius: 8px; background: #fff; box-shadow: 3px 3px 0 rgb(32 32 42 / 12%); }
+.product-card.selected { outline: 3px solid #ffd84d; outline-offset: 1px; }
+.product-card.invalid { opacity: .68; }
+.product-main { display: grid; min-height: 122px; grid-template-columns: 112px minmax(0, 1fr); }
+.image-wrap { position: relative; overflow: hidden; border-right: 2px solid #20202a; background: #eeeae4; }
+.image-wrap image { width: 100%; height: 100%; min-height: 122px; }
+.image-wrap > text { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgb(32 32 42 / 58%); color: #fff; font-size: 12px; font-weight: 900; }
+.copy { display: flex; min-width: 0; flex-direction: column; padding: 12px 48px 11px 12px; }
+.meta { color: #ed5b49; font-size: 9px; font-weight: 800; }
+.name { margin-top: 5px; overflow: hidden; font-size: 14px; font-weight: 900; text-overflow: ellipsis; white-space: nowrap; }
+.subtitle { display: -webkit-box; overflow: hidden; margin-top: 5px; color: #77737d; font-size: 9px; line-height: 1.4; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.price { margin-top: auto; padding-top: 7px; font-size: 13px; font-weight: 900; }
+.remove { position: absolute; right: 8px; bottom: 9px; width: 58px !important; min-width: 0 !important; height: 29px; margin: 0 !important; border: 1px solid #20202a; border-radius: 5px; padding: 0 !important; background: #fff; color: #ed5b49; font-size: 8px; font-weight: 900; }
+.select { position: absolute; z-index: 2; top: 8px; left: 8px; width: 28px !important; min-width: 28px !important; height: 28px; margin: 0 !important; border: 2px solid #20202a; border-radius: 6px; padding: 0 !important; background: #fff; font-size: 15px; font-weight: 900; }
+.history-list { display: grid; gap: 18px; }.date-title { display: block; margin-bottom: 8px; font-size: 15px; font-weight: 900; }
+.feedback { display: block; margin-bottom: 11px; border: 2px solid #20202a; border-radius: 6px; padding: 9px; background: #d6f2eb; font-size: 10px; text-align: center; }
+.empty { display: flex; min-height: 340px; flex-direction: column; align-items: center; justify-content: center; gap: 10px; color: #77737d; font-size: 11px; text-align: center; }
+.empty-title { color: #20202a; font-size: 18px; font-weight: 900; }.empty button { height: 40px; margin-top: 4px; border: 2px solid #20202a; border-radius: 6px; padding: 0 18px; background: #ffd84d; font-size: 11px; font-weight: 900; }
+.mask { position: fixed; inset: 0; z-index: 60; display: flex; align-items: flex-end; background: rgb(32 32 42 / 48%); }
+.confirm { width: 100%; border: 2px solid #20202a; border-bottom: 0; border-radius: 12px 12px 0 0; padding: 23px 16px calc(20px + env(safe-area-inset-bottom)); background: #fffefa; }
+.confirm-title,.confirm-note,.confirm-error { display: block; }.confirm-title { font-size: 18px; font-weight: 900; }.confirm-note { margin: 10px 0 18px; color: #77737d; font-size: 10px; }.confirm-error { margin: -8px 0 14px; color: #ed5b49; font-size: 10px; }.confirm > view { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }.confirm button { min-width: 0; height: 40px; margin: 0; border: 2px solid #20202a; border-radius: 6px; background: #fff; font-size: 11px; font-weight: 900; }.confirm .danger { background: #ed5b49; color: #fff; }

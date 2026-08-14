@@ -208,6 +208,33 @@ const mallApi = {
   getProductActivitySummary() {
     return request<Record<string, number>>({ url: '/api/mall/member/product-activity/summary' })
   },
+  getFavorites() {
+    return request<Array<Record<string, any>>>({ url: '/api/mall/member/product-activity/favorites' })
+  },
+  getFavoriteState(spuId: number) {
+    return request<{ favorited: boolean }>({ url: `/api/mall/member/product-activity/favorites/${spuId}/state` })
+  },
+  addFavorite(spuId: number) {
+    return request<Record<string, any>>({ url: `/api/mall/member/product-activity/favorites/${spuId}`, method: 'POST' })
+  },
+  removeFavorite(spuId: number) {
+    return request<Record<string, any>>({ url: `/api/mall/member/product-activity/favorites/${spuId}`, method: 'DELETE' })
+  },
+  getBrowseHistory() {
+    return request<Array<Record<string, any>>>({ url: '/api/mall/member/product-activity/history' })
+  },
+  recordBrowseHistory(spuId: number) {
+    return request<Record<string, any>>({ url: `/api/mall/member/product-activity/history/${spuId}`, method: 'POST' })
+  },
+  removeBrowseHistory(spuId: number) {
+    return request<Record<string, any>>({ url: `/api/mall/member/product-activity/history/${spuId}`, method: 'DELETE' })
+  },
+  removeBrowseHistoryBatch(spuIds: number[]) {
+    return request<number>({ url: '/api/mall/member/product-activity/history/batch-delete', method: 'POST', data: { spuIds } })
+  },
+  clearBrowseHistory() {
+    return request<number>({ url: '/api/mall/member/product-activity/history', method: 'DELETE' })
+  },
   sendSmsCode(phone: string, challengeTicket = '') {
     return request<SmsCodeResponse>({
       url: '/api/mall/member/sms-code',

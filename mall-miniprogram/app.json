@@ -6,6 +6,7 @@
     "pages/messages/index",
     "pages/coupons/index",
     "pages/addresses/index",
+    "pages/activity/index",
     "pages/profile/index",
     "pages/orders/index",
     "pages/product/index",

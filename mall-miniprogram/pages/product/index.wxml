@@ -18,7 +18,7 @@
 
     <view class="product-copy">
       <text class="kicker">{{product.categoryBrand || '日常好物'}}</text>
-      <text class="product-name">{{product.productName}}</text>
+      <view class="product-title-row"><text class="product-name">{{product.productName}}</text><button class="favorite {{favorited ? 'active' : ''}}" loading="{{favoriteBusy}}" disabled="{{favoriteBusy}}" bindtap="toggleFavorite"><image src="/assets/icons/heart.svg" /><text>{{favorited ? '已收藏' : '收藏'}}</text></button></view>
       <text class="subtitle">{{product.subtitle}}</text>
       <view class="price-row"><text class="price">¥{{product.displayPrice}}</text><text wx:if="{{product.displayMarketPrice}}" class="market-price">¥{{product.displayMarketPrice}}</text><text class="sales">{{product.salesText}}</text></view>
     </view>

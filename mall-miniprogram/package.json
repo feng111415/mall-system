@@ -6,7 +6,7 @@
   "scripts": {
     "validate": "node scripts/validate.js",
     "typecheck": "tsc --noEmit",
-    "test": "node scripts/request.test.js && node scripts/home.test.js && node scripts/product.test.js && node scripts/checkout.test.js && node scripts/order.test.js && node scripts/after-sale.test.js && node scripts/member-center.test.js && node scripts/address.test.js && node scripts/validate.js && npm run typecheck"
+    "test": "node scripts/request.test.js && node scripts/home.test.js && node scripts/product.test.js && node scripts/checkout.test.js && node scripts/order.test.js && node scripts/after-sale.test.js && node scripts/member-center.test.js && node scripts/address.test.js && node scripts/activity.test.js && node scripts/validate.js && npm run typecheck"
   },
   "devDependencies": {
     "lucide-static": "0.468.0",
