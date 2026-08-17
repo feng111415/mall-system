@@ -3,7 +3,7 @@
   <view class="header"><view><text class="kicker">MEMBER SPACE</text><text class="title">我的</text></view><image class="header-icon" src="/assets/icons/circle-user-round.svg" /></view>
 
   <block wx:if="{{!loggedIn}}">
-    <view class="login-card">
+    <view class="login-card login-card-compact">
       <view class="login-heading"><text class="login-title">欢迎回来</text><text class="login-subtitle">用手机号登录，继续你的购物清单</text></view>
       <view class="field"><text class="field-label">手机号</text><input type="number" maxlength="11" value="{{phone}}" bindinput="handlePhoneInput" placeholder="请输入手机号" /></view>
       <view class="field code-field"><text class="field-label">短信验证码</text><input type="number" maxlength="6" value="{{code}}" bindinput="handleCodeInput" placeholder="6 位验证码" /><button class="code-button" disabled="{{loading || seconds > 0}}" bindtap="handleSendCode">{{seconds ? seconds + 's 后重发' : (loading ? '发送中' : '获取验证码')}}</button></view>

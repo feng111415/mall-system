@@ -19,13 +19,7 @@ Page({
     recommendationTitle: '猜你喜欢',
     products: [] as MallHomeProduct[],
     orderSummary: { pendingPayment: 0, pendingShipment: 0, pendingReceipt: 0, pendingReview: 0 },
-    activitySummary: { favoriteCount: 0, historyCount: 0 },
-    services: [
-      { title: '优惠券', subtitle: '结算自动匹配', icon: '/assets/icons/ticket-percent.svg', color: 'yellow' },
-      { title: '地址簿', subtitle: '管理收货地址', icon: '/assets/icons/map-pin.svg', color: 'cyan' },
-      { title: '收藏足迹', subtitle: '继续看心动商品', icon: '/assets/icons/heart.svg', color: 'coral' },
-      { title: '售后服务', subtitle: '查看申请进度', icon: '/assets/icons/headset.svg', color: 'lilac' }
-    ]
+    activitySummary: { favoriteCount: 0, historyCount: 0 }
   },
 
   onLoad() {
@@ -122,10 +116,15 @@ Page({
     wx.navigateTo({ url: `/pages/orders/index${status ? `?status=${status}` : ''}` })
   },
 
-  openService(event: WechatMiniprogram.BaseEvent) {
+  openMemberPage(url: string) {
     if (!this.data.loggedIn) return this.openLogin()
-    wx.showToast({ title: `${event.currentTarget.dataset.title}将在对应模块开放`, icon: 'none' })
+    wx.navigateTo({ url })
   },
+
+  openCoupons() { this.openMemberPage('/pages/coupons/index') },
+  openAddresses() { this.openMemberPage('/pages/addresses/index') },
+  openActivity() { this.openMemberPage('/pages/activity/index?tab=favorites') },
+  openAfterSales() { this.openMemberPage('/pages/after-sales/index') },
 
   openCatalog() {
     wx.switchTab({ url: '/pages/catalog/index' })

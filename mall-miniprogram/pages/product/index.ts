@@ -27,6 +27,12 @@ Page({
     this.loadProduct()
   },
 
+  onUnload() {
+    if (this.feedbackTimer) clearTimeout(this.feedbackTimer)
+  },
+
+  feedbackTimer: null as ReturnType<typeof setTimeout> | null,
+
   async loadProduct() {
     if (!this.data.spuId) {
       this.setData({ loading: false, error: '商品参数无效，请返回重新选择' })
@@ -85,14 +91,16 @@ Page({
       return
     }
     if (this.data.favoriteBusy || !this.data.spuId) return
-    this.setData({ favoriteBusy: true, feedback: '', feedbackSuccess: false })
+    this.clearFeedback()
+    this.setData({ favoriteBusy: true })
     try {
       if (this.data.favorited) await mallApi.removeFavorite(this.data.spuId)
       else await mallApi.addFavorite(this.data.spuId)
       const favorited = !this.data.favorited
-      this.setData({ favorited, feedback: favorited ? '已加入收藏' : '已取消收藏', feedbackSuccess: true })
+      this.setData({ favorited })
+      this.setTransientFeedback(favorited ? '已加入收藏' : '已取消收藏', true)
     } catch (error) {
-      this.setData({ feedback: error instanceof Error ? error.message : '收藏操作失败，请稍后重试', feedbackSuccess: false })
+      this.setTransientFeedback(error instanceof Error ? error.message : '收藏操作失败，请稍后重试', false)
     } finally { this.setData({ favoriteBusy: false }) }
   },
 
@@ -129,12 +137,13 @@ Page({
       wx.switchTab({ url: '/pages/profile/index' })
       return
     }
-    this.setData({ busy: true, feedback: '', feedbackSuccess: false })
+    this.clearFeedback()
+    this.setData({ busy: true })
     try {
       await mallApi.addCartItem(Number(sku.skuId), this.data.quantity)
-      this.setData({ feedback: `${sku.skuName} × ${this.data.quantity} 已加入购物车`, feedbackSuccess: true })
+      this.setTransientFeedback(`${sku.skuName} × ${this.data.quantity} 已加入购物车`, true)
     } catch (error) {
-      this.setData({ feedback: error instanceof Error ? error.message : '加入购物车失败，请稍后重试', feedbackSuccess: false })
+      this.setTransientFeedback(error instanceof Error ? error.message : '加入购物车失败，请稍后重试', false)
     } finally {
       this.setData({ busy: false })
     }
@@ -152,6 +161,21 @@ Page({
 
   handleRetry() {
     this.loadProduct()
+  },
+
+  clearFeedback() {
+    if (this.feedbackTimer) clearTimeout(this.feedbackTimer)
+    this.feedbackTimer = null
+    this.setData({ feedback: '', feedbackSuccess: false })
+  },
+
+  setTransientFeedback(message: string, success: boolean) {
+    if (this.feedbackTimer) clearTimeout(this.feedbackTimer)
+    this.setData({ feedback: message, feedbackSuccess: success })
+    this.feedbackTimer = setTimeout(() => {
+      this.feedbackTimer = null
+      this.setData({ feedback: '' })
+    }, 2500)
   },
 
   previewImage() {

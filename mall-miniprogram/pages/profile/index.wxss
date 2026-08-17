@@ -36,6 +36,29 @@
 .login-card {
   padding: 20px;
 }
+.login-card-compact {
+  width: min(100%, 340px);
+  max-width: 340px;
+  margin: 0 auto;
+  padding: 14px;
+}
+.login-card-compact .login-heading {
+  margin-bottom: 12px;
+}
+.login-card-compact .field {
+  min-height: 58px;
+  margin-top: 9px;
+  padding: 6px 10px;
+}
+.login-card-compact .field-label {
+  margin-bottom: 2px;
+}
+.login-card-compact .agreement {
+  margin: 10px 0;
+}
+.login-card-compact .primary-button {
+  height: 42px;
+}
 .login-heading {
   margin-bottom: 20px;
 }

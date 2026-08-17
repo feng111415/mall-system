@@ -27,6 +27,7 @@
       <view class="section-head"><text>选择规格</text><text>{{product.selectedSku.skuName || '请选择'}}</text></view>
       <view class="sku-list"><button wx:for="{{product.skus}}" wx:key="skuId" class="sku {{selectedSkuId === item.skuId ? 'active' : ''}} {{item.soldOut ? 'soldout' : ''}}" disabled="{{!item.selectable || item.soldOut}}" data-id="{{item.skuId}}" bindtap="selectSku"><text>{{item.skuName}}</text><text wx:if="{{item.soldOut}}">售罄</text></button></view>
       <view class="stock {{product.selectedSku.stockTone}}"><text class="stock-dot"></text><text>{{product.selectedSku.stockLabel}}</text></view>
+      <view class="purchase-quantity"><text>购买数量</text><view class="quantity"><button data-delta="-1" bindtap="changeQuantity" disabled="{{busy || product.selectedSku.soldOut || quantity <= 1}}">−</button><text>{{quantity}}</text><button data-delta="1" bindtap="changeQuantity" disabled="{{busy || product.selectedSku.soldOut || quantity >= product.selectedSku.availableStock}}">＋</button></view></view>
     </view>
 
     <view class="service-strip"><text>7 天无理由退换</text><text>48 小时内发出</text><text>下单时复核库存</text></view>
@@ -45,6 +46,6 @@
     </view>
 
     <view wx:if="{{feedback}}" class="feedback {{feedbackSuccess ? 'success' : 'error'}}">{{feedback}}</view>
-    <view class="bottom-bar"><button bindtap="openCatalog">继续逛逛</button><view class="buy-group"><view class="quantity"><button data-delta="-1" bindtap="changeQuantity" disabled="{{busy || product.selectedSku.soldOut || quantity <= 1}}">−</button><text>{{quantity}}</text><button data-delta="1" bindtap="changeQuantity" disabled="{{busy || product.selectedSku.soldOut || quantity >= product.selectedSku.availableStock}}">＋</button></view><button class="primary" bindtap="addToCart" disabled="{{busy || product.selectedSku.soldOut}}">{{busy ? '正在加入...' : product.selectedSku.soldOut ? '暂时售罄' : '加入购物车'}}</button></view></view>
+    <view class="bottom-bar"><button bindtap="openCatalog">继续逛逛</button><button class="primary" bindtap="addToCart" disabled="{{busy || product.selectedSku.soldOut}}">{{busy ? '正在加入...' : product.selectedSku.soldOut ? '暂时售罄' : '加入购物车'}}</button></view>
   </block>
 </view>
