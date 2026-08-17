@@ -47,7 +47,7 @@ export default {
     statusLabel (value) { return ({ PENDING: '待审核', PUBLISHED: '已公开', REJECTED: '已驳回' })[value] || value || '-' },
     statusType (value) { return ({ PUBLISHED: 'success', REJECTED: 'info' })[value] || 'warning' },
     stars (value) { return '★'.repeat(Number(value || 0)) + '☆'.repeat(Math.max(0, 5 - Number(value || 0))) },
-    imageUrl (value) { if (!value) return '/assets/chair.jpg'; if (/^https?:\/\//.test(value)) return value; return `${process.env.VUE_APP_BASE_API || ''}${value}` }
+    imageUrl (value) { if (!value) return '/assets/chair.jpg'; if (/^https?:\/\//.test(value) || value.startsWith('/assets/')) return value; return `${process.env.VUE_APP_BASE_API || ''}${value}` }
   }
 }
 </script>

@@ -22,6 +22,7 @@ Component({
     updateSelected() {
       const pages = getCurrentPages()
       const current = pages[pages.length - 1]
+      if (!current?.route) return
       const selected = this.data.list.findIndex(item => `/${current.route}` === item.pagePath)
       this.setData({ selected: selected < 0 ? 0 : selected })
     },
