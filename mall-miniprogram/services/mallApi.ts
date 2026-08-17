@@ -194,6 +194,28 @@ const mallApi = {
       name: 'file'
     })
   },
+  getMemberSessions() {
+    return request<MallMemberSessionOverview>({ url: '/api/mall/member/profile/sessions' })
+  },
+  revokeMemberSession(sessionId: number) {
+    return request<MallMemberSessionOverview>({
+      url: `/api/mall/member/profile/sessions/${sessionId}`,
+      method: 'DELETE'
+    })
+  },
+  sendPrimaryDeviceCode() {
+    return request<SmsCodeResponse>({
+      url: '/api/mall/member/profile/sessions/primary-mobile/code',
+      method: 'POST'
+    })
+  },
+  replacePrimaryDevice(code: string) {
+    return request<MallMemberSessionOverview>({
+      url: '/api/mall/member/profile/sessions/primary-mobile',
+      method: 'PUT',
+      data: { code }
+    })
+  },
   getOrders(params?: Record<string, string | number>) {
     return request<Array<Record<string, unknown>>>({ url: '/api/mall/orders', data: params })
   },

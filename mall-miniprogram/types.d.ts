@@ -16,6 +16,24 @@ interface MallAvatarPreset {
   url: string
 }
 
+interface MallMemberSession {
+  sessionId: number
+  deviceType: 'MOBILE' | 'DESKTOP'
+  deviceName: string
+  primaryMobile: boolean
+  current: boolean
+  loginIp?: string
+  loginTime?: string
+  lastActiveTime?: string
+  expireTime?: string
+}
+
+interface MallMemberSessionOverview {
+  sessions: MallMemberSession[]
+  primaryChangesRemaining: number
+  primaryChangeWindowDays: number
+}
+
 interface MallHomeProduct {
   spuId: number
   productName: string

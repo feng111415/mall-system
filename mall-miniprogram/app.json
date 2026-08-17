@@ -9,6 +9,7 @@
     "pages/activity/index",
     "pages/profile/index",
     "pages/profile-edit/index",
+    "pages/security/index",
     "pages/orders/index",
     "pages/product/index",
     "pages/checkout/index",

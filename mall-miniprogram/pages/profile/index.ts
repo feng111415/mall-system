@@ -257,6 +257,7 @@ Page({
   openCoupons() { wx.navigateTo({ url: '/pages/coupons/index' }) },
   openMessages() { wx.switchTab({ url: '/pages/messages/index' }) },
   openAddresses() { wx.navigateTo({ url: '/pages/addresses/index' }) },
+  openSecurity() { wx.navigateTo({ url: '/pages/security/index' }) },
   openProfileEditor() { wx.navigateTo({ url: '/pages/profile-edit/index' }) },
   openActivity(event: WechatMiniprogram.BaseEvent) {
     const tab = String(event.currentTarget.dataset.tab || 'favorites')
