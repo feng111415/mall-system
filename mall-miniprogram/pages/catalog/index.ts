@@ -8,6 +8,8 @@ Page({
     error: '',
     keyword: '',
     selectedCategoryId: 0,
+    selectedCategoryName: '全部',
+    categoryOpen: false,
     categories: [] as Array<Record<string, any>>,
     products: [] as Array<Record<string, any>>
   },
@@ -53,8 +55,23 @@ Page({
   },
 
   selectCategory(event: WechatMiniprogram.BaseEvent) {
-    this.setData({ selectedCategoryId: Number(event.currentTarget.dataset.id || 0) })
+    this.setData({
+      selectedCategoryId: Number(event.currentTarget.dataset.id || 0),
+      selectedCategoryName: String(event.currentTarget.dataset.name || '全部'),
+      categoryOpen: false
+    })
+    if (this.getTabBar) this.getTabBar().setData({ hidden: false })
     this.loadCatalog()
+  },
+
+  openCategoryPanel() {
+    this.setData({ categoryOpen: true })
+    if (this.getTabBar) this.getTabBar().setData({ hidden: true })
+  },
+
+  closeCategoryPanel() {
+    this.setData({ categoryOpen: false })
+    if (this.getTabBar) this.getTabBar().setData({ hidden: false })
   },
 
   openProduct(event: WechatMiniprogram.BaseEvent) {
@@ -69,5 +86,7 @@ Page({
 
   handleRetry() {
     this.loadCatalog()
-  }
+  },
+
+  noop() {}
 })
