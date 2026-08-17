@@ -24,6 +24,7 @@ assert.match(productMarkup, /class="sticky-header" style="padding-top: \{\{statu
 assert.match(productMarkup, /class="feedback[^>]*style="top: \{\{statusBarHeight \+ 60\}\}px;"/)
 assert.match(productStyles, /\.sticky-header\s*\{[^}]*position:\s*sticky[^}]*backdrop-filter:\s*blur\(14px\)/s)
 assert.match(productStyles, /\.sku-section\s*\{[^}]*border-bottom:\s*0/s)
+assert.match(productStyles, /\.product-copy\s*\{[^}]*border-bottom:\s*0/s)
 assert.match(productStyles, /\.quantity button\s*\{[^}]*display:\s*flex[^}]*align-items:\s*center[^}]*justify-content:\s*center/s)
 assert.match(productStyles, /\.quantity text\s*\{[^}]*display:\s*flex[^}]*align-items:\s*center[^}]*justify-content:\s*center/s)
 assert.match(productStyles, /\.feedback\s*\{[^}]*position:\s*fixed[^}]*pointer-events:\s*none/s)
@@ -69,6 +70,8 @@ assert.match(orderDetailStyles, /\.cancel-sheet textarea\s*\{[^}]*box-sizing:\s*
 
 const homeMarkup = read('pages/home/index.wxml')
 const homeSource = read('pages/home/index.ts')
+assert.match(homeMarkup, /scroll-view wx:if="\{\{tickers\.length\}\}" class="ticker" scroll-x/)
+assert.match(homeMarkup, /wx:for="\{\{tickers\}\}"[^>]*class="ticker-item"/)
 for (const handler of ['openCoupons', 'openAddresses', 'openActivity', 'openAfterSales']) {
   assert.match(homeMarkup, new RegExp(`bindtap="${handler}"`))
   assert.match(homeSource, new RegExp(`${handler}\\(\\)`))
