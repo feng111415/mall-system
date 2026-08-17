@@ -2,7 +2,7 @@
   <view style="height: {{statusBarHeight}}px;"></view>
   <view class="heading"><view><text class="kicker">FIND YOURS</text><text class="title">分类逛好物</text></view><text>{{products.length}} 件</text></view>
   <view class="search"><image src="/assets/icons/search.svg" /><input value="{{keyword}}" placeholder="搜索商品名称" confirm-type="search" bindinput="handleKeyword" bindconfirm="loadCatalog" /><text wx:if="{{keyword}}" bindtap="clearSearch">清除</text><text wx:else bindtap="loadCatalog">搜索</text></view>
-  <scroll-view class="category-scroll" scroll-x enhanced show-scrollbar="{{false}}"><view class="category-row"><button wx:for="{{categories}}" wx:key="categoryId" class="category {{selectedCategoryId === item.categoryId ? 'active' : ''}}" data-id="{{item.categoryId}}" bindtap="selectCategory">{{item.categoryName}}</button></view></scroll-view>
+  <view class="category-grid"><button wx:for="{{categories}}" wx:key="categoryId" class="category {{selectedCategoryId === item.categoryId ? 'active' : ''}}" data-id="{{item.categoryId}}" bindtap="selectCategory">{{item.categoryName}}</button></view>
 
   <state-view loading="{{loading}}" error="{{error}}" bind:retry="handleRetry" />
   <view wx:if="{{!loading && !error && products.length}}" class="product-grid"><view wx:for="{{products}}" wx:key="spuId" class="product" data-id="{{item.spuId}}" bindtap="openProduct"><image src="{{item.displayImage}}" mode="aspectFill" /><view class="product-copy"><text class="product-name">{{item.productName}}</text><text class="subtitle">{{item.subtitle}}</text><view><text class="price">¥{{item.displayPrice}}</text><text class="sales">{{item.salesText}}</text></view></view></view></view>

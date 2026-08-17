@@ -32,6 +32,26 @@ assert.doesNotMatch(productStyles, /\.feedback\s*\{[^}]*bottom:/s)
 const couponStyles = read('pages/coupons/index.wxss')
 assert.match(couponStyles, /\.tabs button\s*\{[^}]*display:\s*flex[^}]*height:\s*34px[^}]*align-items:\s*center[^}]*justify-content:\s*center/s)
 
+const catalogMarkup = read('pages/catalog/index.wxml')
+const catalogStyles = read('pages/catalog/index.wxss')
+assert.doesNotMatch(catalogMarkup, /category-scroll/)
+assert.match(catalogMarkup, /class="category-grid"/)
+assert.match(catalogMarkup, /class="category \{\{selectedCategoryId === item\.categoryId \? 'active' : ''\}\}"[^>]*bindtap="selectCategory"/)
+assert.match(catalogStyles, /\.category-grid\s*\{[^}]*display:\s*grid[^}]*grid-template-columns:\s*repeat\(3,minmax\(0,1fr\)\)/s)
+
+const cartStyles = read('pages/cart/index.wxss')
+assert.match(cartStyles, /\.check\s*\{[^}]*display:\s*flex[^}]*width:\s*26px\s*!important[^}]*min-width:\s*26px\s*!important[^}]*align-items:\s*center[^}]*justify-content:\s*center[^}]*margin:\s*0\s*!important/s)
+assert.match(cartStyles, /\.check::after\s*\{[^}]*display:\s*none/s)
+assert.match(cartStyles, /\.quantity button\s*\{[^}]*display:\s*flex[^}]*align-items:\s*center[^}]*justify-content:\s*center/s)
+
+const checkoutStyles = read('pages/checkout/index.wxss')
+assert.match(checkoutStyles, /\.remark-section textarea\s*\{[^}]*box-sizing:\s*border-box[^}]*max-width:\s*100%/s)
+assert.match(checkoutStyles, /\.summary \.primary\s*\{[^}]*display:\s*flex[^}]*align-items:\s*center[^}]*justify-content:\s*center[^}]*margin-left:\s*0\s*!important[^}]*margin-right:\s*0\s*!important/s)
+
+const orderDetailStyles = read('pages/orders/detail/index.wxss')
+assert.match(orderDetailStyles, /\.actions button\s*\{[^}]*display:\s*flex[^}]*align-items:\s*center[^}]*justify-content:\s*center/s)
+assert.match(orderDetailStyles, /\.cancel-sheet textarea\s*\{[^}]*box-sizing:\s*border-box[^}]*max-width:\s*100%/s)
+
 const homeMarkup = read('pages/home/index.wxml')
 const homeSource = read('pages/home/index.ts')
 for (const handler of ['openCoupons', 'openAddresses', 'openActivity', 'openAfterSales']) {
