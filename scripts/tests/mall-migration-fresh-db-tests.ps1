@@ -10,6 +10,11 @@ if ([string]::IsNullOrWhiteSpace($env:RUOYI_DATASOURCE_PASSWORD)) {
 }
 
 $projectRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
+$baselineVersion = [version]'2.25.2'
+Import-Module (Join-Path $projectRoot 'scripts\MallMigration.psm1') -Force
+$migrationCatalog = @(Get-MallMigrationCatalog -MigrationRoot (Join-Path $projectRoot 'sql'))
+$migrationCount = $migrationCatalog.Count
+$baselineCount = @($migrationCatalog | Where-Object { $_.Version -le $baselineVersion }).Count
 $database = 'mall_migration_test_fresh_' + (Get-Date -Format 'yyyyMMddHHmmss')
 $baselineDatabase = $database + '_baseline'
 if ($database -notmatch '^mall_migration_test_fresh_\d{14}$') {
@@ -60,15 +65,17 @@ select concat(
    where table_schema=database() and table_name='mall_order' and column_name='risk_status')
 );
 '@
-    if ($state -ne '40,40,0,1') {
+    $expectedState = "$migrationCount,$migrationCount,0,1"
+    if ($state -ne $expectedState) {
         throw "Unexpected fresh migration state: $state"
     }
 
-    Invoke-MySqlClient -DatabaseName $baselineDatabase -Sql 'create table mall_order (order_id bigint not null primary key) engine=InnoDB;' | Out-Null
+    Invoke-MySqlClient -DatabaseName $baselineDatabase -Sql "set names utf8mb4; source $baseScript; source $quartzScript; create table mall_order (order_id bigint not null primary key) engine=InnoDB;" | Out-Null
     & (Join-Path $projectRoot 'scripts\invoke-db-migrations.ps1') -Database $baselineDatabase -BaselineVersion 2.25.2
     & (Join-Path $projectRoot 'scripts\invoke-db-migrations.ps1') -Database $baselineDatabase
     $baselineState = Invoke-MySqlClient -DatabaseName $baselineDatabase -Sql "select concat(count(*), ',', sum(success=1), ',', sum(type='BASELINE')) from mall_schema_history;"
-    if ($baselineState -ne '40,40,40') {
+    $expectedBaselineState = "$migrationCount,$migrationCount,$baselineCount"
+    if ($baselineState -ne $expectedBaselineState) {
         throw "Unexpected baseline migration state: $baselineState"
     }
 
